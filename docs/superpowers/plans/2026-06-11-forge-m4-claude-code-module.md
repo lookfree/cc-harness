@@ -2079,7 +2079,7 @@ mod tests {
 cargo test --manifest-path forge/src-tauri/Cargo.toml claude_code::git 2>&1 | grep -E "FAILED|error" | head -10
 ```
 
-- [ ] **Step 2: Green — 实现 git.rs**
+- [x] **Step 2: Green — 实现 git.rs**
 
 ```rust
 use git2::{Repository, StatusOptions, BranchType};
@@ -2263,13 +2263,13 @@ pub fn git_log(repo_path: &str, limit: usize) -> Result<Vec<CommitInfo>, String>
 #[tauri::command] pub fn cmd_git_log(repo_path: String, limit: usize) -> Result<Vec<CommitInfo>, String> { git_log(&repo_path, limit) }
 ```
 
-- [ ] **Step 3: 运行测试**
+- [x] **Step 3: 运行测试**
 
 ```bash
 cargo test --manifest-path forge/src-tauri/Cargo.toml claude_code::git 2>&1 | grep -E "test .* ok|FAILED|error"
 ```
 
-- [ ] **Step 4: 注册命令到 lib.rs**
+- [x] **Step 4: 注册命令到 lib.rs**
 
 在 `invoke_handler` 中追加：
 
@@ -2283,7 +2283,7 @@ commands::claude_code::git::cmd_git_checkout,
 commands::claude_code::git::cmd_git_log,
 ```
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add forge/src-tauri/
@@ -2298,7 +2298,7 @@ git commit -m "feat(m4b): implement git commands via git2 crate (TDD green)"
 - Implement: `forge/src-tauri/src/commands/claude_code/worktrees.rs`
 - Implement: `forge/src-tauri/src/commands/claude_code/environment.rs`
 
-- [ ] **Step 1: 实现 worktrees.rs（TDD）**
+- [x] **Step 1: 实现 worktrees.rs（TDD）**
 
 ```rust
 use git2::Repository;
@@ -2459,7 +2459,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 2: 实现 environment.rs（TDD）**
+- [x] **Step 2: 实现 environment.rs（TDD）**
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -2612,7 +2612,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 3: 注册命令到 lib.rs**
+- [x] **Step 3: 注册命令到 lib.rs**
 
 ```rust
 // M4b Worktrees
@@ -2627,7 +2627,7 @@ commands::claude_code::environment::cmd_delete_env_var,
 commands::claude_code::environment::cmd_test_api_connection,
 ```
 
-- [ ] **Step 4: 运行测试**
+- [x] **Step 4: 运行测试**
 
 ```bash
 cargo test --manifest-path forge/src-tauri/Cargo.toml \
@@ -2636,7 +2636,7 @@ cargo test --manifest-path forge/src-tauri/Cargo.toml \
   2>&1 | grep -E "test .* ok|FAILED|error"
 ```
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add forge/src-tauri/
@@ -2654,7 +2654,7 @@ git commit -m "feat(m4b): implement worktrees + environment Rust commands (TDD g
 
 均为新代码，inline style 深色主题，与 Dashboard.tsx 保持一致。
 
-- [ ] **Step 1: 创建 Git.tsx**
+- [x] **Step 1: 创建 Git.tsx**
 
 页面布局按设计文档：当前状态区 → 变更文件列表（多选 + 暂存）→ 提交框 → 分支列表 → 最近提交。
 
@@ -2806,7 +2806,7 @@ export default function Git() {
 }
 ```
 
-- [ ] **Step 2: 创建 Worktrees.tsx**
+- [x] **Step 2: 创建 Worktrees.tsx**
 
 ```typescript
 import { useState, useEffect } from 'react'
@@ -2877,7 +2877,7 @@ export default function Worktrees() {
 }
 ```
 
-- [ ] **Step 3: 创建 Environment.tsx**
+- [x] **Step 3: 创建 Environment.tsx**
 
 ```typescript
 import { useState, useEffect } from 'react'
@@ -2965,13 +2965,13 @@ export default function Environment() {
 }
 ```
 
-- [ ] **Step 4: 验证前端构建**
+- [x] **Step 4: 验证前端构建**
 
 ```bash
 cd forge && npm run build 2>&1 | grep -E "error|✓" | head -20
 ```
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add forge/src/modules/claude-code/pages/
@@ -2984,7 +2984,7 @@ git commit -m "feat(m4b): add Git/Worktrees/Environment pages (new inline-style 
 
 **Files:** 无新文件，仅验证。
 
-- [ ] **Step 1: 全量 Rust 测试**
+- [x] **Step 1: 全量 Rust 测试**
 
 ```bash
 cargo test --manifest-path forge/src-tauri/Cargo.toml 2>&1 | tail -30
@@ -2992,7 +2992,7 @@ cargo test --manifest-path forge/src-tauri/Cargo.toml 2>&1 | tail -30
 
 期望：所有非 `#[ignore]` 测试通过，0 个 FAILED。
 
-- [ ] **Step 2: 全量前端构建**
+- [x] **Step 2: 全量前端构建**
 
 ```bash
 cd forge && npm run build 2>&1 | tail -20
@@ -3000,11 +3000,11 @@ cd forge && npm run build 2>&1 | tail -20
 
 期望：0 个 TypeScript error，dist/ 产物生成。
 
-- [ ] **Step 3: 检查未注册命令**
+- [x] **Step 3: 检查未注册命令**
 
 确认 `forge/src-tauri/src/lib.rs` 的 `invoke_handler` 中，`tauri.ts` 里每个 `inv('cmd_...')` 都有对应的命令注册（逐行比对）。
 
-- [ ] **Step 4: 最终提交**
+- [x] **Step 4: 最终提交**
 
 ```bash
 git add forge/
