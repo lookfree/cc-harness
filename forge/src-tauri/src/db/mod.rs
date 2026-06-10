@@ -1,3 +1,5 @@
+pub mod providers;
+
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};
 
