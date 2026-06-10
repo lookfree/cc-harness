@@ -138,6 +138,10 @@ pub fn run() {
             commands::usage::query::get_dashboard,
             commands::usage::query::get_daily_usage,
             commands::usage::status::get_running_tools,
+            // M7 Codex CLI
+            commands::codex_cli::codex_get_status,
+            commands::codex_cli::codex_read_config,
+            commands::codex_cli::codex_write_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
