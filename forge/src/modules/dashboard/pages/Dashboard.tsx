@@ -1,5 +1,6 @@
 // forge/src/modules/dashboard/pages/Dashboard.tsx
 import { useEffect, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
@@ -220,9 +221,7 @@ export default function Dashboard() {
 function EnvTable() {
   const [tools, setTools] = useState<{ name: string; installed: boolean; path: string | null; version: string | null }[]>([])
   useEffect(() => {
-    import('@tauri-apps/api/core').then(({ invoke: tauriInvoke }) =>
-      tauriInvoke<typeof tools>('detect_tools').then(setTools).catch(() => {})
-    )
+    invoke<typeof tools>('detect_tools').then(setTools).catch(() => {})
   }, [])
   return (
     <div style={{ background: '#141414', border: '1px solid #1f1f1f', borderRadius: 8, overflow: 'hidden' as const }}>

@@ -9,7 +9,7 @@ pub struct Preset {
     pub codex_cli_config: Option<&'static str>,
 }
 
-/// 12 条内置预设（v1）
+/// 22 条内置预设（v2）
 pub fn builtin_presets() -> Vec<Preset> {
     vec![
         // ── Anthropic（两工具都支持）──────────────────────────────
@@ -20,10 +20,22 @@ pub fn builtin_presets() -> Vec<Preset> {
             codex_cli_config:   Some(r#"{"model":"claude-sonnet-4-5","provider":"anthropic"}"#),
         },
         Preset {
+            id: "anthropic-claude-sonnet-4-6",
+            name: "Claude Sonnet 4.6",
+            claude_code_config: Some(r#"{"model":"claude-sonnet-4-6"}"#),
+            codex_cli_config:   Some(r#"{"model":"claude-sonnet-4-6","provider":"anthropic"}"#),
+        },
+        Preset {
             id: "anthropic-claude-opus-4",
             name: "Claude Opus 4",
             claude_code_config: Some(r#"{"model":"claude-opus-4"}"#),
             codex_cli_config:   Some(r#"{"model":"claude-opus-4","provider":"anthropic"}"#),
+        },
+        Preset {
+            id: "anthropic-claude-opus-4-8",
+            name: "Claude Opus 4.8",
+            claude_code_config: Some(r#"{"model":"claude-opus-4-8"}"#),
+            codex_cli_config:   Some(r#"{"model":"claude-opus-4-8","provider":"anthropic"}"#),
         },
         Preset {
             id: "anthropic-claude-haiku-4-5",
@@ -45,10 +57,22 @@ pub fn builtin_presets() -> Vec<Preset> {
             codex_cli_config:   Some(r#"{"model":"gpt-4o-mini","provider":"openai"}"#),
         },
         Preset {
+            id: "openai-gpt-4-1",
+            name: "GPT-4.1",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"gpt-4.1","provider":"openai"}"#),
+        },
+        Preset {
             id: "openai-o3",
             name: "OpenAI o3",
             claude_code_config: None,
             codex_cli_config:   Some(r#"{"model":"o3","provider":"openai"}"#),
+        },
+        Preset {
+            id: "openai-o3-mini",
+            name: "OpenAI o3-mini",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"o3-mini","provider":"openai"}"#),
         },
         // ── Ollama 本地（仅 Codex CLI 支持）──────────────────────
         Preset {
@@ -69,12 +93,24 @@ pub fn builtin_presets() -> Vec<Preset> {
             claude_code_config: None,
             codex_cli_config:   Some(r#"{"model":"qwen","provider":"ollama"}"#),
         },
+        Preset {
+            id: "ollama-qwen2-5-coder",
+            name: "Ollama qwen2.5-coder",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"qwen2.5-coder","provider":"ollama"}"#),
+        },
         // ── DeepSeek（仅 Codex CLI 支持）──────────────────────────
         Preset {
             id: "deepseek-v3",
             name: "DeepSeek-V3",
             claude_code_config: None,
             codex_cli_config:   Some(r#"{"model":"deepseek-chat","provider":"deepseek"}"#),
+        },
+        Preset {
+            id: "deepseek-r1",
+            name: "DeepSeek-R1",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"deepseek-r1","provider":"deepseek"}"#),
         },
         // ── Qwen（仅 Codex CLI 支持）──────────────────────────────
         Preset {
@@ -83,12 +119,36 @@ pub fn builtin_presets() -> Vec<Preset> {
             claude_code_config: None,
             codex_cli_config:   Some(r#"{"model":"qwen-max","provider":"qwen"}"#),
         },
+        Preset {
+            id: "qwen-glm-4-plus",
+            name: "GLM-4-Plus",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"glm-4-plus","provider":"zhipu"}"#),
+        },
+        Preset {
+            id: "moonshot-kimi-k2",
+            name: "Kimi K2",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"kimi-k2","provider":"moonshot"}"#),
+        },
         // ── Google（仅 Codex CLI 支持）────────────────────────────
         Preset {
             id: "google-gemini-2-5-pro",
             name: "Gemini 2.5 Pro",
             claude_code_config: None,
             codex_cli_config:   Some(r#"{"model":"gemini-2.5-pro","provider":"google"}"#),
+        },
+        Preset {
+            id: "google-gemini-2-0-flash",
+            name: "Gemini 2.0 Flash",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"gemini-2.0-flash","provider":"google"}"#),
+        },
+        Preset {
+            id: "google-gemini-2-5-flash",
+            name: "Gemini 2.5 Flash",
+            claude_code_config: None,
+            codex_cli_config:   Some(r#"{"model":"gemini-2.5-flash","provider":"google"}"#),
         },
     ]
 }
@@ -135,8 +195,8 @@ mod tests {
     #[test]
     fn builtin_presets_count() {
         let presets = builtin_presets();
-        // 至少 10 条，以覆盖规格中所有提及的 Provider 品牌
-        assert!(presets.len() >= 10, "expected >= 10 presets, got {}", presets.len());
+        // 至少 20 条，以覆盖规格中所有提及的 Provider 品牌
+        assert!(presets.len() >= 20, "expected >= 20 presets, got {}", presets.len());
     }
 
     #[test]

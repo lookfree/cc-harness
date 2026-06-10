@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use crate::commands::claude_code::utils::safe_join;
+use crate::config::atomic::write_atomic;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -53,7 +54,7 @@ pub fn save_skill(base_dir: &Path, skill: &Skill) -> Result<(), String> {
     let content = skill.content.clone().unwrap_or_else(|| {
         format!("---\nname: {}\ndescription: {}\n---\n", skill.name, skill.description)
     });
-    fs::write(path, content).map_err(|e| e.to_string())
+    write_atomic(&path, &content).map_err(|e| e.to_string())
 }
 
 pub fn delete_skill(base_dir: &Path, name: &str) -> Result<(), String> {

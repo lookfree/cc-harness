@@ -11,6 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "providers", label: "Providers" },
   { id: "presets", label: "Presets" },
   { id: "_group_claude_code", label: "Claude Code", isGroupHeader: true },
+  { id: "cc_overview", label: "Overview" },
   { id: "cc_sessions", label: "Sessions" },
   { id: "cc_projects", label: "Projects" },
   { id: "cc_skills", label: "Skills" },

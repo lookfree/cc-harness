@@ -21,12 +21,14 @@ import Graph from "./modules/claude-code/pages/Graph";
 import Git from "./modules/claude-code/pages/Git";
 import Worktrees from "./modules/claude-code/pages/Worktrees";
 import Environment from "./modules/claude-code/pages/Environment";
+import ClaudeCodeOverview from "./modules/claude-code/pages/Overview";
 
 type PageId =
   | "dashboard"
   | "runner"
   | "providers"
   | "presets"
+  | "cc_overview"
   | "cc_sessions"
   | "cc_projects"
   | "codex_overview"
@@ -51,6 +53,7 @@ function renderPage(id: PageId, navigate: (id: string) => void) {
     case "runner":          return <Runner />;
     case "providers":       return <Providers />;
     case "presets":         return <Presets />;
+    case "cc_overview":     return <ClaudeCodeOverview onNavigate={navigate} />;
     case "cc_sessions":     return <Sessions tool="claude-code" onNavigate={navigate} />;
     case "cc_projects":     return <Projects tool="claude-code" onNavigate={navigate} />;
     case "codex_overview":  return <CodexOverview onNavigate={navigate} />;
