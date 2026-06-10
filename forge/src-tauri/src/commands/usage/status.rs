@@ -23,9 +23,8 @@ pub fn scan_running_tools() -> Vec<RunningTool> {
         for (pid, proc) in sys.processes() {
             let name = proc.name().to_string_lossy().to_lowercase();
             if name == *proc_name || name.starts_with(proc_name) {
-                // Try to get working dir from process exe path parent
-                let working_dir = proc.exe()
-                    .and_then(|p| p.parent())
+                let working_dir = proc
+                    .cwd()
                     .map(|p| p.to_string_lossy().to_string());
                 results.push(RunningTool {
                     tool: tool_id.to_string(),

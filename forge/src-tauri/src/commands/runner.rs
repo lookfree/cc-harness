@@ -91,7 +91,7 @@ pub fn pty_create(
             if let Some(db_path) = crate::db::default_path() {
                 if let Ok(conn) = crate::db::open(&db_path) {
                     let _ = conn.execute(
-                        "UPDATE sessions SET ended_at=?1, duration_sec=ended_at-started_at WHERE id=?2",
+                        "UPDATE sessions SET ended_at=?1, duration_sec=?1-started_at WHERE id=?2",
                         rusqlite::params![ended_unix, sid_exit],
                     );
                     // Recompute project aggregates for this dir
