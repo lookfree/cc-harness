@@ -139,7 +139,7 @@ date-fns
 - Create: `forge/src-tauri/src/commands/claude_code/environment.rs`（骨架）
 - Modify: `forge/src-tauri/src/commands/mod.rs`（pub mod claude_code;）
 
-- [ ] **Step 1: 添加 Cargo 依赖**
+- [x] **Step 1: 添加 Cargo 依赖**
 
 编辑 `forge/src-tauri/Cargo.toml`，在 `[dependencies]` 末尾追加：
 
@@ -150,7 +150,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 tokio = { version = "1", features = ["rt", "macros"] }
 ```
 
-- [ ] **Step 2: 创建 claude_code/mod.rs**
+- [x] **Step 2: 创建 claude_code/mod.rs**
 
 新建 `forge/src-tauri/src/commands/claude_code/mod.rs`：
 
@@ -168,7 +168,7 @@ pub mod watcher;
 pub mod worktrees;
 ```
 
-- [ ] **Step 3: 创建各子模块骨架（所有函数体 todo!()）**
+- [x] **Step 3: 创建各子模块骨架（所有函数体 todo!()）**
 
 新建 `forge/src-tauri/src/commands/claude_code/skills.rs`：
 
@@ -228,7 +228,7 @@ fn resolve_base(base_dir: Option<String>) -> Result<PathBuf, String> {
 
 以同样模式创建其余骨架文件，函数签名按清单填写，函数体 `todo!()`。
 
-- [ ] **Step 4: 注册 pub mod**
+- [x] **Step 4: 注册 pub mod**
 
 编辑 `forge/src-tauri/src/commands/mod.rs`，追加：
 
@@ -236,13 +236,13 @@ fn resolve_base(base_dir: Option<String>) -> Result<PathBuf, String> {
 pub mod claude_code;
 ```
 
-- [ ] **Step 5: 验证编译**
+- [x] **Step 5: 验证编译**
 
 ```bash
 cargo check --manifest-path forge/src-tauri/Cargo.toml 2>&1 | head -30
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add forge/src-tauri/
@@ -264,7 +264,7 @@ git commit -m "feat(m4): scaffold claude_code commands module + add notify/git2/
 - Create: `forge/src/index.css`（Tailwind 指令）
 - Modify: `forge/src/main.tsx`（import i18n, import index.css）
 
-- [ ] **Step 1: 安装前端依赖**
+- [x] **Step 1: 安装前端依赖**
 
 ```bash
 cd forge && npm install \
@@ -277,7 +277,7 @@ cd forge && npm install \
   @monaco-editor/react reactflow zustand date-fns
 ```
 
-- [ ] **Step 2: 初始化 Tailwind**
+- [x] **Step 2: 初始化 Tailwind**
 
 新建 `forge/tailwind.config.js`：
 
@@ -312,7 +312,7 @@ export default {
 export default { plugins: { tailwindcss: {}, autoprefixer: {} } }
 ```
 
-- [ ] **Step 3: 创建 index.css（Tailwind 指令 + CSS 变量）**
+- [x] **Step 3: 创建 index.css（Tailwind 指令 + CSS 变量）**
 
 新建 `forge/src/index.css`（深色主题 CSS 变量，与老 `src/index.css` 保持一致）：
 
@@ -352,7 +352,7 @@ export default { plugins: { tailwindcss: {}, autoprefixer: {} } }
 }
 ```
 
-- [ ] **Step 4: 复制 shadcn UI 组件**
+- [x] **Step 4: 复制 shadcn UI 组件**
 
 ```bash
 mkdir -p forge/src/components/ui
@@ -370,7 +370,7 @@ cp src/components/ui/badge.tsx \
 
 将每个组件中的 `@/lib/utils` 导入路径改为相对路径（如 `../../lib/utils`）。
 
-- [ ] **Step 5: 创建 utils.ts**
+- [x] **Step 5: 创建 utils.ts**
 
 新建 `forge/src/lib/utils.ts`：
 
@@ -383,7 +383,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 ```
 
-- [ ] **Step 6: 复制 i18n + shared/types**
+- [x] **Step 6: 复制 i18n + shared/types**
 
 ```bash
 mkdir -p forge/src/i18n forge/src/lib/types
@@ -397,7 +397,7 @@ cp shared/types/skill.ts shared/types/agent.ts shared/types/hook.ts \
 
 i18n 文件中的导入路径（相对路径）保持不变；types/index.ts 中移除 `provider` 导出（M3 已单独管理）。
 
-- [ ] **Step 7: 修改 main.tsx**
+- [x] **Step 7: 修改 main.tsx**
 
 在 `forge/src/main.tsx` 顶部添加：
 
@@ -406,13 +406,13 @@ import './index.css'
 import './i18n'
 ```
 
-- [ ] **Step 8: 验证前端构建**
+- [x] **Step 8: 验证前端构建**
 
 ```bash
 cd forge && npm run build 2>&1 | tail -20
 ```
 
-- [ ] **Step 9: 提交**
+- [x] **Step 9: 提交**
 
 ```bash
 git add forge/
@@ -429,7 +429,7 @@ git commit -m "feat(m4): add tailwind + shadcn ui + i18n + shared types to forge
 - Implement: `forge/src-tauri/src/commands/claude_code/claudemd.rs`（完整实现）
 - Implement: `forge/src-tauri/src/commands/claude_code/graph.rs`（完整实现）
 
-- [ ] **Step 1: TDD Red — 写失败测试**
+- [x] **Step 1: TDD Red — 写失败测试**
 
 在 `skills.rs` 末尾加：
 
@@ -490,7 +490,7 @@ mod tests {
 cargo test --manifest-path forge/src-tauri/Cargo.toml 2>&1 | grep -E "FAILED|error" | head -20
 ```
 
-- [ ] **Step 2: Green — 实现 skills.rs**
+- [x] **Step 2: Green — 实现 skills.rs**
 
 完整实现：
 
@@ -593,7 +593,7 @@ pub fn cmd_delete_skill(name: String, base_dir: Option<String>) -> Result<(), St
 }
 ```
 
-- [ ] **Step 3: Green — 实现 agents.rs**
+- [x] **Step 3: Green — 实现 agents.rs**
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -690,7 +690,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 4: Green — 实现 claudemd.rs**
+- [x] **Step 4: Green — 实现 claudemd.rs**
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -788,7 +788,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 5: Green — 实现 graph.rs**
+- [x] **Step 5: Green — 实现 graph.rs**
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -878,7 +878,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 6: 运行测试（Green）**
+- [x] **Step 6: 运行测试（Green）**
 
 ```bash
 cargo test --manifest-path forge/src-tauri/Cargo.toml \
@@ -889,7 +889,7 @@ cargo test --manifest-path forge/src-tauri/Cargo.toml \
   2>&1 | grep -E "test .* ok|FAILED|error"
 ```
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add forge/src-tauri/src/commands/claude_code/
@@ -905,13 +905,13 @@ git commit -m "feat(m4): implement skills/agents/claudemd/graph Rust commands (T
 - Implement: `forge/src-tauri/src/commands/claude_code/mcp.rs`
 - Implement: `forge/src-tauri/src/commands/claude_code/hooks.rs`
 
-- [ ] **Step 1: TDD Red — 各模块失败测试**
+- [x] **Step 1: TDD Red — 各模块失败测试**
 
 slash_commands 测试：save/delete/list roundtrip（tempdir）。
 mcp 测试：save server → get_mcp_servers 返回 1 条，delete 后返回 0。
 hooks 测试：save_hook → get_hooks 返回 1 条，delete 后返回 0；get_hook_logs 初始返回空。
 
-- [ ] **Step 2: Green — 实现 slash_commands.rs**
+- [x] **Step 2: Green — 实现 slash_commands.rs**
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -1008,7 +1008,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 3: Green — 实现 mcp.rs**
+- [x] **Step 3: Green — 实现 mcp.rs**
 
 MCP 服务器配置存于 `settings.json` 的 `mcpServers` 字段（`serde_json::Value`，preserve-unknown-fields）：
 
@@ -1103,7 +1103,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 4: Green — 实现 hooks.rs**
+- [x] **Step 4: Green — 实现 hooks.rs**
 
 Hooks 存于 `settings.json` 的 `hooks` 字段，同时支持独立 `.md` 脚本文件和 debug log 解析：
 
@@ -1391,7 +1391,7 @@ mod tests {
 libc = "0.2"
 ```
 
-- [ ] **Step 5: 运行测试**
+- [x] **Step 5: 运行测试**
 
 ```bash
 cargo test --manifest-path forge/src-tauri/Cargo.toml \
@@ -1401,7 +1401,7 @@ cargo test --manifest-path forge/src-tauri/Cargo.toml \
   2>&1 | grep -E "test .* ok|FAILED|error"
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add forge/src-tauri/
@@ -1416,7 +1416,7 @@ git commit -m "feat(m4): implement slash_commands/mcp/hooks Rust commands (TDD g
 - Implement: `forge/src-tauri/src/commands/claude_code/watcher.rs`
 - Modify: `forge/src-tauri/src/lib.rs`（setup watcher + WatcherState）
 
-- [ ] **Step 1: 实现 watcher.rs**
+- [x] **Step 1: 实现 watcher.rs**
 
 ```rust
 use notify::{Config as NConfig, Event, RecommendedWatcher, RecursiveMode, Watcher};
@@ -1473,7 +1473,7 @@ impl FileWatcher {
 pub struct WatcherState(pub Mutex<Option<FileWatcher>>);
 ```
 
-- [ ] **Step 2: 注册 WatcherState 到 lib.rs**
+- [x] **Step 2: 注册 WatcherState 到 lib.rs**
 
 在 `forge/src-tauri/src/lib.rs` 的 `setup` 闭包中（`seed_presets` 之后）：
 
@@ -1501,13 +1501,13 @@ if let Ok(fw) = FileWatcher::start(app.handle().clone(), watch_dirs) {
 
 并在 `pub mod` 声明中确保 `pub mod tray;` 上方加 `use std::sync::Mutex;`（已有则跳过）。
 
-- [ ] **Step 3: 验证编译**
+- [x] **Step 3: 验证编译**
 
 ```bash
 cargo check --manifest-path forge/src-tauri/Cargo.toml 2>&1 | grep -v "^warning"
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add forge/src-tauri/
@@ -1809,7 +1809,7 @@ cargo check --manifest-path forge/src-tauri/Cargo.toml 2>&1 | grep -v "^warning"
 cd forge && npm run build 2>&1 | tail -10
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add forge/
@@ -1998,7 +1998,7 @@ import Environment from "./modules/claude-code/pages/Environment";
 cd forge && npm run build 2>&1 | tail -15
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add forge/src/
@@ -2012,7 +2012,7 @@ git commit -m "feat(m4): wire claude-code nav group + App.tsx routing for all 10
 **Files:**
 - Implement: `forge/src-tauri/src/commands/claude_code/git.rs`
 
-- [ ] **Step 1: TDD Red — 写失败测试**
+- [x] **Step 1: TDD Red — 写失败测试**
 
 ```rust
 #[cfg(test)]
