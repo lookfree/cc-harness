@@ -5,7 +5,7 @@ pub mod pty;
 pub mod tray;
 
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use crate::pty::SessionRegistry;
 use crate::commands::model_switcher::commands::DbState;
 use crate::commands::model_switcher::presets::seed_presets;
@@ -46,6 +46,18 @@ pub fn run() {
             };
             if let Ok(fw) = FileWatcher::start(app.handle().clone(), watch_dirs) {
                 *app.state::<WatcherState>().0.lock().unwrap() = Some(fw);
+            }
+
+            // 启动 tools:status 轮询线程（每 5 秒）
+            {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    loop {
+                        std::thread::sleep(std::time::Duration::from_secs(5));
+                        let tools = crate::commands::usage::status::scan_running_tools();
+                        let _ = app_handle.emit("tools:status", tools);
+                    }
+                });
             }
 
             Ok(())
