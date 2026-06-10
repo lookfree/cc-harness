@@ -6,50 +6,137 @@ pub struct Provider {
     pub id: String,
     pub name: String,
     pub is_preset: bool,
-    pub claude_code_config: Option<String>, // JSON 片段
-    pub codex_cli_config: Option<String>,   // JSON 片段
+    pub claude_code_config: Option<String>,
+    pub codex_cli_config: Option<String>,
     pub created_at: i64,
 }
 
-/// 列出所有 providers（按 is_preset DESC, created_at ASC）
-pub fn list_providers(_conn: &Connection) -> Result<Vec<Provider>, String> {
-    todo!()
+pub fn list_providers(conn: &Connection) -> Result<Vec<Provider>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, is_preset, claude_code_config, codex_cli_config, created_at \
+             FROM providers ORDER BY is_preset DESC, created_at ASC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(Provider {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                is_preset: row.get::<_, i64>(2)? != 0,
+                claude_code_config: row.get(3)?,
+                codex_cli_config: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    Ok(rows)
 }
 
-/// 按 id 查询单个 provider
-pub fn get_provider(_conn: &Connection, _id: &str) -> Result<Option<Provider>, String> {
-    todo!()
+pub fn get_provider(conn: &Connection, id: &str) -> Result<Option<Provider>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, is_preset, claude_code_config, codex_cli_config, created_at \
+             FROM providers WHERE id = ?1",
+        )
+        .map_err(|e| e.to_string())?;
+    let mut rows = stmt
+        .query_map([id], |row| {
+            Ok(Provider {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                is_preset: row.get::<_, i64>(2)? != 0,
+                claude_code_config: row.get(3)?,
+                codex_cli_config: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    match rows.next() {
+        Some(r) => Ok(Some(r.map_err(|e| e.to_string())?)),
+        None => Ok(None),
+    }
 }
 
-/// 插入一条 provider，返回插入后的行（使用传入的 id）
-pub fn insert_provider(_conn: &Connection, _p: &Provider) -> Result<(), String> {
-    todo!()
+pub fn insert_provider(conn: &Connection, p: &Provider) -> Result<(), String> {
+    conn.execute(
+        "INSERT INTO providers (id, name, is_preset, claude_code_config, codex_cli_config, created_at) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            p.id,
+            p.name,
+            p.is_preset as i64,
+            p.claude_code_config,
+            p.codex_cli_config,
+            p.created_at,
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
-/// 更新 name / claude_code_config / codex_cli_config（is_preset 不可改）
 pub fn update_provider(
-    _conn: &Connection,
-    _id: &str,
-    _name: &str,
-    _claude_code_config: Option<&str>,
-    _codex_cli_config: Option<&str>,
+    conn: &Connection,
+    id: &str,
+    name: &str,
+    claude_code_config: Option<&str>,
+    codex_cli_config: Option<&str>,
 ) -> Result<(), String> {
-    todo!()
+    let affected = conn
+        .execute(
+            "UPDATE providers SET name=?1, claude_code_config=?2, codex_cli_config=?3 \
+             WHERE id=?4 AND is_preset=0",
+            params![name, claude_code_config, codex_cli_config, id],
+        )
+        .map_err(|e| e.to_string())?;
+    if affected == 0 {
+        Err(format!("provider '{}' not found or is a preset (cannot update)", id))
+    } else {
+        Ok(())
+    }
 }
 
-/// 删除 provider（is_preset=1 的行拒绝删除，返回 Err）
-pub fn delete_provider(_conn: &Connection, _id: &str) -> Result<(), String> {
-    todo!()
+pub fn delete_provider(conn: &Connection, id: &str) -> Result<(), String> {
+    // 先检查是否为 preset
+    let is_preset: bool = conn
+        .query_row(
+            "SELECT is_preset FROM providers WHERE id=?1",
+            [id],
+            |r| r.get::<_, i64>(0),
+        )
+        .map(|v| v != 0)
+        .map_err(|e| e.to_string())?;
+    if is_preset {
+        return Err(format!("cannot delete preset provider '{}'", id));
+    }
+    conn.execute("DELETE FROM providers WHERE id=?1", [id])
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
-/// 读取某工具当前激活的 provider_id（工具值：'claude-code' | 'codex-cli'）
-pub fn get_active_provider(_conn: &Connection, _tool: &str) -> Result<Option<String>, String> {
-    todo!()
+pub fn get_active_provider(conn: &Connection, tool: &str) -> Result<Option<String>, String> {
+    let mut stmt = conn
+        .prepare("SELECT provider_id FROM active_providers WHERE tool=?1")
+        .map_err(|e| e.to_string())?;
+    let mut rows = stmt
+        .query_map([tool], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?;
+    match rows.next() {
+        Some(r) => Ok(Some(r.map_err(|e| e.to_string())?)),
+        None => Ok(None),
+    }
 }
 
-/// 设置某工具的激活 provider（upsert）
-pub fn set_active_provider(_conn: &Connection, _tool: &str, _provider_id: &str) -> Result<(), String> {
-    todo!()
+pub fn set_active_provider(conn: &Connection, tool: &str, provider_id: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT INTO active_providers (tool, provider_id) VALUES (?1, ?2) \
+         ON CONFLICT(tool) DO UPDATE SET provider_id=excluded.provider_id",
+        params![tool, provider_id],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[cfg(test)]
