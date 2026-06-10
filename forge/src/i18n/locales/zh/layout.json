@@ -1,0 +1,17 @@
+{
+  "appTitle": "Claude 调试器",
+  "appName": "Claude Code 调试器",
+  "version": "v{{version}}",
+  "nav": {
+    "dashboard": "仪表板",
+    "claudeMd": "CLAUDE.md",
+    "commands": "命令",
+    "agents": "子代理",
+    "mcp": "MCP 服务器",
+    "skills": "技能",
+    "hooks": "钩子",
+    "models": "AI 模型",
+    "graph": "依赖关系图",
+    "settings": "设置"
+  }
+}

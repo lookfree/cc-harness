@@ -1,0 +1,241 @@
+{
+  "title": "钩子",
+  "description": "配置 Claude Code 事件的自动化钩子",
+  "loading": "正在加载钩子...",
+  "search": "搜索钩子...",
+  "newHook": "新建钩子",
+  "noHooks": "未配置钩子",
+  "noHooksHint": "添加钩子来自动化任务",
+  "noSearchResults": "未找到匹配的钩子",
+  "selectHook": "选择一个钩子查看详情",
+  "user": "用户",
+  "project": "项目",
+  "enabled": "已启用",
+  "disabled": "已禁用",
+  "edit": "编辑",
+  "delete": "删除",
+  "aboutHooks": "关于钩子",
+  "aboutHooksDesc": "钩子允许你在特定事件（如会话开始、工具执行或提交提示）时自动化任务。",
+  "stats": {
+    "userHooks": "用户钩子",
+    "projectHooks": "项目钩子"
+  },
+  "events": {
+    "PreToolUse": {
+      "title": "工具调用前",
+      "description": "在工具被调用之前触发"
+    },
+    "PostToolUse": {
+      "title": "工具调用后",
+      "description": "在工具完成之后触发"
+    },
+    "Notification": {
+      "title": "通知",
+      "description": "当显示通知时触发"
+    },
+    "UserPromptSubmit": {
+      "title": "用户提交提示",
+      "description": "在用户提交提示之后触发"
+    },
+    "Stop": {
+      "title": "停止",
+      "description": "在 Claude 结束响应之前触发"
+    },
+    "SubagentStart": {
+      "title": "子代理启动",
+      "description": "当子代理（Task 工具调用）启动时触发"
+    },
+    "SubagentStop": {
+      "title": "子代理停止",
+      "description": "在子代理结束响应之前触发"
+    },
+    "PreCompact": {
+      "title": "压缩前",
+      "description": "在对话压缩之前触发"
+    },
+    "SessionStart": {
+      "title": "会话开始",
+      "description": "当 Claude Code 启动新会话时触发"
+    },
+    "SessionEnd": {
+      "title": "会话结束",
+      "description": "当会话即将结束时触发"
+    }
+  },
+  "tabs": {
+    "details": "详情",
+    "actions": "动作",
+    "logs": "执行记录",
+    "config": "配置"
+  },
+  "details": {
+    "type": "类型",
+    "priority": "优先级",
+    "pattern": "匹配模式",
+    "conditions": "条件",
+    "commands": "命令",
+    "branches": "分支",
+    "filePatterns": "文件模式",
+    "tools": "工具",
+    "customCondition": "自定义条件",
+    "filePath": "配置文件"
+  },
+  "actions": {
+    "title": "钩子动作",
+    "actionType": "动作类型",
+    "handler": "处理器",
+    "command": "命令",
+    "timeout": "超时时间",
+    "continueOnError": "出错时继续",
+    "yes": "是",
+    "no": "否",
+    "types": {
+      "validate": "验证",
+      "transform": "转换",
+      "notify": "通知",
+      "block": "阻止",
+      "execute": "执行"
+    }
+  },
+  "flow": {
+    "title": "钩子执行流程",
+    "eventTriggered": "事件触发",
+    "hookExecutes": "钩子执行",
+    "actionsRun": "动作运行"
+  },
+  "dialog": {
+    "createTitle": "创建新钩子",
+    "editTitle": "编辑钩子",
+    "createDescription": "创建一个新钩子来在特定事件时自动化任务",
+    "editDescription": "修改钩子配置",
+    "name": "钩子名称",
+    "namePlaceholder": "my-hook",
+    "nameHint": "只能使用小写字母、数字和连字符",
+    "type": "钩子类型",
+    "typePlaceholder": "选择钩子类型",
+    "description": "描述",
+    "descriptionPlaceholder": "这个钩子做什么？",
+    "enabled": "启用",
+    "enabledHint": "启用或禁用此钩子",
+    "location": "位置",
+    "locationProject": "项目（仅当前项目）",
+    "locationUser": "用户（所有项目）",
+    "projectPath": "项目路径",
+    "projectPathPlaceholder": "选择项目路径",
+    "projectPathHint": "钩子将保存到",
+    "projectPathRequired": "请选择一个项目",
+    "browse": "浏览",
+    "priority": "优先级",
+    "priorityHint": "数字越小优先级越高",
+    "stopOnError": "出错时停止",
+    "stopOnErrorHint": "当发生错误时停止执行剩余动作",
+    "pattern": "模式",
+    "patternPlaceholder": "匹配的 Glob 模式（例如：*.ts）",
+    "conditions": "条件",
+    "conditionsHint": "定义此钩子何时触发",
+    "actions": "动作",
+    "actionsHint": "定义此钩子应该做什么",
+    "addAction": "添加动作",
+    "removeAction": "移除",
+    "actionType": "动作类型",
+    "actionHandler": "处理器",
+    "actionCommand": "命令",
+    "actionTimeout": "超时时间（毫秒）",
+    "actionContinueOnError": "出错时继续",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中...",
+    "rawContent": "JSON 内容",
+    "rawContentHint": "编辑完整的 JSON 配置",
+    "matcher": "匹配器",
+    "matcherPlaceholder": "工具名称模式（例如：Bash, Edit|Write）",
+    "matcherHint": "留空匹配所有。使用 | 匹配多个模式（例如：Edit|Write）",
+    "hookCommands": "命令",
+    "addCommand": "添加命令",
+    "command": "命令",
+    "commandType": "类型",
+    "typeCommand": "Shell 命令",
+    "typePrompt": "提示",
+    "timeout": "超时时间（毫秒）",
+    "shellCommand": "Shell 命令",
+    "shellCommandPlaceholder": "echo \"Hook executed\" 或 path/to/script.sh",
+    "promptText": "提示文本",
+    "promptPlaceholder": "输入提示文本...",
+    "useScriptFile": "创建脚本文件 (.sh)",
+    "scriptPath": "脚本路径",
+    "scriptPathHint": "相对于 ~/.claude 或项目根目录的路径",
+    "scriptContent": "脚本内容",
+    "scriptContentHint": "脚本将以可执行权限创建",
+    "preview": "配置预览",
+    "previewHint": "此配置将保存到 settings.json",
+    "scriptWillBeCreated": "脚本文件将自动创建"
+  },
+  "deleteDialog": {
+    "title": "删除钩子",
+    "description": "确定要删除此钩子吗？此操作无法撤销。",
+    "cancel": "取消",
+    "delete": "删除"
+  },
+  "errors": {
+    "nameRequired": "钩子名称必填",
+    "invalidName": "名称只能包含小写字母、数字和连字符",
+    "typeRequired": "钩子类型必填",
+    "actionsRequired": "至少需要一个动作",
+    "projectPathRequired": "项目钩子需要选择项目路径",
+    "saveFailed": "保存钩子失败",
+    "deleteFailed": "删除钩子失败"
+  },
+  "validation": {
+    "title": "验证错误",
+    "fixErrors": "请修复以下错误："
+  },
+  "saveSuccess": "钩子保存成功",
+  "saveSuccessRestartHint": "请重启 Claude Code 会话以使新的钩子配置生效。",
+  "howToCreate": {
+    "title": "如何创建自己的钩子",
+    "step1": "在 Claude Code 中通过 /hooks 配置，或编辑 ~/.claude/settings.json",
+    "step2": "选择钩子事件：PreToolUse、PostToolUse、Notification、UserPromptSubmit、Stop、SubagentStart、SubagentStop、PreCompact、SessionStart 或 SessionEnd",
+    "step3": "定义钩子触发时要运行的 shell 命令",
+    "step4": "重启 Claude Code 以激活钩子"
+  },
+  "logs": {
+    "title": "执行记录",
+    "test": "测试执行",
+    "testing": "执行中...",
+    "refresh": "刷新",
+    "clear": "清空",
+    "loading": "加载执行记录中...",
+    "noLogs": "暂无执行记录",
+    "noLogsForHook": "暂无 {{type}} 类型钩子的执行记录",
+    "noLogsHint": "启动 Claude Code 以生成执行记录，或点击「测试执行」按钮手动测试钩子",
+    "noActions": "该钩子没有定义动作",
+    "noCommand": "该动作没有定义命令",
+    "testFailed": "测试执行失败",
+    "details": "执行详情",
+    "command": "执行命令",
+    "duration": "执行时长",
+    "timestamp": "执行时间",
+    "location": "位置",
+    "output": "输出",
+    "error": "错误",
+    "hookType": "钩子类型",
+    "hookName": "钩子名称",
+    "debugLogsHint": "显示来自 ~/.claude/debug/ 的真实 Claude Code 执行日志。点击「启动调试」以 debug 模式启动 Claude Code 并捕获钩子执行日志。",
+    "launchDebug": "启动调试",
+    "stopDebug": "停止调试",
+    "startingDebugSession": "正在以 debug 模式启动 Claude Code...",
+    "sessionAlreadyRunning": "已有一个调试会话正在运行",
+    "sessionEnded": "调试会话已结束",
+    "sessionStopped": "调试会话已停止",
+    "logsLoaded": "日志加载成功",
+    "launchFailed": "启动调试会话失败",
+    "debugSessionRunning": "调试会话运行中，日志将自动刷新。点击「停止调试」提前结束。",
+    "status": {
+      "success": "成功",
+      "failed": "失败",
+      "error": "错误",
+      "timeout": "超时",
+      "blocked": "阻止"
+    }
+  }
+}

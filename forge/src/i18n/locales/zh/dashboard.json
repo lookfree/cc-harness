@@ -1,0 +1,45 @@
+{
+  "title": "仪表板",
+  "subtitle": "您的 Claude Code 配置概览",
+  "stats": {
+    "claudeMdFiles": "CLAUDE.md 文件",
+    "configFiles": "配置文件",
+    "skills": "技能",
+    "totalSkills": "已配置的技能总数",
+    "commands": "命令",
+    "slashCommands": "斜杠命令",
+    "agents": "代理",
+    "activeAgents": "活跃的子代理",
+    "mcpServers": "MCP 服务器",
+    "connectedServers": "已连接的服务器",
+    "hooks": "钩子",
+    "configuredHooks": "已配置的钩子"
+  },
+  "claudeMdSection": {
+    "title": "CLAUDE.md 配置文件",
+    "description": "跨项目发现的所有 CLAUDE.md 文件概览",
+    "projectConfigs": "项目配置",
+    "projects": "项目",
+    "foundIn": "在",
+    "differentProjects": "个不同项目中发现"
+  },
+  "gettingStarted": {
+    "title": "快速开始",
+    "welcome": "欢迎使用 Claude Code 调试器与管理器",
+    "whatYouCanDo": "您可以做什么:",
+    "features": {
+      "browseClaude": "浏览和管理所有项目中的 CLAUDE.md 文件",
+      "configureComponents": "配置技能、代理、钩子、MCP 服务器和斜杠命令",
+      "visualizeDependencies": "可视化组件之间的依赖关系",
+      "debugConfigs": "实时调试和测试配置",
+      "editVisually": "使用可视化编辑器编辑配置"
+    },
+    "quickTips": "快速提示:",
+    "tips": {
+      "startWithClaude": "从 CLAUDE.md 开始配置项目特定指令",
+      "useGraph": "使用依赖关系图了解组件之间的关系",
+      "commandsPage": "命令页面显示所有可用的斜杠命令",
+      "autoDiscovery": "自动发现会在 ~/Documents 和 ~/Projects 中查找所有 CLAUDE.md 文件"
+    }
+  }
+}

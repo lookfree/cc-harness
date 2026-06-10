@@ -1,0 +1,67 @@
+{
+  "button": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "add": "Add",
+    "remove": "Remove",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "apply": "Apply",
+    "test": "Test",
+    "run": "Run",
+    "stop": "Stop",
+    "refresh": "Refresh"
+  },
+  "status": {
+    "loading": "Loading...",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "location": {
+    "user": "User",
+    "project": "Project",
+    "global": "Global",
+    "plugin": "Plugin"
+  },
+  "placeholder": {
+    "search": "Search...",
+    "enter": "Enter...",
+    "select": "Select...",
+    "typeHere": "Type here..."
+  },
+  "message": {
+    "noData": "No data available",
+    "noResults": "No results found",
+    "loading": "Loading, please wait...",
+    "error": "An error occurred",
+    "success": "Operation successful",
+    "confirmDelete": "Are you sure you want to delete this?"
+  },
+  "label": {
+    "name": "Name",
+    "description": "Description",
+    "type": "Type",
+    "status": "Status",
+    "location": "Location",
+    "version": "Version",
+    "created": "Created",
+    "updated": "Updated",
+    "actions": "Actions"
+  }
+}

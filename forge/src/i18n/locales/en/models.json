@@ -1,0 +1,43 @@
+{
+  "title": "AI Models Configuration",
+  "description": "Manage and switch between different AI model providers, supporting Claude, Kimi, Zhipu, and more",
+  "addNew": "Add New Model Configuration",
+  "configured": "Configured Models",
+  "noProviders": "No models configured yet. Choose one from above to get started",
+  "active": "Active",
+  "currentModel": "Currently Active AI Model",
+  "added": "Added",
+  "baseUrl": "Base URL",
+  "model": "Model",
+  "dialog": {
+    "addTitle": "Add New Model",
+    "editTitle": "Edit Model Configuration",
+    "description": "Configure AI model's API key and related parameters",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "e.g., Claude (Anthropic)",
+    "authMode": "Authentication Mode",
+    "apiMode": "API Mode",
+    "subscriptionMode": "Subscription Mode",
+    "apiModeDesc": "Authenticate using API Key",
+    "subscriptionModeDesc": "Login using Claude subscription (via claude login)",
+    "subscriptionInfo": "Use Claude Pro/Max subscription account. First run",
+    "subscriptionInfoLogin": "to login",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Enter your API key",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "https://api.example.com/v1",
+    "baseUrlDesc": "API endpoint address (sets ANTHROPIC_BASE_URL)",
+    "model": "Model",
+    "modelPlaceholder": "Model name",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "actions": {
+    "switch": "Switch to",
+    "edit": "Edit",
+    "enable": "Enable",
+    "disable": "Disable",
+    "delete": "Delete",
+    "configure": "Configure"
+  }
+}

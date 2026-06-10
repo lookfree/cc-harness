@@ -1,0 +1,241 @@
+{
+  "title": "Hooks",
+  "description": "Configure automation hooks for Claude Code events",
+  "loading": "Loading hooks...",
+  "search": "Search hooks...",
+  "newHook": "New Hook",
+  "noHooks": "No hooks configured",
+  "noHooksHint": "Add hooks to automate tasks",
+  "noSearchResults": "No hooks found matching your search",
+  "selectHook": "Select a hook to view details",
+  "user": "User",
+  "project": "Project",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "edit": "Edit",
+  "delete": "Delete",
+  "aboutHooks": "About Hooks",
+  "aboutHooksDesc": "Hooks allow you to automate tasks at specific events like session start, tool execution, or prompt submission.",
+  "stats": {
+    "userHooks": "User Hooks",
+    "projectHooks": "Project Hooks"
+  },
+  "events": {
+    "PreToolUse": {
+      "title": "Pre Tool Use",
+      "description": "Before a tool is invoked"
+    },
+    "PostToolUse": {
+      "title": "Post Tool Use",
+      "description": "After a tool has completed"
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "When a notification is displayed"
+    },
+    "UserPromptSubmit": {
+      "title": "User Prompt Submit",
+      "description": "After the user submits their prompt"
+    },
+    "Stop": {
+      "title": "Stop",
+      "description": "Right before Claude concludes its response"
+    },
+    "SubagentStart": {
+      "title": "Subagent Start",
+      "description": "When a subagent (Task tool call) is started"
+    },
+    "SubagentStop": {
+      "title": "Subagent Stop",
+      "description": "Right before a subagent concludes its response"
+    },
+    "PreCompact": {
+      "title": "Pre Compact",
+      "description": "Before conversation compaction"
+    },
+    "SessionStart": {
+      "title": "Session Start",
+      "description": "When Claude Code starts a new session"
+    },
+    "SessionEnd": {
+      "title": "Session End",
+      "description": "When a session is ending"
+    }
+  },
+  "tabs": {
+    "details": "Details",
+    "actions": "Actions",
+    "logs": "Execution Logs",
+    "config": "Configuration"
+  },
+  "details": {
+    "type": "Type",
+    "priority": "Priority",
+    "pattern": "Pattern",
+    "conditions": "Conditions",
+    "commands": "Commands",
+    "branches": "Branches",
+    "filePatterns": "File Patterns",
+    "tools": "Tools",
+    "customCondition": "Custom Condition",
+    "filePath": "Configuration File"
+  },
+  "actions": {
+    "title": "Hook Actions",
+    "actionType": "Action Type",
+    "handler": "Handler",
+    "command": "Command",
+    "timeout": "Timeout",
+    "continueOnError": "Continue on Error",
+    "yes": "Yes",
+    "no": "No",
+    "types": {
+      "validate": "Validate",
+      "transform": "Transform",
+      "notify": "Notify",
+      "block": "Block",
+      "execute": "Execute"
+    }
+  },
+  "flow": {
+    "title": "Hook Execution Flow",
+    "eventTriggered": "Event Triggered",
+    "hookExecutes": "Hook Executes",
+    "actionsRun": "Actions Run"
+  },
+  "dialog": {
+    "createTitle": "Create New Hook",
+    "editTitle": "Edit Hook",
+    "createDescription": "Create a new hook to automate tasks at specific events",
+    "editDescription": "Modify the hook configuration",
+    "name": "Hook Name",
+    "namePlaceholder": "my-hook",
+    "nameHint": "Use lowercase letters, numbers, and hyphens only",
+    "type": "Hook Type",
+    "typePlaceholder": "Select hook type",
+    "description": "Description",
+    "descriptionPlaceholder": "What does this hook do?",
+    "enabled": "Enabled",
+    "enabledHint": "Enable or disable this hook",
+    "location": "Location",
+    "locationProject": "Project (current project only)",
+    "locationUser": "User (all projects)",
+    "projectPath": "Project Path",
+    "projectPathPlaceholder": "Select project path",
+    "projectPathHint": "Hook will be saved to",
+    "projectPathRequired": "Please select a project",
+    "browse": "Browse",
+    "priority": "Priority",
+    "priorityHint": "Lower number = higher priority",
+    "stopOnError": "Stop on Error",
+    "stopOnErrorHint": "Stop executing remaining actions if an error occurs",
+    "pattern": "Pattern",
+    "patternPlaceholder": "Glob pattern for matching (e.g., *.ts)",
+    "conditions": "Conditions",
+    "conditionsHint": "Define when this hook should trigger",
+    "actions": "Actions",
+    "actionsHint": "Define what this hook should do",
+    "addAction": "Add Action",
+    "removeAction": "Remove",
+    "actionType": "Action Type",
+    "actionHandler": "Handler",
+    "actionCommand": "Command",
+    "actionTimeout": "Timeout (ms)",
+    "actionContinueOnError": "Continue on Error",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "rawContent": "JSON Content",
+    "rawContentHint": "Edit the complete JSON configuration",
+    "matcher": "Matcher",
+    "matcherPlaceholder": "Tool name pattern (e.g., Bash, Edit|Write)",
+    "matcherHint": "Leave empty to match all. Use | for multiple patterns (e.g., Edit|Write)",
+    "hookCommands": "Commands",
+    "addCommand": "Add Command",
+    "command": "Command",
+    "commandType": "Type",
+    "typeCommand": "Shell Command",
+    "typePrompt": "Prompt",
+    "timeout": "Timeout (ms)",
+    "shellCommand": "Shell Command",
+    "shellCommandPlaceholder": "echo \"Hook executed\" or path/to/script.sh",
+    "promptText": "Prompt Text",
+    "promptPlaceholder": "Enter prompt text...",
+    "useScriptFile": "Create script file (.sh)",
+    "scriptPath": "Script Path",
+    "scriptPathHint": "Relative path from ~/.claude or project root",
+    "scriptContent": "Script Content",
+    "scriptContentHint": "The script will be created with executable permissions",
+    "preview": "Configuration Preview",
+    "previewHint": "This configuration will be saved to settings.json",
+    "scriptWillBeCreated": "Script file(s) will be created automatically"
+  },
+  "deleteDialog": {
+    "title": "Delete Hook",
+    "description": "Are you sure you want to delete this hook? This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "errors": {
+    "nameRequired": "Hook name is required",
+    "invalidName": "Name can only contain lowercase letters, numbers, and hyphens",
+    "typeRequired": "Hook type is required",
+    "actionsRequired": "At least one action is required",
+    "projectPathRequired": "Project path is required for project hooks",
+    "saveFailed": "Failed to save hook",
+    "deleteFailed": "Failed to delete hook"
+  },
+  "validation": {
+    "title": "Validation Errors",
+    "fixErrors": "Please fix the following errors:"
+  },
+  "saveSuccess": "Hook saved successfully",
+  "saveSuccessRestartHint": "Please restart Claude Code session to apply the new hooks configuration.",
+  "howToCreate": {
+    "title": "How to Create Your Own Hook",
+    "step1": "Configure hooks via /hooks in Claude Code or edit ~/.claude/settings.json",
+    "step2": "Choose a hook event: PreToolUse, PostToolUse, Notification, UserPromptSubmit, Stop, SubagentStart, SubagentStop, PreCompact, SessionStart, or SessionEnd",
+    "step3": "Define the shell commands to run when the hook is triggered",
+    "step4": "Restart Claude Code to activate the hook"
+  },
+  "logs": {
+    "title": "Execution Logs",
+    "test": "Test Run",
+    "testing": "Running...",
+    "refresh": "Refresh",
+    "clear": "Clear",
+    "loading": "Loading execution logs...",
+    "noLogs": "No execution logs",
+    "noLogsForHook": "No execution logs for {{type}} hooks",
+    "noLogsHint": "Start Claude Code to generate execution logs, or click 'Test Run' to manually test the hook",
+    "noActions": "This hook has no actions defined",
+    "noCommand": "This action has no command defined",
+    "testFailed": "Test execution failed",
+    "details": "Execution Details",
+    "command": "Command",
+    "duration": "Duration",
+    "timestamp": "Timestamp",
+    "location": "Location",
+    "output": "Output",
+    "error": "Error",
+    "hookType": "Hook Type",
+    "hookName": "Hook Name",
+    "debugLogsHint": "Showing real Claude Code execution logs from ~/.claude/debug/. Click \"Launch Debug\" to start Claude Code in debug mode and capture hook execution logs.",
+    "launchDebug": "Launch Debug",
+    "stopDebug": "Stop Debug",
+    "startingDebugSession": "Starting Claude Code in debug mode...",
+    "sessionAlreadyRunning": "A debug session is already running",
+    "sessionEnded": "Debug session ended",
+    "sessionStopped": "Debug session stopped",
+    "logsLoaded": "Logs loaded successfully",
+    "launchFailed": "Failed to start debug session",
+    "debugSessionRunning": "Debug session is running. Logs will auto-refresh. Click \"Stop Debug\" to end early.",
+    "status": {
+      "success": "Success",
+      "failed": "Failed",
+      "error": "Error",
+      "timeout": "Timeout",
+      "blocked": "Blocked"
+    }
+  }
+}

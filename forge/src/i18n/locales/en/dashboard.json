@@ -1,0 +1,45 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Overview of your Claude Code configuration",
+  "stats": {
+    "claudeMdFiles": "CLAUDE.md Files",
+    "configFiles": "Configuration files",
+    "skills": "Skills",
+    "totalSkills": "Total skills configured",
+    "commands": "Commands",
+    "slashCommands": "Slash commands",
+    "agents": "Agents",
+    "activeAgents": "Active subagents",
+    "mcpServers": "MCP Servers",
+    "connectedServers": "Connected servers",
+    "hooks": "Hooks",
+    "configuredHooks": "Configured hooks"
+  },
+  "claudeMdSection": {
+    "title": "CLAUDE.md Configuration Files",
+    "description": "Overview of all discovered CLAUDE.md files across your projects",
+    "projectConfigs": "Project Configurations",
+    "projects": "Projects",
+    "foundIn": "Found in",
+    "differentProjects": "different projects"
+  },
+  "gettingStarted": {
+    "title": "Getting Started",
+    "welcome": "Welcome to Claude Code Debugger & Manager",
+    "whatYouCanDo": "What you can do:",
+    "features": {
+      "browseClaude": "Browse and manage CLAUDE.md files across all your projects",
+      "configureComponents": "Configure Skills, Agents, Hooks, MCP Servers, and Slash Commands",
+      "visualizeDependencies": "Visualize dependencies between components",
+      "debugConfigs": "Debug and test configurations in real-time",
+      "editVisually": "Edit configurations with a visual editor"
+    },
+    "quickTips": "Quick Tips:",
+    "tips": {
+      "startWithClaude": "Start with CLAUDE.md to configure project-specific instructions",
+      "useGraph": "Use the Dependency Graph to understand component relationships",
+      "commandsPage": "Commands page shows all available slash commands",
+      "autoDiscovery": "Auto-discovery finds all CLAUDE.md files in ~/Documents and ~/Projects"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "title": "AI 模型配置",
+  "description": "管理和切换不同的 AI 模型提供商，支持 Claude、Kimi、智谱等多种模型",
+  "addNew": "添加新的模型配置",
+  "configured": "已配置的模型",
+  "noProviders": "还没有配置任何模型，从上面选择一个开始吧",
+  "active": "当前使用",
+  "currentModel": "当前使用的 AI 模型",
+  "added": "已添加",
+  "baseUrl": "Base URL",
+  "model": "Model",
+  "dialog": {
+    "addTitle": "添加新模型",
+    "editTitle": "编辑模型配置",
+    "description": "配置 AI 模型的 API 密钥和相关参数",
+    "displayName": "显示名称",
+    "displayNamePlaceholder": "例如: Claude (Anthropic)",
+    "authMode": "认证模式",
+    "apiMode": "API 模式",
+    "subscriptionMode": "订阅模式",
+    "apiModeDesc": "使用 API Key 进行认证",
+    "subscriptionModeDesc": "使用 Claude 订阅登录（通过 claude login）",
+    "subscriptionInfo": "使用 Claude Pro/Max 订阅账号，需要先在终端运行",
+    "subscriptionInfoLogin": "登录",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "输入你的 API 密钥",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "https://api.example.com/v1",
+    "baseUrlDesc": "API 端点地址（设置 ANTHROPIC_BASE_URL）",
+    "model": "Model",
+    "modelPlaceholder": "模型名称",
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "actions": {
+    "switch": "切换使用",
+    "edit": "编辑",
+    "enable": "启用",
+    "disable": "禁用",
+    "delete": "删除",
+    "configure": "配置"
+  }
+}
