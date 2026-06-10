@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import LaunchBar from "../components/LaunchBar";
 import TerminalTab, { TabHeader } from "../components/TerminalTab";
+import { launchStore } from "../../../lib/launchStore";
 
 interface TabInfo {
   sessionId: string;
@@ -13,6 +14,42 @@ export default function Runner() {
   const [tabs, setTabs] = useState<TabInfo[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Consume launch-request from Sessions/Projects pages (on mount + subscription)
+  useEffect(() => {
+    const req = launchStore.consume()
+    if (req) {
+      invoke<string>("pty_create", { tool: req.tool, workingDir: req.workingDir, extraArgs: req.extraArgs })
+        .then((sessionId) => {
+          const newTab: TabInfo = { sessionId, tool: req.tool, exited: false };
+          setTabs((prev) => {
+            const next = [...prev, newTab];
+            setActiveIdx(next.length - 1);
+            return next;
+          });
+        })
+        .catch((e) => setError(String(e)));
+    }
+  }, []);
+
+  useEffect(() => {
+    return launchStore.subscribe((req) => {
+      if (!req) return;
+      const consumed = launchStore.consume();
+      if (consumed) {
+        invoke<string>("pty_create", { tool: consumed.tool, workingDir: consumed.workingDir, extraArgs: consumed.extraArgs })
+          .then((sessionId) => {
+            const newTab: TabInfo = { sessionId, tool: consumed.tool, exited: false };
+            setTabs((prev) => {
+              const next = [...prev, newTab];
+              setActiveIdx(next.length - 1);
+              return next;
+            });
+          })
+          .catch((e) => setError(String(e)));
+      }
+    });
+  }, []);
 
   async function handleLaunch(tool: string, workingDir: string) {
     setError(null);

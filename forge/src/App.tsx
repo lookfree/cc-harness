@@ -4,6 +4,10 @@ import Dashboard from "./modules/dashboard/pages/Dashboard";
 import Runner from "./modules/runner/pages/Runner";
 import Providers from "./modules/model-switcher/pages/Providers";
 import Presets from "./modules/model-switcher/pages/Presets";
+import Sessions from "./modules/claude-code/pages/Sessions";
+import Projects from "./modules/claude-code/pages/Projects";
+import CodexSessions from "./modules/codex-cli/pages/Sessions";
+import CodexProjects from "./modules/codex-cli/pages/Projects";
 import Skills from "./modules/claude-code/pages/Skills";
 import Agents from "./modules/claude-code/pages/Agents";
 import Hooks from "./modules/claude-code/pages/Hooks";
@@ -20,6 +24,10 @@ type PageId =
   | "runner"
   | "providers"
   | "presets"
+  | "cc_sessions"
+  | "cc_projects"
+  | "codex_sessions"
+  | "codex_projects"
   | "cc_skills"
   | "cc_agents"
   | "cc_hooks"
@@ -31,38 +39,27 @@ type PageId =
   | "cc_worktrees"
   | "cc_environment";
 
-function renderPage(id: PageId) {
+function renderPage(id: PageId, navigate: (id: string) => void) {
   switch (id) {
-    case "dashboard":
-      return <Dashboard />;
-    case "runner":
-      return <Runner />;
-    case "providers":
-      return <Providers />;
-    case "presets":
-      return <Presets />;
-    case "cc_skills":
-      return <Skills />;
-    case "cc_agents":
-      return <Agents />;
-    case "cc_hooks":
-      return <Hooks />;
-    case "cc_mcp":
-      return <MCP />;
-    case "cc_commands":
-      return <Commands />;
-    case "cc_claudemd":
-      return <ClaudeMd />;
-    case "cc_graph":
-      return <Graph />;
-    case "cc_git":
-      return <Git />;
-    case "cc_worktrees":
-      return <Worktrees />;
-    case "cc_environment":
-      return <Environment />;
-    default:
-      return <Dashboard />;
+    case "dashboard":       return <Dashboard />;
+    case "runner":          return <Runner />;
+    case "providers":       return <Providers />;
+    case "presets":         return <Presets />;
+    case "cc_sessions":     return <Sessions tool="claude-code" onNavigate={navigate} />;
+    case "cc_projects":     return <Projects tool="claude-code" onNavigate={navigate} />;
+    case "codex_sessions":  return <CodexSessions onNavigate={navigate} />;
+    case "codex_projects":  return <CodexProjects onNavigate={navigate} />;
+    case "cc_skills":       return <Skills />;
+    case "cc_agents":       return <Agents />;
+    case "cc_hooks":        return <Hooks />;
+    case "cc_mcp":          return <MCP />;
+    case "cc_commands":     return <Commands />;
+    case "cc_claudemd":     return <ClaudeMd />;
+    case "cc_graph":        return <Graph />;
+    case "cc_git":          return <Git />;
+    case "cc_worktrees":    return <Worktrees />;
+    case "cc_environment":  return <Environment />;
+    default:                return <Dashboard />;
   }
 }
 
@@ -82,7 +79,7 @@ function App() {
     >
       <Navigation activeId={page} onNavigate={(id) => setPage(id as PageId)} />
       <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-        {renderPage(page)}
+        {renderPage(page, (id) => setPage(id as PageId))}
       </main>
     </div>
   );

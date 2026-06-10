@@ -220,8 +220,8 @@ export default function Dashboard() {
 function EnvTable() {
   const [tools, setTools] = useState<{ name: string; installed: boolean; path: string | null; version: string | null }[]>([])
   useEffect(() => {
-    import('@tauri-apps/api/core').then(({ invoke }) =>
-      invoke<typeof tools>('detect_tools').then(setTools).catch(() => {})
+    import('@tauri-apps/api/core').then(({ invoke: tauriInvoke }) =>
+      tauriInvoke<typeof tools>('detect_tools').then(setTools).catch(() => {})
     )
   }, [])
   return (

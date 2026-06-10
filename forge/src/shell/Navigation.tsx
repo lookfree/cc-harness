@@ -11,6 +11,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: "providers", label: "Providers" },
   { id: "presets", label: "Presets" },
   { id: "_group_claude_code", label: "Claude Code", isGroupHeader: true },
+  { id: "cc_sessions", label: "Sessions" },
+  { id: "cc_projects", label: "Projects" },
   { id: "cc_skills", label: "Skills" },
   { id: "cc_agents", label: "Agents" },
   { id: "cc_hooks", label: "Hooks" },
@@ -21,6 +23,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: "cc_git", label: "Git" },
   { id: "cc_worktrees", label: "Worktrees" },
   { id: "cc_environment", label: "Environment" },
+  { id: "_group_codex_cli", label: "Codex CLI", isGroupHeader: true },
+  { id: "codex_sessions", label: "Sessions" },
+  { id: "codex_projects", label: "Projects" },
 ];
 
 interface NavigationProps {
