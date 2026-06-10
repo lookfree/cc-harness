@@ -107,6 +107,16 @@ pub fn run() {
             commands::claude_code::git::cmd_git_branches,
             commands::claude_code::git::cmd_git_checkout,
             commands::claude_code::git::cmd_git_log,
+            // M4b Worktrees
+            commands::claude_code::worktrees::cmd_list_worktrees,
+            commands::claude_code::worktrees::cmd_add_worktree,
+            commands::claude_code::worktrees::cmd_remove_worktree,
+            // M4b Environment
+            commands::claude_code::environment::cmd_detect_env_tools,
+            commands::claude_code::environment::cmd_get_env_vars,
+            commands::claude_code::environment::cmd_set_env_var,
+            commands::claude_code::environment::cmd_delete_env_var,
+            commands::claude_code::environment::cmd_test_api_connection,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
