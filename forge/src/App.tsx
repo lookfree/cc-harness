@@ -8,6 +8,9 @@ import Sessions from "./modules/claude-code/pages/Sessions";
 import Projects from "./modules/claude-code/pages/Projects";
 import CodexSessions from "./modules/codex-cli/pages/Sessions";
 import CodexProjects from "./modules/codex-cli/pages/Projects";
+import CodexOverview from "./modules/codex-cli/pages/Overview";
+import CodexConfig from "./modules/codex-cli/pages/Config";
+import CommandRef from "./modules/command-ref/pages/CommandRef";
 import Skills from "./modules/claude-code/pages/Skills";
 import Agents from "./modules/claude-code/pages/Agents";
 import Hooks from "./modules/claude-code/pages/Hooks";
@@ -26,8 +29,11 @@ type PageId =
   | "presets"
   | "cc_sessions"
   | "cc_projects"
+  | "codex_overview"
   | "codex_sessions"
   | "codex_projects"
+  | "codex_config"
+  | "command_ref"
   | "cc_skills"
   | "cc_agents"
   | "cc_hooks"
@@ -47,8 +53,11 @@ function renderPage(id: PageId, navigate: (id: string) => void) {
     case "presets":         return <Presets />;
     case "cc_sessions":     return <Sessions tool="claude-code" onNavigate={navigate} />;
     case "cc_projects":     return <Projects tool="claude-code" onNavigate={navigate} />;
+    case "codex_overview":  return <CodexOverview onNavigate={navigate} />;
     case "codex_sessions":  return <CodexSessions onNavigate={navigate} />;
     case "codex_projects":  return <CodexProjects onNavigate={navigate} />;
+    case "codex_config":    return <CodexConfig />;
+    case "command_ref":     return <CommandRef />;
     case "cc_skills":       return <Skills />;
     case "cc_agents":       return <Agents />;
     case "cc_hooks":        return <Hooks />;

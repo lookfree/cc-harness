@@ -24,8 +24,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: "cc_worktrees", label: "Worktrees" },
   { id: "cc_environment", label: "Environment" },
   { id: "_group_codex_cli", label: "Codex CLI", isGroupHeader: true },
+  { id: "codex_overview", label: "Overview" },
   { id: "codex_sessions", label: "Sessions" },
   { id: "codex_projects", label: "Projects" },
+  { id: "codex_config", label: "Config" },
+  { id: "command_ref", label: "Command Ref" },
 ];
 
 interface NavigationProps {
