@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::commands::claude_code::utils::safe_join;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -47,7 +48,8 @@ pub fn get_skill(base_dir: &Path, name: &str) -> Result<Option<Skill>, String> {
 pub fn save_skill(base_dir: &Path, skill: &Skill) -> Result<(), String> {
     let dir = skills_dir(base_dir);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join(format!("{}.md", skill.name));
+    let file_name = format!("{}.md", skill.name);
+    let path = safe_join(&dir, &file_name)?;
     let content = skill.content.clone().unwrap_or_else(|| {
         format!("---\nname: {}\ndescription: {}\n---\n", skill.name, skill.description)
     });
@@ -55,7 +57,9 @@ pub fn save_skill(base_dir: &Path, skill: &Skill) -> Result<(), String> {
 }
 
 pub fn delete_skill(base_dir: &Path, name: &str) -> Result<(), String> {
-    let path = skills_dir(base_dir).join(format!("{}.md", name));
+    let dir = skills_dir(base_dir);
+    let file_name = format!("{}.md", name);
+    let path = safe_join(&dir, &file_name)?;
     if path.exists() {
         fs::remove_file(path).map_err(|e| e.to_string())?;
     }
@@ -140,5 +144,43 @@ mod tests {
         save_skill(&base, &skill).unwrap();
         delete_skill(&base, "to-delete").unwrap();
         assert!(get_skill(&base, "to-delete").unwrap().is_none());
+    }
+
+    #[test]
+    fn save_skill_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let skill = Skill {
+            name: "../evil".into(),
+            description: "bad".into(),
+            content: None,
+            file_path: None,
+            location: "user".into(),
+            dependencies: None,
+        };
+        let result = save_skill(dir.path(), &skill);
+        assert!(result.is_err(), "expected Err for name '../evil'");
+        assert!(!dir.path().parent().unwrap().join("evil.md").exists());
+    }
+
+    #[test]
+    fn save_skill_rejects_absolute_name() {
+        let dir = tempdir().unwrap();
+        let skill = Skill {
+            name: "/tmp/evil".into(),
+            description: "bad".into(),
+            content: None,
+            file_path: None,
+            location: "user".into(),
+            dependencies: None,
+        };
+        let result = save_skill(dir.path(), &skill);
+        assert!(result.is_err(), "expected Err for absolute name");
+    }
+
+    #[test]
+    fn delete_skill_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let result = delete_skill(dir.path(), "../evil");
+        assert!(result.is_err(), "expected Err for name '../evil'");
     }
 }

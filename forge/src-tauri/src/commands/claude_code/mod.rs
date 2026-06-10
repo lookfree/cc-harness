@@ -7,5 +7,6 @@ pub mod hooks;
 pub mod mcp;
 pub mod skills;
 pub mod slash_commands;
+pub mod utils;
 pub mod watcher;
 pub mod worktrees;

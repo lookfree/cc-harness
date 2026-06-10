@@ -57,9 +57,18 @@ export default function Git() {
 
   const handleCommit = async () => {
     if (!commitMsg.trim()) return
-    await api.git.commit(repoPath, commitMsg)
-    setCommitMsg('')
-    await load()
+    if (!status || status.staged.length === 0) {
+      setError('没有已暂存的变更')
+      return
+    }
+    try {
+      await api.git.commit(repoPath, commitMsg)
+      setCommitMsg('')
+      setError(null)
+      await load()
+    } catch (e) {
+      setError(String(e))
+    }
   }
 
   const handlePush = async () => {

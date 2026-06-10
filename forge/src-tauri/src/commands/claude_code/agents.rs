@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::commands::claude_code::utils::safe_join;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Agent {
@@ -43,14 +44,18 @@ pub fn get_agent(base_dir: &Path, name: &str) -> Result<Option<Agent>, String> {
 pub fn save_agent(base_dir: &Path, agent: &Agent) -> Result<(), String> {
     let dir = agents_dir(base_dir);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let file_name = format!("{}.md", agent.name);
+    let path = safe_join(&dir, &file_name)?;
     let content = agent.content.clone().unwrap_or_else(|| {
         format!("---\nname: {}\ndescription: {}\n---\n", agent.name, agent.description)
     });
-    fs::write(dir.join(format!("{}.md", agent.name)), content).map_err(|e| e.to_string())
+    fs::write(path, content).map_err(|e| e.to_string())
 }
 
 pub fn delete_agent(base_dir: &Path, name: &str) -> Result<(), String> {
-    let path = agents_dir(base_dir).join(format!("{}.md", name));
+    let dir = agents_dir(base_dir);
+    let file_name = format!("{}.md", name);
+    let path = safe_join(&dir, &file_name)?;
     if path.exists() { fs::remove_file(path).map_err(|e| e.to_string())?; }
     Ok(())
 }
@@ -88,5 +93,29 @@ mod tests {
         assert!(get_agent(dir.path(), "ag").unwrap().is_some());
         delete_agent(dir.path(), "ag").unwrap();
         assert!(get_agent(dir.path(), "ag").unwrap().is_none());
+    }
+
+    #[test]
+    fn save_agent_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let agent = Agent { name: "../evil".into(), description: "bad".into(), content: None, file_path: None, location: "user".into(), dependencies: None };
+        let result = save_agent(dir.path(), &agent);
+        assert!(result.is_err(), "expected Err for name '../evil'");
+        assert!(!dir.path().parent().unwrap().join("evil.md").exists());
+    }
+
+    #[test]
+    fn save_agent_rejects_absolute_name() {
+        let dir = tempdir().unwrap();
+        let agent = Agent { name: "/tmp/evil".into(), description: "bad".into(), content: None, file_path: None, location: "user".into(), dependencies: None };
+        let result = save_agent(dir.path(), &agent);
+        assert!(result.is_err(), "expected Err for absolute name");
+    }
+
+    #[test]
+    fn delete_agent_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let result = delete_agent(dir.path(), "../evil");
+        assert!(result.is_err(), "expected Err for name '../evil'");
     }
 }

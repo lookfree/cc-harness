@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use crate::config::atomic::write_atomic;
+use crate::commands::claude_code::utils::safe_join;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SlashCommand {
@@ -42,21 +43,27 @@ pub fn get_slash_command(base_dir: &Path, name: &str) -> Result<Option<SlashComm
 pub fn save_slash_command(base_dir: &Path, cmd: &SlashCommand) -> Result<(), String> {
     let dir = commands_dir(base_dir);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    write_atomic(&dir.join(format!("{}.md", cmd.name)), &cmd.content)
+    let file_name = format!("{}.md", cmd.name);
+    let path = safe_join(&dir, &file_name)?;
+    write_atomic(&path, &cmd.content)
 }
 
 pub fn save_slash_command_raw(base_dir: &Path, name: &str, content: &str, rel_path: &str) -> Result<(), String> {
     let target = if rel_path.is_empty() {
-        commands_dir(base_dir).join(format!("{}.md", name))
+        let dir = commands_dir(base_dir);
+        let file_name = format!("{}.md", name);
+        safe_join(&dir, &file_name)?
     } else {
-        base_dir.join(rel_path)
+        safe_join(base_dir, rel_path)?
     };
     if let Some(p) = target.parent() { fs::create_dir_all(p).map_err(|e| e.to_string())?; }
     write_atomic(&target, content)
 }
 
 pub fn delete_slash_command(base_dir: &Path, name: &str) -> Result<(), String> {
-    let path = commands_dir(base_dir).join(format!("{}.md", name));
+    let dir = commands_dir(base_dir);
+    let file_name = format!("{}.md", name);
+    let path = safe_join(&dir, &file_name)?;
     if path.exists() { fs::remove_file(path).map_err(|e| e.to_string())?; }
     Ok(())
 }
@@ -88,5 +95,36 @@ mod tests {
         assert_eq!(loaded.content, "# foo");
         delete_slash_command(dir.path(), "foo").unwrap();
         assert!(get_slash_command(dir.path(), "foo").unwrap().is_none());
+    }
+
+    #[test]
+    fn save_slash_command_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let cmd = SlashCommand { name: "../evil".into(), description: None, content: "bad".into(), file_path: None, location: "user".into() };
+        let result = save_slash_command(dir.path(), &cmd);
+        assert!(result.is_err(), "expected Err for name '../evil'");
+        // nothing written outside the tempdir base
+        assert!(!dir.path().parent().unwrap().join("evil.md").exists());
+    }
+
+    #[test]
+    fn save_slash_command_raw_rejects_traversal_in_rel_path() {
+        let dir = tempdir().unwrap();
+        let result = save_slash_command_raw(dir.path(), "x", "bad", "../../evil.md");
+        assert!(result.is_err(), "expected Err for rel_path '../../evil.md'");
+    }
+
+    #[test]
+    fn save_slash_command_raw_rejects_absolute_rel_path() {
+        let dir = tempdir().unwrap();
+        let result = save_slash_command_raw(dir.path(), "x", "bad", "/tmp/evil.md");
+        assert!(result.is_err(), "expected Err for absolute rel_path");
+    }
+
+    #[test]
+    fn delete_slash_command_rejects_traversal_in_name() {
+        let dir = tempdir().unwrap();
+        let result = delete_slash_command(dir.path(), "../evil");
+        assert!(result.is_err(), "expected Err for name '../evil'");
     }
 }

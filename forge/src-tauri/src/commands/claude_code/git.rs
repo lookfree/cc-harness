@@ -107,6 +107,15 @@ pub fn git_commit(repo_path: &str, message: &str) -> Result<String, String> {
     } else {
         vec![]
     };
+
+    // Guard: if there is a parent commit, check that the new tree differs from HEAD.
+    // This prevents creating a silent empty commit when nothing is staged.
+    if let Some(parent) = parents.first() {
+        if parent.tree_id() == tree_id {
+            return Err("nothing staged to commit".into());
+        }
+    }
+
     let parent_refs: Vec<&git2::Commit> = parents.iter().collect();
     let oid = repo
         .commit(Some("HEAD"), &sig, &sig, message, &tree, &parent_refs)
@@ -295,5 +304,34 @@ mod tests {
         let log = git_log(dir.path().to_str().unwrap(), 10).unwrap();
         assert_eq!(log.len(), 1);
         assert_eq!(log[0].message, "initial commit");
+    }
+
+    #[test]
+    fn git_commit_rejects_nothing_staged() {
+        let dir = tempdir().unwrap();
+        let repo = init_repo(dir.path());
+        // Create an initial commit so HEAD exists
+        make_commit(&repo, "initial commit");
+        // Attempt to commit again without staging anything
+        let result = git_commit(dir.path().to_str().unwrap(), "empty commit");
+        assert!(result.is_err(), "expected Err when nothing is staged");
+        let err_msg = result.unwrap_err();
+        assert!(
+            err_msg.contains("nothing staged"),
+            "unexpected error message: {err_msg}"
+        );
+    }
+
+    #[test]
+    fn git_commit_succeeds_with_staged_changes() {
+        use std::fs as sfs;
+        let dir = tempdir().unwrap();
+        let repo = init_repo(dir.path());
+        make_commit(&repo, "initial commit");
+        // Write a file and stage it
+        sfs::write(dir.path().join("hello.txt"), "hello").unwrap();
+        git_stage(dir.path().to_str().unwrap(), &["hello.txt".to_string()]).unwrap();
+        let result = git_commit(dir.path().to_str().unwrap(), "add hello");
+        assert!(result.is_ok(), "commit with staged file should succeed");
     }
 }
