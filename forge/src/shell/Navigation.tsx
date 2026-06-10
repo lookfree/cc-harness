@@ -10,6 +10,17 @@ const NAV_ITEMS: NavItem[] = [
   { id: "_group_model_switcher", label: "Model Switcher", isGroupHeader: true },
   { id: "providers", label: "Providers" },
   { id: "presets", label: "Presets" },
+  { id: "_group_claude_code", label: "Claude Code", isGroupHeader: true },
+  { id: "cc_skills", label: "Skills" },
+  { id: "cc_agents", label: "Agents" },
+  { id: "cc_hooks", label: "Hooks" },
+  { id: "cc_mcp", label: "MCP" },
+  { id: "cc_commands", label: "Commands" },
+  { id: "cc_claudemd", label: "CLAUDE.md" },
+  { id: "cc_graph", label: "Dependency Graph" },
+  { id: "cc_git", label: "Git" },
+  { id: "cc_worktrees", label: "Worktrees" },
+  { id: "cc_environment", label: "Environment" },
 ];
 
 interface NavigationProps {
