@@ -1,49 +1,52 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+
+interface ToolStatus {
+  name: string;
+  installed: boolean;
+  path: string | null;
+  version: string | null;
+}
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [tools, setTools] = useState<ToolStatus[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  useEffect(() => {
+    invoke<ToolStatus[]>("detect_tools")
+      .then(setTools)
+      .catch((e) => setError(String(e)));
+  }, []);
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+    <main
+      style={{
+        background: "#0f0f0f",
+        color: "#e5e5e5",
+        minHeight: "100vh",
+        padding: 24,
+        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+      }}
+    >
+      <h1 style={{ fontSize: 20, marginBottom: 16 }}>Forge — 环境检测</h1>
+      {error && <p style={{ color: "#ef4444" }}>{error}</p>}
+      <table style={{ borderCollapse: "collapse", width: "100%" }}>
+        <tbody>
+          {tools.map((t) => (
+            <tr key={t.name} style={{ borderBottom: "1px solid #262626" }}>
+              <td style={{ padding: "8px 12px" }}>
+                {t.installed ? "🟢" : "⚪️"} {t.name}
+              </td>
+              <td style={{ padding: "8px 12px", fontFamily: "monospace", fontSize: 12 }}>
+                {t.path ?? "未安装"}
+              </td>
+              <td style={{ padding: "8px 12px", fontFamily: "monospace", fontSize: 12 }}>
+                {t.version ?? "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </main>
   );
 }
