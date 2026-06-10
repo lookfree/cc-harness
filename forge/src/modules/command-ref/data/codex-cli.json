@@ -1,0 +1,107 @@
+[
+  {
+    "name": "exec",
+    "type": "subcommand",
+    "category": "核心命令",
+    "description": "在指定目录执行一次性编码任务（非交互模式）",
+    "example": "codex exec '为该函数添加单元测试'"
+  },
+  {
+    "name": "login",
+    "type": "subcommand",
+    "category": "认证",
+    "description": "登录 OpenAI / 配置的 Provider 账户",
+    "example": "codex login"
+  },
+  {
+    "name": "logout",
+    "type": "subcommand",
+    "category": "认证",
+    "description": "退出当前登录的账户",
+    "example": "codex logout"
+  },
+  {
+    "name": "mcp",
+    "type": "subcommand",
+    "category": "工具与 MCP",
+    "description": "管理 MCP 服务器配置（list、add、remove）",
+    "example": "codex mcp list"
+  },
+  {
+    "name": "apply",
+    "type": "subcommand",
+    "category": "核心命令",
+    "description": "将 Codex 生成的代码补丁应用到本地文件",
+    "example": "codex apply patch.diff"
+  },
+  {
+    "name": "resume",
+    "type": "subcommand",
+    "category": "核心命令",
+    "description": "恢复上次的 Codex 会话继续工作",
+    "example": "codex resume"
+  },
+  {
+    "name": "completion",
+    "type": "subcommand",
+    "category": "诊断与配置",
+    "description": "生成 shell 补全脚本（bash/zsh/fish）",
+    "example": "codex completion zsh"
+  },
+  {
+    "name": "proto",
+    "type": "subcommand",
+    "category": "高级功能",
+    "description": "进入原型模式，快速迭代代码生成（实验性功能）",
+    "example": "codex proto"
+  },
+  {
+    "name": "--model",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "指定使用的模型 ID，覆盖配置文件中的默认模型",
+    "example": "codex --model gpt-4o '重构这段代码'"
+  },
+  {
+    "name": "--ask-for-approval",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "执行文件修改前提示用户手动确认（安全模式）",
+    "example": "codex --ask-for-approval '添加错误处理'"
+  },
+  {
+    "name": "--full-auto",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "全自动模式：跳过所有确认提示，自动执行所有操作（危险！）",
+    "example": "codex --full-auto '修复所有 lint 错误'"
+  },
+  {
+    "name": "--sandbox",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "在沙盒环境中运行，限制文件系统访问范围",
+    "example": "codex --sandbox '生成测试用例'"
+  },
+  {
+    "name": "--config",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "指定配置文件路径（覆盖默认 ~/.codex/config.toml）",
+    "example": "codex --config ./codex.toml '优化性能'"
+  },
+  {
+    "name": "--image",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "将图片文件作为视觉上下文传入（多模态输入）",
+    "example": "codex --image screenshot.png '根据截图实现 UI'"
+  },
+  {
+    "name": "--oss",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "使用开源模型端点（通过兼容 OpenAI API 的服务）",
+    "example": "codex --oss --model llama3 '生成函数'"
+  }
+]

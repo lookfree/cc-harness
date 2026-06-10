@@ -1,0 +1,324 @@
+[
+  {
+    "name": "/clear",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "清除当前对话上下文，开始全新会话",
+    "example": "/clear"
+  },
+  {
+    "name": "/compact",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "压缩对话历史，仅保留摘要以节省 token",
+    "example": "/compact"
+  },
+  {
+    "name": "/resume",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "恢复上一次会话（仅交互模式）",
+    "example": "/resume"
+  },
+  {
+    "name": "/exit",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "退出 Claude Code 交互会话",
+    "example": "/exit"
+  },
+  {
+    "name": "/help",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "显示所有可用的斜杠命令帮助信息",
+    "example": "/help"
+  },
+  {
+    "name": "/cost",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "显示当前会话已消耗的 token 数量和预估费用",
+    "example": "/cost"
+  },
+  {
+    "name": "/status",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "显示当前会话状态，包括模型、上下文大小等信息",
+    "example": "/status"
+  },
+  {
+    "name": "/rewind",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "撤销最后一轮对话，回退到上一个对话状态",
+    "example": "/rewind"
+  },
+  {
+    "name": "/init",
+    "type": "slash",
+    "category": "文件与上下文",
+    "description": "在当前目录初始化 CLAUDE.md 项目记忆文件",
+    "example": "/init"
+  },
+  {
+    "name": "/add-dir",
+    "type": "slash",
+    "category": "文件与上下文",
+    "description": "将指定目录添加到当前会话的上下文中",
+    "example": "/add-dir ~/projects/mylib"
+  },
+  {
+    "name": "/memory",
+    "type": "slash",
+    "category": "文件与上下文",
+    "description": "查看或管理 CLAUDE.md 记忆文件内容",
+    "example": "/memory"
+  },
+  {
+    "name": "/context",
+    "type": "slash",
+    "category": "文件与上下文",
+    "description": "显示当前上下文窗口中包含的文件和内容摘要",
+    "example": "/context"
+  },
+  {
+    "name": "/mcp",
+    "type": "slash",
+    "category": "工具与 MCP",
+    "description": "查看当前已连接的 MCP 服务器列表和状态",
+    "example": "/mcp"
+  },
+  {
+    "name": "/model",
+    "type": "slash",
+    "category": "模型与配置",
+    "description": "查看当前使用的模型，或在会话中切换模型",
+    "example": "/model claude-opus-4"
+  },
+  {
+    "name": "/agents",
+    "type": "slash",
+    "category": "高级功能",
+    "description": "管理子代理（subagent）的运行状态",
+    "example": "/agents"
+  },
+  {
+    "name": "/hooks",
+    "type": "slash",
+    "category": "高级功能",
+    "description": "查看当前项目配置的 Hooks 列表及其状态",
+    "example": "/hooks"
+  },
+  {
+    "name": "/permissions",
+    "type": "slash",
+    "category": "高级功能",
+    "description": "查看或修改当前会话的工具权限设置",
+    "example": "/permissions"
+  },
+  {
+    "name": "/doctor",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "运行诊断检查，验证 Claude Code 安装和配置是否正常",
+    "example": "/doctor"
+  },
+  {
+    "name": "/login",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "登录 Anthropic 账户以获取 API 访问权限",
+    "example": "/login"
+  },
+  {
+    "name": "/logout",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "退出当前登录的 Anthropic 账户",
+    "example": "/logout"
+  },
+  {
+    "name": "/terminal-setup",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "配置终端环境，安装 shell 集成脚本",
+    "example": "/terminal-setup"
+  },
+  {
+    "name": "/vim",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "切换 Vim 键位绑定模式（开/关）",
+    "example": "/vim"
+  },
+  {
+    "name": "/review",
+    "type": "slash",
+    "category": "代码操作",
+    "description": "对当前分支的代码改动进行代码审查",
+    "example": "/review"
+  },
+  {
+    "name": "/pr-comments",
+    "type": "slash",
+    "category": "代码操作",
+    "description": "读取并处理当前 PR 上的评论",
+    "example": "/pr-comments"
+  },
+  {
+    "name": "/todos",
+    "type": "slash",
+    "category": "代码操作",
+    "description": "列出当前会话中待完成的任务（TODO 列表）",
+    "example": "/todos"
+  },
+  {
+    "name": "/bug",
+    "type": "slash",
+    "category": "代码操作",
+    "description": "报告 Claude Code 本身的 bug，自动收集诊断信息",
+    "example": "/bug"
+  },
+  {
+    "name": "/config",
+    "type": "slash",
+    "category": "模型与配置",
+    "description": "查看或修改 Claude Code 的配置项",
+    "example": "/config"
+  },
+  {
+    "name": "/output-style",
+    "type": "slash",
+    "category": "模型与配置",
+    "description": "切换输出样式（详细/简洁/自动）",
+    "example": "/output-style concise"
+  },
+  {
+    "name": "/export",
+    "type": "slash",
+    "category": "会话控制",
+    "description": "将当前会话导出为 Markdown 文件",
+    "example": "/export ~/session.md"
+  },
+  {
+    "name": "/release-notes",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "查看当前版本的发布说明和更新内容",
+    "example": "/release-notes"
+  },
+  {
+    "name": "/usage",
+    "type": "slash",
+    "category": "诊断与维护",
+    "description": "显示账户的 token 使用量和费用统计",
+    "example": "/usage"
+  },
+  {
+    "name": "--model",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "启动时指定使用的模型 ID（如 claude-sonnet-4-5、claude-opus-4）",
+    "example": "claude --model claude-opus-4"
+  },
+  {
+    "name": "--verbose",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "显示详细日志输出，包括工具调用和内部处理步骤",
+    "example": "claude --verbose"
+  },
+  {
+    "name": "--debug",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "开启调试模式，输出更多内部状态信息",
+    "example": "claude --debug"
+  },
+  {
+    "name": "--resume",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "恢复指定 session ID 的历史会话",
+    "example": "claude --resume <session-id>"
+  },
+  {
+    "name": "--continue",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "继续最近的一次会话",
+    "example": "claude --continue"
+  },
+  {
+    "name": "--print",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "非交互模式：打印单次回复后退出（等价 -p）",
+    "example": "claude --print '解释这段代码'"
+  },
+  {
+    "name": "--output-format",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "指定输出格式：text（默认）、json、stream-json",
+    "example": "claude --output-format json"
+  },
+  {
+    "name": "--permission-mode",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "设置工具权限模式：default、acceptEdits、bypassPermissions、plan",
+    "example": "claude --permission-mode acceptEdits"
+  },
+  {
+    "name": "--dangerously-skip-permissions",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "跳过所有权限提示，自动接受（危险！仅用于自动化环境）",
+    "example": "claude --dangerously-skip-permissions"
+  },
+  {
+    "name": "--add-dir",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "启动时将额外目录加入上下文（可重复使用多次）",
+    "example": "claude --add-dir ~/shared-lib"
+  },
+  {
+    "name": "--mcp-config",
+    "type": "flag",
+    "category": "CLI 参数",
+    "description": "指定 MCP 配置文件路径（覆盖默认配置）",
+    "example": "claude --mcp-config ./mcp.json"
+  },
+  {
+    "name": "mcp",
+    "type": "subcommand",
+    "category": "子命令",
+    "description": "管理 MCP 服务器：add、remove、list、serve 等操作",
+    "example": "claude mcp list"
+  },
+  {
+    "name": "update",
+    "type": "subcommand",
+    "category": "子命令",
+    "description": "将 Claude Code 更新到最新版本",
+    "example": "claude update"
+  },
+  {
+    "name": "doctor",
+    "type": "subcommand",
+    "category": "子命令",
+    "description": "运行安装健康检查（与 /doctor 等价，但在 CLI 层执行）",
+    "example": "claude doctor"
+  },
+  {
+    "name": "setup-token",
+    "type": "subcommand",
+    "category": "子命令",
+    "description": "配置 API Token（适用于 CI/自动化环境）",
+    "example": "claude setup-token"
+  }
+]
