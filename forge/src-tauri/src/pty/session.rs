@@ -38,6 +38,7 @@ impl PtySession {
         program: &str,
         working_dir: &str,
         env_vars: Vec<(String, String)>,
+        extra_args: Option<Vec<String>>,
         on_output: impl Fn(Vec<u8>) + Send + 'static,
         on_exit: impl Fn() + Send + 'static,
     ) -> Result<Self, String> {
@@ -58,6 +59,13 @@ impl PtySession {
         // Inject custom env vars from the database
         for (k, v) in env_vars {
             cmd.env(k, v);
+        }
+
+        // Append extra args (e.g. --resume <sessionId>)
+        if let Some(args) = extra_args {
+            for arg in args {
+                cmd.arg(arg);
+            }
         }
 
         let child = pair
@@ -201,6 +209,7 @@ mod tests {
             "sh",
             &working_dir,
             vec![],
+            None,
             move |bytes| {
                 collected_clone.lock().unwrap().extend_from_slice(&bytes);
             },
@@ -246,6 +255,7 @@ mod tests {
             "sh",
             &working_dir,
             vec![],
+            None,
             |_| {},
             || {},
         )
@@ -282,6 +292,7 @@ mod tests {
             "sh",
             &working_dir,
             vec![],
+            None,
             move |bytes| {
                 post_clone.lock().unwrap().extend_from_slice(&bytes);
             },

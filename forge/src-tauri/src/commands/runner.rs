@@ -24,10 +24,14 @@ fn tool_to_cmd(tool: &str) -> Result<&'static str, String> {
 ///
 /// Returns the session ID on success, or an Err if the tool is unknown or
 /// the command cannot be spawned (e.g. not installed).
+///
+/// `extra_args` is optional; when provided, the args are appended to the
+/// CLI invocation (e.g. `["--resume", "<sessionId>"]`).
 #[tauri::command]
 pub fn pty_create(
     tool: String,
     working_dir: String,
+    extra_args: Option<Vec<String>>,
     app: AppHandle,
     registry: State<'_, SessionRegistry>,
 ) -> Result<String, String> {
@@ -40,11 +44,31 @@ pub fn pty_create(
         .and_then(|conn| db::get_env_vars(&conn).ok())
         .unwrap_or_default();
 
+    // Track session start in DB (best-effort; don't fail the spawn on DB errors)
+    let now_unix = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
+    let db_session_id = session_id.clone();
+    let db_tool = tool.clone();
+    let db_dir = working_dir.clone();
+    if let Some(db_path) = crate::db::default_path() {
+        if let Ok(conn) = crate::db::open(&db_path) {
+            let _ = conn.execute(
+                "INSERT OR IGNORE INTO sessions (id, tool, working_dir, started_at, input_tokens, output_tokens, cost_usd)
+                 VALUES (?1, ?2, ?3, ?4, 0, 0, 0.0)",
+                rusqlite::params![db_session_id, db_tool, db_dir, now_unix],
+            );
+        }
+    }
+
     let sid_output = session_id.clone();
     let app_output = app.clone();
 
     let sid_exit = session_id.clone();
     let app_exit = app.clone();
+    let tool_exit = tool.clone();
+    let dir_exit = working_dir.clone();
 
     let session = PtySession::spawn(
         &session_id,
@@ -52,12 +76,28 @@ pub fn pty_create(
         cmd,
         &working_dir,
         env_vars,
+        extra_args,
         move |bytes| {
             let payload = String::from_utf8_lossy(&bytes).to_string();
             let _ = app_output.emit(&format!("pty:output:{sid_output}"), payload);
         },
         move || {
             let _ = app_exit.emit(&format!("pty:exit:{sid_exit}"), ());
+            // Update session end time (best-effort)
+            let ended_unix = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64;
+            if let Some(db_path) = crate::db::default_path() {
+                if let Ok(conn) = crate::db::open(&db_path) {
+                    let _ = conn.execute(
+                        "UPDATE sessions SET ended_at=?1, duration_sec=ended_at-started_at WHERE id=?2",
+                        rusqlite::params![ended_unix, sid_exit],
+                    );
+                    // Recompute project aggregates for this dir
+                    let _ = crate::db::projects::recompute_project(&conn, &tool_exit, &dir_exit);
+                }
+            }
         },
     )
     .map_err(|e| format!("pty_create failed: {e}"))?;
