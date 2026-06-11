@@ -114,6 +114,7 @@ pub fn run() {
             commands::claude_code::hooks::cmd_get_hook_debug_logs,
             commands::claude_code::hooks::cmd_launch_debug_session,
             commands::claude_code::hooks::cmd_stop_debug_session,
+            commands::claude_code::hooks::cmd_test_hook,
             // M4b Git
             commands::claude_code::git::cmd_git_status,
             commands::claude_code::git::cmd_git_stage,

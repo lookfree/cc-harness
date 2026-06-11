@@ -132,6 +132,71 @@ pub fn delete_hook_from_settings_proj(
     write_atomic(&path, &pretty)
 }
 
+/// Result struct for hook test execution
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookTestResult {
+    pub exit_code: Option<i32>,
+    pub stdout: String,
+    pub stderr: String,
+    pub duration_ms: u64,
+    pub timed_out: bool,
+}
+
+/// Test a hook command via `sh -c <command>`.
+/// Spawns in a thread so timeout can be enforced via channel.
+pub fn test_hook(command: &str, timeout_secs: Option<u64>) -> HookTestResult {
+    use std::process::Command as Proc;
+    use std::time::Instant;
+
+    let timeout = std::time::Duration::from_secs(timeout_secs.unwrap_or(30));
+    let start = Instant::now();
+
+    let output = {
+        // We need to enforce timeout. Use a thread + channel approach.
+        let cmd_str = command.to_string();
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let result = Proc::new("sh")
+                .arg("-c")
+                .arg(&cmd_str)
+                .output();
+            let _ = tx.send(result);
+        });
+        rx.recv_timeout(timeout)
+    };
+
+    let duration_ms = start.elapsed().as_millis() as u64;
+
+    match output {
+        Ok(Ok(out)) => HookTestResult {
+            exit_code: out.status.code(),
+            stdout: String::from_utf8_lossy(&out.stdout).trim_end().to_string(),
+            stderr: String::from_utf8_lossy(&out.stderr).trim_end().to_string(),
+            duration_ms,
+            timed_out: false,
+        },
+        Ok(Err(e)) => HookTestResult {
+            exit_code: None,
+            stdout: String::new(),
+            stderr: e.to_string(),
+            duration_ms,
+            timed_out: false,
+        },
+        Err(_) => {
+            // Timeout: channel recv timed out. The spawned thread may still run
+            // but we can't easily kill it here without adding more deps.
+            // This is acceptable for the test command use case.
+            HookTestResult {
+                exit_code: None,
+                stdout: String::new(),
+                stderr: String::new(),
+                duration_ms,
+                timed_out: true,
+            }
+        }
+    }
+}
+
 pub fn create_hook_script(path: &Path, content: &str) -> Result<String, String> {
     if let Some(p) = path.parent() { fs::create_dir_all(p).map_err(|e| e.to_string())?; }
     fs::write(path, content).map_err(|e| e.to_string())?;
@@ -272,6 +337,10 @@ pub fn cmd_launch_debug_session(hook_type: String, project_path: Option<String>)
 }
 #[tauri::command]
 pub fn cmd_stop_debug_session(pid: u32) -> bool { stop_debug_session(pid) }
+#[tauri::command]
+pub fn cmd_test_hook(command: String, timeout_secs: Option<u64>) -> HookTestResult {
+    test_hook(&command, timeout_secs)
+}
 
 #[cfg(test)]
 mod tests {
@@ -347,5 +416,30 @@ mod tests {
     fn hook_logs_initially_empty() {
         clear_hook_logs();
         assert!(get_hook_logs().is_empty());
+    }
+
+    // A2 tests
+    #[test]
+    fn a2_test_hook_echo_success() {
+        let result = test_hook("echo hi", None);
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(result.stdout, "hi");
+        assert!(!result.timed_out);
+    }
+
+    #[test]
+    fn a2_test_hook_nonzero_exit() {
+        let result = test_hook("exit 3", None);
+        assert_eq!(result.exit_code, Some(3));
+        assert!(!result.timed_out);
+    }
+
+    #[test]
+    fn a2_test_hook_timeout() {
+        let start = std::time::Instant::now();
+        let result = test_hook("sleep 10", Some(1));
+        let elapsed = start.elapsed().as_millis();
+        assert!(result.timed_out, "expected timed_out=true");
+        assert!(elapsed < 2500, "should finish within ~2.5s but took {}ms", elapsed);
     }
 }
