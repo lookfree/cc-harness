@@ -222,35 +222,222 @@ pub fn clear_hook_logs() {
     EXEC_LOGS.lock().unwrap().clear();
 }
 
-pub fn get_hook_debug_logs(base_dir: &Path) -> Result<Vec<HookExecutionLog>, String> {
+/// A structured debug log entry parsed from Claude Code debug .txt files.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HookDebugEntry {
+    /// ISO timestamp string from the log line e.g. "2026-01-01T00:00:00.000Z"
+    pub timestamp: String,
+    /// Hook type e.g. "PreToolUse", "SessionStart", or query string
+    pub hook_type: String,
+    /// "matched" | "error" | "running" | "output"
+    pub status: String,
+    /// Human-readable message
+    pub message: String,
+    /// Source file name
+    pub file: String,
+}
+
+/// Parse a single log line into (timestamp, level, message)
+fn parse_debug_line(line: &str) -> Option<(String, String, String)> {
+    // Format: 2025-11-29T08:08:33.503Z [DEBUG] message
+    // Find " [LEVEL]" pattern
+    let bracket_open = line.find(" [")?;
+    let timestamp = line[..bracket_open].trim().to_string();
+    // Must look like an ISO timestamp
+    if !timestamp.contains('T') || !timestamp.ends_with('Z') { return None; }
+    // rest starts after the space, at '[LEVEL]...'
+    let rest = &line[bracket_open + 1..]; // starts with '[', e.g. "[DEBUG] message"
+    let close = rest.find(']')?;
+    // level is between '[' and ']' i.e. rest[1..close]
+    let level = if rest.starts_with('[') { rest[1..close].to_string() } else { rest[..close].to_string() };
+    let message = rest[close + 1..].trim().to_string();
+    // Strip optional [CATEGORY] prefix
+    let message = if message.starts_with('[') {
+        if let Some(ci) = message.find(']') {
+            message[ci + 1..].trim().to_string()
+        } else {
+            message
+        }
+    } else {
+        message
+    };
+    Some((timestamp, level, message))
+}
+
+/// Parse a single debug .txt file and return structured HookDebugEntry items.
+fn parse_debug_file(path: &Path) -> Vec<HookDebugEntry> {
+    let file_name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let content = match fs::read_to_string(path) { Ok(c) => c, Err(_) => return vec![] };
+    let mut entries: Vec<HookDebugEntry> = vec![];
+
+    // State machine: track current hook event being built
+    let mut current_hook_type: Option<String> = None;
+    let mut current_ts: String = String::new();
+
+    for line in content.lines() {
+        let parsed = match parse_debug_line(line) {
+            Some(p) => p,
+            None => continue,
+        };
+        let (ts, level, msg) = parsed;
+
+        // Pattern: "Getting matching hook commands for <HookType> with query: <query>"
+        if let Some(cap_start) = {
+            let prefix = "Getting matching hook commands for ";
+            if msg.starts_with(prefix) { Some(&msg[prefix.len()..]) } else { None }
+        } {
+            // e.g. "PreToolUse with query: read"
+            if let Some(with_pos) = cap_start.find(" with query:") {
+                current_hook_type = Some(cap_start[..with_pos].to_string());
+                current_ts = ts.clone();
+            }
+            continue;
+        }
+
+        // Pattern: "Matched N unique hooks for query \"startup\""
+        if let Some(rest) = {
+            let prefix = "Matched ";
+            if msg.starts_with(prefix) { Some(&msg[prefix.len()..]) } else { None }
+        } {
+            // Extract count
+            if let Some(space) = rest.find(' ') {
+                let count_str = &rest[..space];
+                let count: u32 = count_str.parse().unwrap_or(0);
+                if count > 0 {
+                    // Extract query
+                    let query = if let Some(qi) = rest.find('"') {
+                        if let Some(qe) = rest[qi + 1..].find('"') {
+                            rest[qi + 1..qi + 1 + qe].to_string()
+                        } else { rest.to_string() }
+                    } else { rest.to_string() };
+
+                    let hook_type = current_hook_type.clone().unwrap_or_else(|| "unknown".to_string());
+                    entries.push(HookDebugEntry {
+                        timestamp: current_ts.clone(),
+                        hook_type,
+                        status: "matched".to_string(),
+                        message: format!("Matched {} hook(s) for query \"{}\"", count, query),
+                        file: file_name.clone(),
+                    });
+                }
+            }
+            current_hook_type = None;
+            continue;
+        }
+
+        // Pattern: "Running hook command: <cmd>"
+        if let Some(cmd) = {
+            let prefix = "Running hook command:";
+            if msg.starts_with(prefix) { Some(msg[prefix.len()..].trim()) } else { None }
+        } {
+            entries.push(HookDebugEntry {
+                timestamp: ts.clone(),
+                hook_type: current_hook_type.clone().unwrap_or_else(|| "HookCommand".to_string()),
+                status: "running".to_string(),
+                message: format!("Running hook command: {}", cmd),
+                file: file_name.clone(),
+            });
+            continue;
+        }
+
+        // Pattern: Hook output lines
+        if msg.contains("Hook output") || msg.contains("Hook returned") {
+            if let Some(last) = entries.last_mut() {
+                last.message.push('\n');
+                last.message.push_str(&msg);
+            }
+            continue;
+        }
+
+        // Pattern: ERROR lines related to hooks
+        if level == "ERROR" {
+            let msg_lower = msg.to_lowercase();
+            if msg_lower.contains("hook") || msg_lower.contains("command") ||
+               msg_lower.contains("spawn") || msg_lower.contains("enoent") ||
+               msg_lower.contains("exit code") || msg_lower.contains("timed out") {
+                entries.push(HookDebugEntry {
+                    timestamp: ts.clone(),
+                    hook_type: current_hook_type.clone().unwrap_or_else(|| "unknown".to_string()),
+                    status: "error".to_string(),
+                    message: msg.clone(),
+                    file: file_name.clone(),
+                });
+                continue;
+            }
+        }
+
+        // Pattern: exit code lines
+        if let Some(exit_pos) = {
+            let ml = msg.to_lowercase();
+            ml.find("exit").map(|_| ())
+        } {
+            let _ = exit_pos;
+            // Check if matches exit code pattern
+            let ml = msg.to_lowercase();
+            if (ml.contains("exit") && ml.contains("code")) || ml.contains("exited") {
+                if let Some(last) = entries.last_mut() {
+                    // Append exit code info to last entry
+                    last.message.push('\n');
+                    last.message.push_str(&msg);
+                    // Determine if error
+                    // Simple check: if code is non-zero
+                    if let Some(num_start) = ml.rfind(|c: char| c.is_ascii_alphabetic()).map(|i| i + 1) {
+                        let num_part = ml[num_start..].trim();
+                        if let Ok(code) = num_part.parse::<i32>() {
+                            if code != 0 { last.status = "error".to_string(); }
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+
+        // Pattern: timed out
+        let ml = msg.to_lowercase();
+        if (ml.contains("hook") && ml.contains("timed")) || (ml.contains("timeout") && ml.contains("hook")) {
+            if let Some(last) = entries.last_mut() {
+                last.status = "error".to_string();
+                last.message.push_str("\n[TIMEOUT] ");
+                last.message.push_str(&msg);
+            }
+        }
+    }
+
+    entries
+}
+
+pub fn get_hook_debug_logs(base_dir: &Path) -> Result<Vec<HookDebugEntry>, String> {
     let debug_dir = base_dir.join("debug");
     if !debug_dir.exists() { return Ok(vec![]); }
-    let mut logs = vec![];
-    let entries = fs::read_dir(&debug_dir).map_err(|e| e.to_string())?;
-    for entry in entries.flatten() {
+
+    // Collect .txt files, sorted newest first
+    let mut files: Vec<(std::time::SystemTime, PathBuf)> = vec![];
+    for entry in fs::read_dir(&debug_dir).map_err(|e| e.to_string())?.flatten() {
         let p = entry.path();
-        if p.extension().and_then(|e| e.to_str()) == Some("log") {
-            if let Ok(content) = fs::read_to_string(&p) {
-                for (i, line) in content.lines().enumerate() {
-                    if line.contains("hook") || line.contains("Hook") {
-                        logs.push(HookExecutionLog {
-                            id: format!("debug-{}-{}", p.file_name().unwrap().to_string_lossy(), i),
-                            hook_name: "debug".into(),
-                            hook_type: "debug".into(),
-                            command: String::new(),
-                            exit_code: None,
-                            stdout: line.to_string(),
-                            stderr: String::new(),
-                            duration_ms: 0,
-                            timestamp: 0,
-                            success: true,
-                        });
-                    }
+        if p.extension().and_then(|e| e.to_str()) == Some("txt") {
+            if let Ok(meta) = fs::metadata(&p) {
+                if let Ok(mt) = meta.modified() {
+                    files.push((mt, p));
                 }
             }
         }
     }
-    Ok(logs)
+    files.sort_by(|a, b| b.0.cmp(&a.0));
+
+    let mut all: Vec<HookDebugEntry> = vec![];
+    for (_, path) in files.iter().take(10) {
+        all.extend(parse_debug_file(path));
+    }
+
+    // Sort by timestamp desc, deduplicate by hook_type+timestamp+status
+    all.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+    let mut seen = std::collections::HashSet::new();
+    let result: Vec<HookDebugEntry> = all.into_iter().filter(|e| {
+        let key = format!("{}-{}-{}", e.hook_type, e.timestamp, e.status);
+        seen.insert(key)
+    }).take(100).collect();
+
+    Ok(result)
 }
 
 pub fn launch_debug_session(
@@ -328,7 +515,7 @@ pub fn cmd_get_hook_logs() -> Vec<HookExecutionLog> { get_hook_logs() }
 #[tauri::command]
 pub fn cmd_clear_hook_logs() -> bool { clear_hook_logs(); true }
 #[tauri::command]
-pub fn cmd_get_hook_debug_logs(base_dir: Option<String>) -> Result<Vec<HookExecutionLog>, String> {
+pub fn cmd_get_hook_debug_logs(base_dir: Option<String>) -> Result<Vec<HookDebugEntry>, String> {
     get_hook_debug_logs(&resolve_base(base_dir)?)
 }
 #[tauri::command]
@@ -416,6 +603,58 @@ mod tests {
     fn hook_logs_initially_empty() {
         clear_hook_logs();
         assert!(get_hook_logs().is_empty());
+    }
+
+    // A3 tests
+    #[test]
+    fn a3_debug_log_empty_when_no_debug_dir() {
+        let dir = tempdir().unwrap();
+        let result = get_hook_debug_logs(dir.path()).unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn a3_debug_log_fixture_matched_and_error() {
+        let dir = tempdir().unwrap();
+        let debug_dir = dir.path().join("debug");
+        fs::create_dir_all(&debug_dir).unwrap();
+
+        // Synthetic .txt fixture mirroring old claude code debug format
+        let fixture = "\
+2026-01-01T10:00:00.000Z [DEBUG] Getting matching hook commands for PreToolUse with query: read_file\n\
+2026-01-01T10:00:00.001Z [DEBUG] Matched 2 unique hooks for query \"read_file\" (2 before deduplication)\n\
+2026-01-01T10:00:00.002Z [DEBUG] Running hook command: echo hello\n\
+2026-01-01T10:00:01.000Z [ERROR] Hook exited with exit code 1\n\
+2026-01-01T10:00:02.000Z [DEBUG] Getting matching hook commands for SessionStart with query: startup\n\
+2026-01-01T10:00:02.001Z [DEBUG] Matched 0 unique hooks for query \"startup\" (0 before deduplication)\n\
+";
+        fs::write(debug_dir.join("session-test.txt"), fixture).unwrap();
+
+        let entries = get_hook_debug_logs(dir.path()).unwrap();
+        // Should have: 1 "matched" for PreToolUse, 1 "running" for echo hello
+        // SessionStart matched 0 → should NOT produce a matched entry
+        let matched: Vec<_> = entries.iter().filter(|e| e.status == "matched").collect();
+        let running: Vec<_> = entries.iter().filter(|e| e.status == "running").collect();
+        assert!(!matched.is_empty(), "should have matched entry");
+        assert_eq!(matched[0].hook_type, "PreToolUse");
+        assert!(!running.is_empty(), "should have running entry");
+    }
+
+    #[test]
+    fn a3_debug_log_error_line_captured() {
+        let dir = tempdir().unwrap();
+        let debug_dir = dir.path().join("debug");
+        fs::create_dir_all(&debug_dir).unwrap();
+
+        let fixture = "\
+2026-01-02T09:00:00.000Z [ERROR] Hook command spawn failed: ENOENT no such file\n\
+";
+        fs::write(debug_dir.join("err-test.txt"), fixture).unwrap();
+
+        let entries = get_hook_debug_logs(dir.path()).unwrap();
+        let errors: Vec<_> = entries.iter().filter(|e| e.status == "error").collect();
+        assert!(!errors.is_empty(), "should capture error entries");
+        assert!(errors[0].message.contains("ENOENT"));
     }
 
     // A2 tests
