@@ -54,9 +54,29 @@ export interface HookExecutionLog {
   success: boolean
 }
 
+/** Result from cmd_test_hook */
+export interface HookTestResult {
+  exit_code?: number
+  stdout: string
+  stderr: string
+  duration_ms: number
+  timed_out: boolean
+}
+
+/** Structured entry from cmd_get_hook_debug_logs */
+export interface HookDebugEntry {
+  timestamp: string
+  hook_type: string
+  status: string
+  message: string
+  file: string
+}
+
 export interface McpServer {
   name: string
   config: Record<string, unknown>
+  /** "settings" | "legacy" */
+  source: string
 }
 
 export interface SlashCommand {
@@ -64,6 +84,14 @@ export interface SlashCommand {
   description?: string
   content: string
   file_path?: string
+  location: string
+  rel_path?: string
+}
+
+/** Entry returned by cmd_discover_claudemd */
+export interface ClaudeMdEntry {
+  path: string
+  project_name: string
   location: string
 }
 
@@ -215,6 +243,8 @@ export const api = {
       inv<ClaudeMdFile[]>('cmd_get_all_claudemd', { projectPath }),
     save: (filePath: string, content: string) =>
       inv<void>('cmd_save_claudemd', { filePath, content }),
+    discover: (roots?: string[]) =>
+      inv<ClaudeMdEntry[]>('cmd_discover_claudemd', { roots }),
   },
 
   graph: {
@@ -222,7 +252,7 @@ export const api = {
   },
 
   commands: {
-    getAll: () => inv<SlashCommand[]>('cmd_get_slash_commands'),
+    getAll: (projectPath?: string) => inv<SlashCommand[]>('cmd_get_slash_commands', { projectPath }),
     get: (name: string) => inv<SlashCommand | null>('cmd_get_slash_command', { name }),
     save: (cmd: SlashCommand) => inv<void>('cmd_save_slash_command', { cmd }),
     saveRaw: (name: string, content: string, filePath: string) =>
@@ -245,21 +275,25 @@ export const api = {
       hookConfig: unknown,
       location: string,
       matcherIndex?: number,
+      projectPath?: string,
     ) =>
       inv<void>('cmd_save_hook_to_settings', {
         hookType,
         hookConfig,
         location,
         matcherIndex,
+        projectPath,
       }),
-    deleteFromSettings: (hookType: string, matcherIndex: number, location: string) =>
-      inv<void>('cmd_delete_hook_from_settings', { hookType, matcherIndex, location }),
+    deleteFromSettings: (hookType: string, matcherIndex: number, location: string, projectPath?: string) =>
+      inv<void>('cmd_delete_hook_from_settings', { hookType, matcherIndex, location, projectPath }),
     createScript: (scriptPath: string, content: string) =>
       inv<string>('cmd_create_hook_script', { scriptPath, content }),
     readScript: (scriptPath: string) => inv<string>('cmd_read_hook_script', { scriptPath }),
     getLogs: () => inv<HookExecutionLog[]>('cmd_get_hook_logs'),
     clearLogs: () => inv<boolean>('cmd_clear_hook_logs'),
-    getDebugLogs: () => inv<HookExecutionLog[]>('cmd_get_hook_debug_logs'),
+    getDebugLogs: () => inv<HookDebugEntry[]>('cmd_get_hook_debug_logs'),
+    testHook: (command: string, timeoutSecs?: number) =>
+      inv<HookTestResult>('cmd_test_hook', { command, timeoutSecs }),
     launchDebugSession: (hookType: string, projectPath?: string) =>
       inv<{ success: boolean; message: string; pid?: number }>(
         'cmd_launch_debug_session',
