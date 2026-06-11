@@ -94,6 +94,7 @@ pub fn run() {
             commands::claude_code::claudemd::cmd_get_claudemd,
             commands::claude_code::claudemd::cmd_get_all_claudemd,
             commands::claude_code::claudemd::cmd_save_claudemd,
+            commands::claude_code::claudemd::cmd_discover_claudemd,
             commands::claude_code::graph::cmd_get_dependency_graph,
             commands::claude_code::slash_commands::cmd_get_slash_commands,
             commands::claude_code::slash_commands::cmd_get_slash_command,
