@@ -18,6 +18,43 @@ const s = {
   btn: { padding: '6px 14px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13 },
 }
 
+interface FrontmatterMeta {
+  author?: string
+  version?: string
+  'allowed-tools'?: string | string[]
+  license?: string
+  [key: string]: unknown
+}
+
+/** Parse YAML-ish frontmatter from ---\n...\n--- blocks. Returns parsed key-values. */
+function parseFrontmatter(content: string): FrontmatterMeta | null {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  if (!match) return null
+  const block = match[1]
+  const result: FrontmatterMeta = {}
+  for (const line of block.split('\n')) {
+    const colon = line.indexOf(':')
+    if (colon === -1) continue
+    const key = line.slice(0, colon).trim()
+    const val = line.slice(colon + 1).trim()
+    if (!key) continue
+    // Handle simple list values like `- item`
+    if (val === '' && block.includes(`${key}:\n`)) {
+      // multi-line list — skip for now, handled below
+      continue
+    }
+    // Strip quotes
+    result[key] = val.replace(/^['"]|['"]$/g, '')
+  }
+  // Handle allowed-tools as array if value contains commas
+  if (typeof result['allowed-tools'] === 'string' && (result['allowed-tools'] as string).includes(',')) {
+    result['allowed-tools'] = (result['allowed-tools'] as string).split(',').map(s => s.trim())
+  }
+  return Object.keys(result).length > 0 ? result : null
+}
+
+const META_KEYS: Array<keyof FrontmatterMeta> = ['author', 'version', 'allowed-tools', 'license']
+
 export default function Skills() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [selected, setSelected] = useState<Skill | null>(null)
@@ -42,10 +79,13 @@ export default function Skills() {
     return () => { unlisten?.() }
   }, [])
 
-  const filtered = skills.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.description.toLowerCase().includes(search.toLowerCase()),
+  const filtered = skills.filter(sk =>
+    sk.name.toLowerCase().includes(search.toLowerCase()) ||
+    sk.description.toLowerCase().includes(search.toLowerCase()),
   )
+
+  const meta = selected?.content ? parseFrontmatter(selected.content) : null
+  const hasMeta = meta && META_KEYS.some(k => meta[k] != null)
 
   return (
     <div style={s.container}>
@@ -89,6 +129,38 @@ export default function Skills() {
               </div>
               <span style={s.badge}>{selected.location}</span>
             </div>
+
+            {/* Frontmatter metadata panel */}
+            {hasMeta && (
+              <div style={s.card}>
+                <div style={s.label}>元数据</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <tbody>
+                    {META_KEYS.map(key => {
+                      const val = meta![key]
+                      if (val == null) return null
+                      return (
+                        <tr key={key}>
+                          <td style={{ padding: '4px 0', color: '#6b7280', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, width: 120, verticalAlign: 'top', paddingRight: 16 }}>{key}</td>
+                          <td style={{ padding: '4px 0', color: '#e5e5e5', verticalAlign: 'top' }}>
+                            {Array.isArray(val) ? (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                {val.map((v, i) => (
+                                  <span key={i} style={{ padding: '2px 8px', borderRadius: 4, background: '#1e3a5f', color: '#3b82f6', fontSize: 11, border: '1px solid #3b82f6' }}>{v}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span style={{ color: '#a3a3a3' }}>{String(val)}</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {selected.dependencies && selected.dependencies.length > 0 && (
               <div style={s.card}>
                 <div style={s.label}>Dependencies</div>
