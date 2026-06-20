@@ -509,6 +509,10 @@ export class FileManager {
   }
 
   async saveSkill(skill: Skill): Promise<void> {
+    // 插件 skill 只读：由插件系统管理，不能通过本工具保存（否则会错写一个同名 user skill）。
+    if (skill.source === 'plugin') {
+      throw new Error(`插件 skill「${skill.name}」由插件管理，是只读的，不能保存`)
+    }
     const location = skill.location || 'project'
     const dir = location === 'project'
       ? path.join(this.projectPath, '.claude', 'skills')
@@ -520,7 +524,13 @@ export class FileManager {
 
   async deleteSkill(name: string): Promise<void> {
     const skill = await this.getSkill(name)
-    if (skill?.filePath) {
+    if (!skill) return
+    // 插件 skill 只读护栏（关键）：其 filePath 指向插件安装目录里的真实 SKILL.md，
+    // 且 getSkill 按 name 解析可能命中插件那条 —— 误删会直接损坏已装插件。一律拦截。
+    if (skill.source === 'plugin') {
+      throw new Error(`插件 skill「${name}」由插件管理，是只读的，不能删除`)
+    }
+    if (skill.filePath) {
       await fs.unlink(skill.filePath)
     }
   }

@@ -205,4 +205,5 @@ async getSkills(): Promise<Skill[]> {
 - skill 目录是单层（`skills/<name>/SKILL.md`），不依赖 spec003 的递归 glob；但 plugin 根的发现依赖 installed_plugins.json，不依赖盲扫，这点与 spec003 的"扫描路径配置化"解耦。若后续要支持自定义 plugin cache 路径，再接 spec003 的配置项。
 - `parseSkillMD` 现有 mtime 缓存（`:256`-`:262`）按 filePath 缓存，三层模型下 filePath 仍唯一，缓存可保留；但缓存的 Skill 对象不含 source（同一文件路径 source 固定），安全。
 - 覆盖优先级"user>project>plugin"是本工具的展示约定，若后续核实 Claude Code 真实加载顺序不同（如 project>user），改 `rank()` 一处即可。
+- **已加临时只读护栏（spec003 落地后、code-review 发现，需本 spec 收口）**：spec003 让 plugin skill 进入了 `getSkills`，但 `getSkill/saveSkill/deleteSkill` 仍按 **name** 解析、且 plugin skill 的 `filePath` 指向插件真实 SKILL.md、`location` 被错标 `'user'`——`deleteSkill('某插件skill名')` 会 `fs.unlink` 掉插件安装目录里的真实文件，**破坏已装插件**。已在 `file-manager.ts` 的 `saveSkill`/`deleteSkill` 加 `if (skill.source === 'plugin') throw` 护栏先堵住破坏性删除。**本 spec 实现时要系统收口**：把 getSkill/save/delete 从「按 name」改成「按 `computeSkillUid` / `filePath`」解析，配合本 spec 的同名去重（`rankTuple`），从根上消除 name 冲突导致的误删/误写；届时这个临时 `throw` 护栏可保留为"插件只读"的正式策略（plugin skill 本就不该由本工具改），但解析必须改对。
 ```
