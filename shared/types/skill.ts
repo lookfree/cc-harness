@@ -57,6 +57,9 @@ export interface Skill {
 
 export type SkillSource = 'user' | 'project' | 'plugin'
 
+/** skill 稳定唯一标识：source==='plugin' 时含 marketplace/plugin/version，否则 source:name */
+export type SkillUid = string
+
 /** installed_plugins.json（schema v2）解析后的单条安装记录。spec003 引入，spec004/005/006 共用。 */
 export interface InstalledPluginEntry {
   pluginName: string // 'superpowers'

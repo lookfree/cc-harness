@@ -1,0 +1,14 @@
+{
+  "filter": {
+    "all": "全部",
+    "user": "用户",
+    "project": "项目",
+    "plugin": "插件"
+  },
+  "overridden": "被覆盖",
+  "overriddenNotice": "被更高优先级的同名 skill 覆盖，实际不会加载",
+  "diagram": {
+    "loading": "正在加载图…",
+    "error": "图渲染失败"
+  }
+}

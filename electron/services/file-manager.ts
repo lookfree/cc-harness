@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { watch, FSWatcher } from 'chokidar'
 import os from 'os'
-import type { Skill, SkillSource, InstalledPluginEntry, Agent, Hook, MCPServers, SlashCommand, ProjectContext, ConfigFile } from '../../shared/types'
+import type { Skill, SkillSource, SkillUid, InstalledPluginEntry, Agent, Hook, MCPServers, SlashCommand, ProjectContext, ConfigFile } from '../../shared/types'
 import { globScan, isMissing } from './glob-scan'
 
 export class FileManager {
@@ -221,54 +221,104 @@ export class FileManager {
     return out
   }
 
+  /** 读 settings.json 的 enabledPlugins（"plugin 是否启用"真相源）。值为 false 表示显式禁用。ENOENT→{}。 */
+  private async readEnabledPlugins(): Promise<Record<string, unknown>> {
+    const data = await this.readJSONFile<{ enabledPlugins?: Record<string, unknown> }>(
+      path.join(this.userConfigPath, 'settings.json')
+    )
+    return data?.enabledPlugins ?? {}
+  }
+
+  /** skill 稳定唯一标识：plugin 含 marketplace/plugin/version，否则 source:name。 */
+  private computeSkillUid(s: Skill): SkillUid {
+    return s.source === 'plugin'
+      ? `plugin:${s.marketplace}/${s.pluginName}@${s.version}/${s.name}`
+      : `${s.source ?? 'user'}:${s.name}`
+  }
+
+  /**
+   * 扫一个 skill 根目录下的 <name>/SKILL.md，解析后用 opts 装饰（source + plugin 元信息）推入 out。
+   * 统一 user/project/plugin 三层的扫描+解析+装饰，消除重复循环。dir 不存在静默跳过。
+   */
+  private async scanSkillDir(
+    dir: string,
+    opts: { source: SkillSource; marketplace?: string; pluginName?: string; version?: string; pluginScope?: 'user' | 'project' },
+    out: Skill[]
+  ): Promise<void> {
+    const hits = await globScan(dir, '*/SKILL.md', { maxDepth: 3, maxResults: 2000 })
+    const location = opts.source === 'project' ? 'project' : 'user' // 兼容旧 location 字段（plugin/user→'user'）
+    for (const skillMdPath of hits) {
+      const skill = await this.parseSkillMD(skillMdPath, location)
+      if (skill) out.push({ ...skill, ...opts })
+    }
+  }
+
+  /**
+   * 同名 skill 覆盖检测：优先级 user > project > plugin；同为 plugin 时 user-scope > project-scope，再版本号高者。
+   * winner 正常显示，其余标 overriddenBy=winner 的 uid（不丢，供 UI 灰显）。
+   */
+  private markSkillOverrides(skills: Skill[]): void {
+    const semverKey = (v?: string) =>
+      (v ?? '0').split('.').map((n) => String(parseInt(n, 10) || 0).padStart(6, '0')).join('.')
+    const rankTuple = (s: Skill): [number, number, string] => [
+      s.source === 'user' ? 3 : s.source === 'project' ? 2 : 1,
+      s.pluginScope === 'user' ? 1 : 0,
+      semverKey(s.version),
+    ]
+    const gt = (a: Skill, b: Skill): boolean => {
+      const ta = rankTuple(a), tb = rankTuple(b)
+      for (let i = 0; i < 3; i++) if (ta[i] !== tb[i]) return ta[i] > tb[i]
+      return false
+    }
+    const byName = new Map<string, Skill[]>()
+    for (const s of skills) {
+      const g = byName.get(s.name)
+      if (g) g.push(s)
+      else byName.set(s.name, [s])
+    }
+    for (const group of byName.values()) {
+      if (group.length < 2) continue
+      const winner = group.reduce((a, b) => (gt(b, a) ? b : a))
+      const winnerUid = this.computeSkillUid(winner)
+      for (const s of group) if (s !== winner) s.overriddenBy = winnerUid
+    }
+  }
+
   // Skills
   async getSkills(): Promise<Skill[]> {
-    const skills: Skill[] = []
+    const out: Skill[] = []
 
-    // 1) plugin 来源：以 installed_plugins.json 为准，只扫激活版本的 <installPath>/skills/*/SKILL.md
-    for (const p of await this.readInstalledPlugins()) {
-      const hits = await globScan(path.join(p.installPath, 'skills'), '*/SKILL.md', {
-        maxDepth: 4,
-        maxResults: 2000,
-      })
-      for (const skillMdPath of hits) {
-        const skill = await this.parseSkillMD(skillMdPath, 'user')
-        if (!skill) continue
-        skills.push({
-          ...skill,
-          source: 'plugin',
-          marketplace: p.marketplace,
-          pluginName: p.pluginName,
-          version: p.version,
-          pluginScope: p.scope,
-        })
-      }
+    // 1) user：~/.claude/skills/<name>/SKILL.md
+    await this.scanSkillDir(path.join(this.userConfigPath, 'skills'), { source: 'user' }, out)
+
+    // 2) project：<cwd>/.claude/skills/<name>/SKILL.md
+    await this.scanSkillDir(path.join(this.projectPath, '.claude', 'skills'), { source: 'project' }, out)
+
+    // 2b) project 旧 JSON 格式 skills（非 Claude Code 标准格式，但本项目历史支持，保留兼容）
+    const projectJson = await this.scanDirectory(path.join(this.projectPath, '.claude', 'skills'), '.json')
+    for (const p of projectJson) {
+      const skill = await this.readJSONFile<Skill>(p)
+      if (skill) out.push({ ...skill, filePath: p, location: 'project', source: 'project' })
     }
 
-    // 2) user 来源：~/.claude/skills/*/SKILL.md
-    const userHits = await globScan(path.join(this.userConfigPath, 'skills'), '*/SKILL.md', {
-      maxDepth: 3,
-      maxResults: 2000,
-    })
-    for (const skillMdPath of userHits) {
-      const skill = await this.parseSkillMD(skillMdPath, 'user')
-      if (skill) skills.push({ ...skill, source: 'user' as SkillSource })
+    // 3) plugin：installed_plugins.json 为准只扫激活版本，按 enabledPlugins 跳过显式禁用的
+    const enabled = await this.readEnabledPlugins()
+    for (const pl of await this.readInstalledPlugins()) {
+      if (enabled[`${pl.pluginName}@${pl.marketplace}`] === false) continue
+      await this.scanSkillDir(path.join(pl.installPath, 'skills'), {
+        source: 'plugin',
+        marketplace: pl.marketplace,
+        pluginName: pl.pluginName,
+        version: pl.version,
+        pluginScope: pl.scope,
+      }, out)
     }
 
-    // 3) project 级 JSON 格式 skills（保留原行为；project 级 SKILL.md 三层来源留给 spec004）
-    const projectSkills = await this.scanDirectory(
-      path.join(this.projectPath, '.claude', 'skills'),
-      '.json'
-    )
-    for (const skillPath of projectSkills) {
-      const skill = await this.readJSONFile<Skill>(skillPath)
-      if (skill) {
-        skills.push({ ...skill, filePath: skillPath, location: 'project', source: 'project' })
-      }
-    }
+    // 4) 同名覆盖检测：winner 正常、其余标 overriddenBy
+    this.markSkillOverrides(out)
 
-    this.logger.info('getSkills() returning', skills.length, 'skills')
-    return skills
+    this.logger.info('getSkills() returning', out.length, 'skills')
+    return out
   }
 
   private async parseSkillMD(filePath: string, location: 'user' | 'project'): Promise<Skill | null> {
@@ -498,7 +548,13 @@ export class FileManager {
 
   async getSkill(name: string): Promise<Skill | null> {
     const skills = await this.getSkills()
-    return skills.find((s) => s.name === name) || null
+    // 同名多条时确定性地返回 winner（未被覆盖的生效那条），而非任意首个，
+    // 避免 save/delete 命中被覆盖的旧版本（code-review #3）。
+    return (
+      skills.find((s) => s.name === name && !s.overriddenBy) ??
+      skills.find((s) => s.name === name) ??
+      null
+    )
   }
 
   async saveSkill(skill: Skill): Promise<void> {

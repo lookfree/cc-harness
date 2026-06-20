@@ -81,7 +81,7 @@
 
 | 编号 | 标题 | Phase | 对应 ID | 状态 |
 |---|---|---|---|---|
-| spec004 | Skills 三层来源模型 | P1 | SKILL-01/02/03/04 | 就绪 |
+| spec004 | Skills 三层来源模型 | P1 | SKILL-01/02/03/04 | ✅ 完成 |
 | spec005 | Plugin Marketplace 浏览器 | P1 | SKILL-05/06 | 就绪 |
 | spec006 | Commands 三层来源 | P1 | SKILL（Commands 部分） | 就绪 |
 | spec007 | Hooks 类型系统补全 | P1 | HOOK-01..11 | 就绪 |

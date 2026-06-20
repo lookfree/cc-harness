@@ -1,0 +1,14 @@
+{
+  "filter": {
+    "all": "All",
+    "user": "User",
+    "project": "Project",
+    "plugin": "Plugin"
+  },
+  "overridden": "Overridden",
+  "overriddenNotice": "Shadowed by a higher-priority skill with the same name — not actually loaded",
+  "diagram": {
+    "loading": "Loading diagram...",
+    "error": "Error rendering diagram"
+  }
+}

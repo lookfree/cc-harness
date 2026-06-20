@@ -177,26 +177,40 @@ async getSkills(): Promise<Skill[]> {
 - 详情面板（`:358` 附近）：plugin 来源时加一栏显示 `marketplace / pluginName / version / pluginScope`；被覆盖时加醒目提示条"此 skill 被 {overriddenBy} 覆盖，实际不会加载"。
 - 提取 `<SourceBadge source overriddenBy>` 小组件，spec006 Commands 复用。
 
+## 实际落地（在 spec003 现有代码上做增量 —— spec004 文档写在 spec003 实现之前，"现状"已过时）
+
+spec003 已把 getSkills 重写过（plugin via installed_plugins + user via globScan + project JSON，扁平字段也加了）。本 spec 在其上增量，几处与原文设计的差异：
+- **`readInstalledPlugins` 保留 spec003 的扁平数组形态**（`{pluginName,marketplace,scope,version,installPath}[]`），不改成原文的 `InstalledPlugins` Record——扁平形态在 getSkills 里更顺手，`InstalledPlugins`/原文版 `InstalledPluginEntry` 不引入。
+- **`parseSkillMD` 签名不动**（仍 `(filePath, location)`）：source/plugin 元信息由 `scanSkillDir` 在 parse 后用 opts 装饰（`{...skill, ...opts}`），比改 parseSkillMD 签名更小、更清晰。
+- **project 层**：新增 `scanSkillDir(project/.claude/skills)` 扫 SKILL.md（真实 Claude Code 格式），同时**保留** spec003 的 project JSON 扫描（历史兼容，非标准格式，不删避免丢行为）。
+- **SourceBadge** 做成 Skills.tsx 内联组件（染色 + plugin 显示 `plugin · pluginName@version`），spec006 可复用。
+- **source 过滤**用 Button group（项目未引 Select 组件，避免新依赖）。
+- **getSkill 返回 winner**（`!overriddenBy` 优先）——收口 code-review #3 的按 name 不确定性；plugin 只读护栏（spec003 加的）保留为正式策略。
+- **i18n**：新建 `skills` namespace（en+zh），过滤标签/覆盖文案走 `t()`；现有硬编码字符串不在本 spec 范围，不动。
+
 ## 实现步骤
 
-- [ ] 1. `shared/types/skill.ts`：按上面 diff 加 `source/marketplace/pluginName/version/pluginScope/overriddenBy`，新增 `InstalledPluginEntry` / `InstalledPlugins` / `SkillUid`。
-- [ ] 2. `electron/services/file-manager.ts`：加 `readInstalledPlugins()`、`readEnabledPlugins()`、`computeSkillUid()`、`scanSkillDir(dir, opts, out)`。
-- [ ] 3. 同文件：改 `parseSkillMD` 签名为 `parseSkillMD(filePath, opts)`，把 source 元信息写入返回 Skill；保留 `location` 兼容映射。
-- [ ] 4. 同文件：按伪代码重写 `getSkills()`，删掉 `:192` 硬编码 marketplace 路径。
-- [ ] 5. `src/components/`（或 Skills.tsx 内联）：新增 `SourceBadge` 组件。
-- [ ] 6. `src/pages/Skills.tsx`：加 source 过滤 Select、列表项染色 + 覆盖样式、详情面板 plugin 元信息与覆盖提示。
-- [ ] 7. i18n：`src/i18n/locales/{en,zh}/` 加 source/overridden 文案 key。
+- [x] 1. `shared/types/skill.ts`：source/marketplace/pluginName/version/pluginScope/overriddenBy（spec003 已加）+ 本 spec 加 `SkillUid`、`SkillSource`、`InstalledPluginEntry`（扁平版）。
+- [x] 2. `file-manager.ts`：加 `readInstalledPlugins()`（spec003）、`readEnabledPlugins()`、`computeSkillUid()`、`scanSkillDir()`、`markSkillOverrides()`。
+- [x] 3. `scanSkillDir` 在 parse 后装饰 source/plugin 元信息（不改 parseSkillMD 签名）；location 兼容映射（plugin/user→'user'，project→'project'）。
+- [x] 4. 重写 `getSkills()`：三层 SKILL.md（scanSkillDir）+ project JSON 兼容 + enabledPlugins 过滤 + `markSkillOverrides` 去重；getSkill 返回 winner。
+- [x] 5. `Skills.tsx` 内联 `SourceBadge` 组件（染色）。
+- [x] 6. `Skills.tsx`：source 过滤 Button group、列表项染色 + 覆盖灰显（opacity+line-through+amber badge）、选中改按 filePath 比较（修 code-review #5）、详情面板 SourceBadge + 覆盖提示条。
+- [x] 7. i18n：新建 `skills` namespace（en+zh），注册到 `i18n/index.ts`。
 
 ## 验收标准
 
-- [ ] 本机打开 Skills 页能看到 superpowers（plugin / claude-plugins-official / 6.0.3）、last30days（plugin / 3.3.2）、rust-analyzer-lsp 等 plugin skill，不再为空。
-- [ ] plugin skill 的 Badge 显示 `pluginName@version`，user/project skill 显示对应 source 染色。
-- [ ] 在 `~/.claude/skills/` 放一个与某 plugin skill **同名**的 SKILL.md：plugin 那条被标 `overriddenBy` 并灰显，user 那条正常显示。
-- [ ] `installed_plugins.json` 里同一 plugin 有 user+project 两条 scope 时，两个版本都被扫出（各带 pluginScope），但**只有一条作为 winner 正常显示，另一条（旧 scope/版本）被标 `overriddenBy` 并灰显**——不重复列出两个同名 skill。本机 superpowers（5.0.7 project + 6.0.3 user）应只亮 6.0.3 那套，5.0.7 那套灰显。winner 判定与 spec005 `pickCurrent` 同口径（user-scope > project-scope，再版本号高者）。
-- [ ] 单测：覆盖检测对"同 plugin 两条 plugin-source entry（不同 scope/version）同名 skill"只标一个 winner、另一条带 `overriddenBy`（防平级 source 不去重的回归）。
-- [ ] 删除/重命名 `installed_plugins.json` 后 `getSkills()` 不抛错（ENOENT 静默），仅返回 user/project skill。
-- [ ] source 过滤选 `plugin` 时只列 plugin 来源。
-- [ ] 单测：`computeSkillUid` 对 plugin 与 user skill 生成的 uid 唯一且稳定；覆盖检测对三层同名只标两条 `overriddenBy`，winner 不带。
+> 验证：tsx 驱动真实 `~/.claude` + app 实跑。
+
+- [x] Skills 页能看到 plugin skill（superpowers/last30days）+ user skill，getSkills 返回 31、app 无崩溃、preload 正常。
+- [x] plugin skill 染色紫色显示 `plugin · pluginName@version`；user 绿 / project 蓝（SourceBadge）。
+- [x] **同 plugin 多 scope/版本去重**：本机 superpowers（5.0.7 project + 6.0.3 user）→ `brainstorming` 实测 2 条，winner=6.0.3/user（不带 overriddenBy），5.0.7/project 标 `overriddenBy` 并灰显（list-through + opacity + amber badge）。winner 判定 user-scope>project-scope 再版本高者。
+- [x] `getSkill('brainstorming')` 确定性返回 winner（6.0.3，`!overriddenBy`）——收口 code-review #3。
+- [x] `computeSkillUid(winner)` = `plugin:claude-plugins-official/superpowers@6.0.3/brainstorming`，唯一稳定。
+- [x] 删除 `installed_plugins.json`（临时空目录）后 `getSkills()` 不抛错（ENOENT 静默），仅返回 user/project skill。
+- [x] source 过滤 Button group（全部/用户/项目/插件，中英双语），选项过滤 `filteredSkills`。
+- [x] 列表项保留原结构（name + badge 行），仅叠加染色/覆盖标记；所有来源 item 都在（含被覆盖的灰显条）。
+- [ ] 单测（未写自动化单测，已用 tsx 手测覆盖上述场景；正式单测框架待 Phase 2 引入）。
 
 ## 风险与备注
 

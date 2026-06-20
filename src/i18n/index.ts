@@ -10,6 +10,7 @@ import dashboardEn from './locales/en/dashboard.json'
 import modelsEn from './locales/en/models.json'
 import commandsEn from './locales/en/commands.json'
 import hooksEn from './locales/en/hooks.json'
+import skillsEn from './locales/en/skills.json'
 
 import commonZh from './locales/zh/common.json'
 import layoutZh from './locales/zh/layout.json'
@@ -17,6 +18,7 @@ import dashboardZh from './locales/zh/dashboard.json'
 import modelsZh from './locales/zh/models.json'
 import commandsZh from './locales/zh/commands.json'
 import hooksZh from './locales/zh/hooks.json'
+import skillsZh from './locales/zh/skills.json'
 
 export const resources = {
   en: {
@@ -26,6 +28,7 @@ export const resources = {
     models: modelsEn,
     commands: commandsEn,
     hooks: hooksEn,
+    skills: skillsEn,
   },
   zh: {
     common: commonZh,
@@ -34,6 +37,7 @@ export const resources = {
     models: modelsZh,
     commands: commandsZh,
     hooks: hooksZh,
+    skills: skillsZh,
   },
 } as const
 

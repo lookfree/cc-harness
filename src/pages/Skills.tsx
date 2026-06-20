@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import type { Skill } from '@shared/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,11 +19,45 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeRaw from 'rehype-raw'
 import 'highlight.js/styles/github.css'
 
+type SourceFilter = 'all' | 'user' | 'project' | 'plugin'
+
+const SOURCE_BADGE: Record<string, string> = {
+  user: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  project: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  plugin: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30',
+}
+
+// diagram 渲染序号：保证 mermaid.render 的 id 每次唯一（Date.now 在同毫秒会撞 id）。
+let diagramRenderSeq = 0
+
+/** skill 来源（带兼容回退）：source 优先，回退旧 location，再回退 'user'。 */
+function skillSource(skill: Skill): string {
+  return skill.source ?? skill.location ?? 'user'
+}
+
+/** 来源染色 Badge：user 绿 / project 蓝 / plugin 紫（plugin 显示 pluginName@version）。spec006 Commands 可复用。 */
+function SourceBadge({ skill }: { skill: Skill }) {
+  const { t } = useTranslation('skills')
+  const src = skillSource(skill)
+  const label =
+    src === 'plugin' ? `${t('filter.plugin')} · ${skill.pluginName}@${skill.version}` : t(`filter.${src}`)
+  return (
+    <Badge variant="outline" className={cn('text-xs', SOURCE_BADGE[src])}>
+      {label}
+    </Badge>
+  )
+}
+
 export default function Skills() {
+  const { t } = useTranslation('skills')
   const [skills, setSkills] = useState<Skill[]>([])
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [diagramSvg, setDiagramSvg] = useState('')
+  const [diagramError, setDiagramError] = useState('')
   const [diagramLayout, setDiagramLayout] = useState<DiagramLayout>('TD')
   const [diagramZoom, setDiagramZoom] = useState(1)
   const [diagramPan, setDiagramPan] = useState({ x: 0, y: 0 })
@@ -31,7 +66,6 @@ export default function Skills() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const diagramRef = useRef<HTMLDivElement>(null)
   const diagramContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,9 +91,11 @@ export default function Skills() {
     }
   }
 
-  const filteredSkills = skills.filter((skill) =>
-    skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    skill.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSkills = skills.filter(
+    (skill) =>
+      (sourceFilter === 'all' || skillSource(skill) === sourceFilter) &&
+      (skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        skill.description.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   // Analyze triggers for selected skill
@@ -77,36 +113,34 @@ export default function Skills() {
   useEffect(() => {
     let cancelled = false
 
-    if (selectedSkill && diagramRef.current) {
+    // 只在 diagram tab 激活时渲染（Radix 默认 unmount 非激活 tab）。
+    // 状态驱动而非 ref+innerHTML：mermaid.render 返回 svg 存进 state 由 JSX 渲染；
+    // 每次用唯一 id（固定 id 在 mermaid v11 重复 render 会残留孤儿元素、致后续渲染坏掉）；
+    // 错误存进 diagramError 显式展示，不再是无声的 imperative 失败。
+    if (selectedSkill && activeTab === 'diagram') {
+      setDiagramError('')
+      setDiagramSvg('') // 清掉上一个 skill 的图，避免新图渲染期间残影显示错 skill
       const renderDiagram = async () => {
-        if (cancelled) return
-
         try {
           const diagramCode = generateSkillDiagram(selectedSkill, diagramLayout)
-          const { svg } = await mermaid.render('mermaid-diagram', diagramCode)
-
-          if (!cancelled && diagramRef.current) {
-            diagramRef.current.innerHTML = svg
-          }
+          const renderId = `skill-diagram-${++diagramRenderSeq}` // 自增序号，保证 mermaid id 唯一
+          const { svg } = await mermaid.render(renderId, diagramCode)
+          if (!cancelled) setDiagramSvg(svg)
         } catch (error) {
           console.error('Error rendering diagram:', error)
-          if (!cancelled && diagramRef.current) {
-            diagramRef.current.innerHTML = '<div class="text-red-500">Error rendering diagram</div>'
+          if (!cancelled) {
+            setDiagramSvg('')
+            setDiagramError(error instanceof Error ? error.message : String(error))
           }
         }
       }
-
       renderDiagram()
     }
 
-    // Cleanup function to prevent memory leaks
     return () => {
       cancelled = true
-      if (diagramRef.current) {
-        diagramRef.current.innerHTML = ''
-      }
     }
-  }, [selectedSkill, diagramLayout])
+  }, [selectedSkill, diagramLayout, activeTab])
 
   const getSkillStats = (skill: Skill) => {
     const patterns = analyzeTriggers(skill)
@@ -237,6 +271,21 @@ export default function Skills() {
           />
         </div>
 
+        {/* Source filter */}
+        <div className="flex gap-1">
+          {(['all', 'user', 'project', 'plugin'] as const).map((f) => (
+            <Button
+              key={f}
+              size="sm"
+              variant={sourceFilter === f ? 'default' : 'outline'}
+              className="text-xs h-7 px-2"
+              onClick={() => setSourceFilter(f)}
+            >
+              {t(`filter.${f}`)}
+            </Button>
+          ))}
+        </div>
+
         {/* Skills Count */}
         <div className="text-sm text-muted-foreground px-1">
           {filteredSkills.length} of {skills.length} skills
@@ -251,23 +300,30 @@ export default function Skills() {
           ) : (
             filteredSkills.map((skill) => (
               <button
-                key={`${skill.source ?? skill.location}-${skill.pluginName ?? ''}-${skill.version ?? ''}-${skill.name}`}
+                key={`${skillSource(skill)}-${skill.pluginName ?? ''}-${skill.version ?? ''}-${skill.name}`}
                 onClick={() => setSelectedSkill(skill)}
                 className={cn(
                   'w-full text-left px-3 py-2 rounded-lg border transition-colors',
-                  selectedSkill?.name === skill.name
+                  (selectedSkill?.filePath
+                    ? selectedSkill.filePath === skill.filePath
+                    : selectedSkill?.name === skill.name)
                     ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card hover:bg-accent border-border'
+                    : 'bg-card hover:bg-accent border-border',
+                  skill.overriddenBy && 'opacity-60'
                 )}
               >
-                <div className="font-medium text-sm">{skill.name}</div>
+                <div className={cn('font-medium text-sm', skill.overriddenBy && 'line-through')}>
+                  {skill.name}
+                </div>
                 <div className="flex items-center gap-1 mt-1">
-                  <Badge variant="secondary" className="text-xs">
-                    {skill.source ?? skill.location}
-                  </Badge>
-                  {skill.source === 'plugin' && (
-                    <Badge variant="outline" className="text-xs">
-                      {skill.pluginName}@{skill.version}
+                  <SourceBadge skill={skill} />
+                  {skill.overriddenBy && (
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                      title={skill.overriddenBy}
+                    >
+                      {t('overridden')}
                     </Badge>
                   )}
                 </div>
@@ -363,14 +419,21 @@ export default function Skills() {
                   <Badge variant={selectedSkill.enabled !== false ? 'default' : 'secondary'}>
                     {selectedSkill.enabled !== false ? 'Enabled' : 'Disabled'}
                   </Badge>
+                  <SourceBadge skill={selectedSkill} />
                 </div>
                 <p className="text-muted-foreground mt-2">{selectedSkill.description}</p>
+                {selectedSkill.overriddenBy && (
+                  <div className="mt-2 text-xs rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 px-3 py-2">
+                    {t('overriddenNotice')}
+                    <span className="opacity-70"> — {selectedSkill.overriddenBy}</span>
+                  </div>
+                )}
               </div>
               <Button>Edit</Button>
             </div>
 
             {/* Tabs */}
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="overview" className="flex items-center gap-1">
                   <BarChart3 className="w-3 h-3" />
@@ -746,7 +809,6 @@ export default function Skills() {
                       onMouseLeave={handleDiagramMouseUp}
                     >
                       <div
-                        ref={diagramRef}
                         className="flex items-center justify-center p-6"
                         style={{
                           transform: `translate(${diagramPan.x}px, ${diagramPan.y}px) scale(${diagramZoom})`,
@@ -754,7 +816,15 @@ export default function Skills() {
                           transition: isDragging ? 'none' : 'transform 0.1s ease-out',
                         }}
                       >
-                        <div className="text-muted-foreground">Loading diagram...</div>
+                        {diagramError ? (
+                          <div className="text-red-500 text-sm whitespace-pre-wrap p-4">
+                            {t('diagram.error')}: {diagramError}
+                          </div>
+                        ) : diagramSvg ? (
+                          <div dangerouslySetInnerHTML={{ __html: diagramSvg }} />
+                        ) : (
+                          <div className="text-muted-foreground">{t('diagram.loading')}</div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
