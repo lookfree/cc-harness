@@ -3,7 +3,7 @@ import path from 'path'
 import { watch, FSWatcher } from 'chokidar'
 import os from 'os'
 import type { Skill, SkillSource, InstalledPluginEntry, Agent, Hook, MCPServers, SlashCommand, ProjectContext, ConfigFile } from '../../shared/types'
-import { globScan } from './glob-scan'
+import { globScan, isMissing } from './glob-scan'
 
 export class FileManager {
   private static instance: FileManager
@@ -69,12 +69,6 @@ export class FileManager {
         // Ignore EPIPE errors when stderr is closed
       }
     },
-  }
-
-  /** Node fs 错误中「文件/目录不存在」的判定。ENOENT=不存在，ENOTDIR=路径中段不是目录，两者都视作「正常缺失」。 */
-  private isMissing(error: unknown): boolean {
-    const code = (error as NodeJS.ErrnoException)?.code
-    return code === 'ENOENT' || code === 'ENOTDIR'
   }
 
   private constructor() {}
@@ -165,7 +159,7 @@ export class FileManager {
       const content = await fs.readFile(filePath, 'utf-8')
       return JSON.parse(content) as T
     } catch (error) {
-      if (this.isMissing(error)) {
+      if (isMissing(error)) {
         // 文件不存在是正常状态（如未配置 MCP），静默返回 null
         return null
       }
@@ -203,7 +197,6 @@ export class FileManager {
   private async readInstalledPlugins(): Promise<InstalledPluginEntry[]> {
     const file = path.join(this.userConfigPath, 'plugins', 'installed_plugins.json')
     const data = await this.readJSONFile<{
-      version?: number
       plugins?: Record<string, Array<{ scope?: string; version?: string; installPath?: string }>>
     }>(file)
     if (!data?.plugins) return []
@@ -949,7 +942,7 @@ export class FileManager {
               commands.push(command)
             }
           } catch (error) {
-            if (!this.isMissing(error)) {
+            if (!isMissing(error)) {
               this.logger.error(`Error reading command file ${mdPath}:`, error)
             }
             // 命令目录里 .md 文件名与目录名不一致时，按缺失静默跳过（spec006 修正约定）
@@ -978,7 +971,7 @@ export class FileManager {
               commands.push(command)
             }
           } catch (error) {
-            if (!this.isMissing(error)) {
+            if (!isMissing(error)) {
               this.logger.error(`Error reading command file ${mdPath}:`, error)
             }
             // 命令目录里 .md 文件名与目录名不一致时，按缺失静默跳过（spec006 修正约定）

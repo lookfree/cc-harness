@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs'
 import path from 'path'
 
-/** Node fs 「文件/目录不存在」判定（与 FileManager.isMissing 同口径）。 */
-function isMissing(error: unknown): boolean {
+/** Node fs 「文件/目录不存在」判定。ENOENT=不存在，ENOTDIR=路径中段不是目录，两者都视作「正常缺失」。 */
+export function isMissing(error: unknown): boolean {
   const code = (error as NodeJS.ErrnoException)?.code
   return code === 'ENOENT' || code === 'ENOTDIR'
 }
