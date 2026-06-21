@@ -1,26 +1,18 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
-import type { Hook, HookType, HookExecutionLog, HookAction, HookSettingsMatcher } from '@shared/types'
-import { HookActionForm, makeEmptyAction } from './hooks/HookActionForm'
+import type { Hook, HookExecutionLog, HookAction, HookSettingsMatcher } from '@shared/types'
+import { makeEmptyAction } from './hooks/HookActionForm'
 import type { HookActionItem } from './hooks/HookActionForm'
-import { HookTypePanels } from './hooks/HookTypePanels'
-import type { HookTypeFields } from './hooks/HookTypePanels'
+import { HooksLogsTab } from './hooks/HooksLogsTab'
+import { HookEditDialog } from './hooks/HookEditDialog'
+import type { EditFormState } from './hooks/hookEditTypes'
+import { HOOK_TYPES } from './hooks/hookTypes'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -43,39 +35,8 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Save,
-  X,
-  AlertCircle,
-  Check,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  History,
-  Timer,
-  Bug,
-  Square,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-// Hook event types grouped by domain for the Select dropdown.
-const HOOK_TYPE_GROUPS: Array<{ group: string; types: HookType[] }> = [
-  { group: 'tool', types: ['PreToolUse', 'PostToolUse', 'MessageDisplay'] },
-  {
-    group: 'session',
-    types: ['SessionStart', 'SessionEnd', 'PostSession', 'UserPromptSubmit', 'Notification'],
-  },
-  { group: 'lifecycle', types: ['Stop', 'StopFailure', 'SubagentStart', 'SubagentStop'] },
-  { group: 'compaction', types: ['PreCompact', 'PostCompact'] },
-  { group: 'audit', types: ['ConfigChange'] },
-  {
-    group: 'interaction',
-    types: ['Elicitation', 'ElicitationResult', 'PermissionRequest'],
-  },
-]
-
-const HOOK_TYPES: HookType[] = HOOK_TYPE_GROUPS.flatMap((g) => g.types)
 
 export default function Hooks() {
   const { t } = useTranslation('hooks')
@@ -85,27 +46,7 @@ export default function Hooks() {
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  const [editForm, setEditForm] = useState<{
-    name: string
-    type: HookType
-    description: string
-    enabled: boolean
-    location: 'user' | 'project'
-    projectPath: string
-    priority: number
-    stopOnError: boolean
-    pattern: string
-    // Claude Code native format fields
-    matcher: string
-    matcherIndex?: number // Index of the hook in settings.json for editing
-    actions: HookActionItem[]
-    // Type-specific matcher-level fields
-    reloadSkills: boolean // SessionStart
-    sessionTitle: string // SessionStart
-    maxBlocks: number // Stop / StopFailure
-    replaceToolOutput: boolean // PostToolUse
-    effort?: Hook['effort'] // read-only display
-  }>({
+  const [editForm, setEditForm] = useState<EditFormState>({
     name: '',
     type: 'SessionStart',
     description: '',
@@ -962,238 +903,20 @@ export default function Hooks() {
                 </TabsContent>
 
                 <TabsContent value="logs" className="space-y-4 mt-4">
-                  {/* Test Button and Actions */}
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      {t('logs.title')}
-                    </h3>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={loadExecutionLogs}
-                        disabled={logsLoading}
-                      >
-                        <RefreshCw className={cn("h-4 w-4 mr-1", logsLoading && "animate-spin")} />
-                        {t('logs.refresh')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearExecutionLogs}
-                        disabled={executionLogs.length === 0}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        {t('logs.clear')}
-                      </Button>
-                      {/* Debug Session Button */}
-                      {debugSessionRunning ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={stopDebugSession}
-                        >
-                          <Square className="h-4 w-4 mr-1" />
-                          {t('logs.stopDebug', 'Stop Debug')}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => launchDebugSession(selectedHook)}
-                        >
-                          <Bug className="h-4 w-4 mr-1" />
-                          {t('logs.launchDebug', 'Launch Debug')}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Debug Session Status */}
-                  {debugSessionMessage && (
-                    <div className={cn(
-                      "rounded-lg p-3 border",
-                      debugSessionRunning
-                        ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800"
-                        : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
-                    )}>
-                      <div className="flex items-center gap-2">
-                        {debugSessionRunning && (
-                          <RefreshCw className="h-4 w-4 text-green-600 animate-spin" />
-                        )}
-                        <p className={cn(
-                          "text-sm",
-                          debugSessionRunning ? "text-green-700 dark:text-green-300" : "text-gray-700 dark:text-gray-300"
-                        )}>
-                          {debugSessionMessage}
-                        </p>
-                      </div>
-                      {debugSessionRunning && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                          {t('logs.debugSessionRunning', 'Debug session is running. Logs will auto-refresh. Click "Stop Debug" to end early.')}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Info about real logs */}
-                  <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      {t('logs.debugLogsHint', 'Showing real Claude Code execution logs from ~/.claude/debug/. Click "Launch Debug" to start Claude Code in debug mode and capture hook execution logs.')}
-                    </p>
-                  </div>
-
-                  {/* Execution Logs List - filtered by selected hook type */}
-                  {logsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <RefreshCw className="h-8 w-8 mx-auto mb-3 animate-spin" />
-                      <p>{t('logs.loading')}</p>
-                    </div>
-                  ) : (() => {
-                    // Filter logs by selected hook type
-                    const filteredLogs = selectedHook
-                      ? executionLogs.filter(log => log.hookType === selectedHook.type)
-                      : executionLogs
-
-                    return filteredLogs.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>{selectedHook ? t('logs.noLogsForHook', { type: selectedHook.type }) : t('logs.noLogs')}</p>
-                      <p className="text-sm mt-2">{t('logs.noLogsHint')}</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-[500px] overflow-auto">
-                      {filteredLogs.map((log) => (
-                        <div key={log.id}>
-                          <Card
-                            className={cn(
-                              "cursor-pointer transition-all hover:border-primary",
-                              selectedLog?.id === log.id && "border-primary bg-accent"
-                            )}
-                            onClick={() => setSelectedLog(selectedLog?.id === log.id ? null : log)}
-                          >
-                            <CardContent className="p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  {log.status === 'success' && (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  )}
-                                  {log.status === 'failed' && (
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                  )}
-                                  {log.status === 'timeout' && (
-                                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                  )}
-                                  {log.status === 'blocked' && (
-                                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                                  )}
-                                  <Badge variant="outline" className="text-xs">
-                                    {log.hookType}
-                                  </Badge>
-                                  <span className="text-sm font-medium">{log.trigger}</span>
-                                  <Badge
-                                    variant={log.status === 'success' ? 'default' : 'destructive'}
-                                    className="text-xs"
-                                  >
-                                    {t(`logs.status.${log.status}`)}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                  {log.duration > 0 && (
-                                    <span className="flex items-center gap-1">
-                                      <Timer className="h-3 w-3" />
-                                      {log.duration}ms
-                                    </span>
-                                  )}
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {new Date(log.timestamp).toLocaleTimeString()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="mt-2 text-xs text-muted-foreground font-mono truncate">
-                                {log.command || log.output || log.hookName}
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          {/* Expanded Log Details - shown below the selected log */}
-                          {selectedLog?.id === log.id && (
-                            <div className="mt-1 ml-4 border-l-2 border-primary pl-4 pb-2">
-                              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="flex items-center gap-2 font-medium text-sm">
-                                    <FileCode className="h-4 w-4" />
-                                    {t('logs.details')}
-                                  </span>
-                                  <Badge
-                                    variant={log.status === 'success' ? 'default' : 'destructive'}
-                                  >
-                                    {log.exitCode !== undefined ? `Exit: ${log.exitCode}` : log.status}
-                                  </Badge>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.hookType', 'Hook Type')}:</span>
-                                    <p className="font-medium">{log.hookType}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.hookName', 'Hook Name')}:</span>
-                                    <p className="font-medium">{log.hookName}</p>
-                                  </div>
-                                </div>
-
-                                {log.command && (
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.command')}:</span>
-                                    <p className="text-sm font-mono bg-background p-2 rounded mt-1 break-all">{log.command}</p>
-                                  </div>
-                                )}
-
-                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                  {log.duration > 0 && (
-                                    <div>
-                                      <span className="text-xs text-muted-foreground">{t('logs.duration')}:</span>
-                                      <p className="font-medium">{log.duration}ms</p>
-                                    </div>
-                                  )}
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.timestamp')}:</span>
-                                    <p className="font-medium">{new Date(log.timestamp).toLocaleString()}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.location')}:</span>
-                                    <p className="font-medium">{log.location}</p>
-                                  </div>
-                                </div>
-
-                                {log.output && (
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.output')}:</span>
-                                    <pre className="text-xs font-mono bg-green-50 dark:bg-green-950 p-3 rounded mt-1 overflow-auto max-h-[150px] whitespace-pre-wrap">
-                                      {log.output}
-                                    </pre>
-                                  </div>
-                                )}
-
-                                {log.error && (
-                                  <div>
-                                    <span className="text-xs text-muted-foreground">{t('logs.error')}:</span>
-                                    <pre className="text-xs font-mono bg-red-50 dark:bg-red-950 p-3 rounded mt-1 overflow-auto max-h-[150px] whitespace-pre-wrap text-red-600 dark:text-red-400">
-                                      {log.error}
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        ))}
-                    </div>
-                  )
-                  })()}
+                  <HooksLogsTab
+                    selectedHook={selectedHook}
+                    executionLogs={executionLogs}
+                    logsLoading={logsLoading}
+                    selectedLog={selectedLog}
+                    setSelectedLog={setSelectedLog}
+                    debugSessionRunning={debugSessionRunning}
+                    debugSessionMessage={debugSessionMessage}
+                    onRefreshLogs={loadExecutionLogs}
+                    onClearLogs={clearExecutionLogs}
+                    onLaunchDebug={() => launchDebugSession(selectedHook)}
+                    onStopDebug={stopDebugSession}
+                    t={t}
+                  />
                 </TabsContent>
               </Tabs>
             </CardContent>
@@ -1209,217 +932,20 @@ export default function Hooks() {
       </div>
 
       {/* Edit/Create Dialog */}
-      <Dialog open={isEditing || isCreating} onOpenChange={(open) => !open && handleCancelEdit()}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isCreating ? t('dialog.createTitle') : `${t('dialog.editTitle')}: ${editForm.name}`}
-            </DialogTitle>
-            <DialogDescription>
-              {isCreating ? t('dialog.createDescription') : t('dialog.editDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Validation Errors */}
-            {validationErrors.length > 0 && (
-              <div className="bg-destructive/10 border border-destructive/50 text-destructive rounded-md p-4">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  {t('validation.title')}
-                </h4>
-                <p className="text-sm mb-2">{t('validation.fixErrors')}</p>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  {validationErrors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Hook Type */}
-            <div className="space-y-2">
-              <Label>{t('dialog.type')}</Label>
-              <Select
-                value={editForm.type}
-                onValueChange={(value: HookType) => setEditForm({ ...editForm, type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('dialog.typePlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {HOOK_TYPE_GROUPS.map((g) => (
-                    <SelectGroup key={g.group}>
-                      <SelectLabel>{t(`groups.${g.group}`, g.group)}</SelectLabel>
-                      {g.types.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          <div className="flex flex-col">
-                            <span>{t(`events.${type}.title`, type)}</span>
-                            <span className="text-xs text-muted-foreground">{t(`events.${type}.description`, '')}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Location */}
-            <div className="space-y-2">
-              <Label>{t('dialog.location')}</Label>
-              <Select
-                value={editForm.location}
-                onValueChange={(value: 'user' | 'project') =>
-                  setEditForm({ ...editForm, location: value, projectPath: value === 'user' ? '' : editForm.projectPath })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      {t('dialog.locationUser')}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="project">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="h-4 w-4" />
-                      {t('dialog.locationProject')}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Project Path (only for project hooks) */}
-            {editForm.location === 'project' && (
-              <div className="space-y-2">
-                <Label>{t('dialog.projectPath')}</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={editForm.projectPath}
-                    placeholder={t('dialog.projectPathPlaceholder')}
-                    readOnly
-                    className="flex-1"
-                  />
-                  <Button type="button" variant="outline" onClick={handleSelectProjectPath}>
-                    <FolderOpen className="h-4 w-4 mr-1" />
-                    {t('dialog.browse')}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t('dialog.projectPathHint')}: {editForm.projectPath ? `${editForm.projectPath}/.claude/settings.json` : t('dialog.projectPathRequired')}
-                </p>
-              </div>
-            )}
-
-            {/* Matcher Pattern */}
-            <div className="space-y-2">
-              <Label>{t('dialog.matcher', 'Matcher')}</Label>
-              <Input
-                value={editForm.matcher}
-                onChange={(e) => setEditForm({ ...editForm, matcher: e.target.value })}
-                placeholder={t('dialog.matcherPlaceholder', 'Tool name pattern (e.g., Bash, Edit|Write)')}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('dialog.matcherHint', 'Leave empty to match all. Use | for multiple patterns (e.g., Edit|Write)')}
-              </p>
-            </div>
-
-            {/* Type-specific panels */}
-            <HookTypePanels
-              type={editForm.type}
-              fields={{
-                reloadSkills: editForm.reloadSkills,
-                sessionTitle: editForm.sessionTitle,
-                maxBlocks: editForm.maxBlocks,
-                replaceToolOutput: editForm.replaceToolOutput,
-              }}
-              effort={editForm.effort}
-              onChange={(partial: Partial<HookTypeFields>) => setEditForm({ ...editForm, ...partial })}
-              t={t}
-            />
-
-            {/* Hook Actions */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>{t('dialog.hookCommands', 'Commands')}</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditForm({ ...editForm, actions: [...editForm.actions, makeEmptyAction()] })}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  {t('dialog.addCommand', 'Add Command')}
-                </Button>
-              </div>
-
-              {editForm.actions.map((action, index) => (
-                <HookActionForm
-                  key={index}
-                  action={action}
-                  index={index}
-                  canRemove={editForm.actions.length > 1}
-                  onChange={(next: HookActionItem) => {
-                    const actions = [...editForm.actions]
-                    actions[index] = next
-                    setEditForm({ ...editForm, actions })
-                  }}
-                  onRemove={() => setEditForm({ ...editForm, actions: editForm.actions.filter((_, i) => i !== index) })}
-                  t={t}
-                />
-              ))}
-            </div>
-
-            {/* Preview */}
-            <div className="space-y-2">
-              <Label>{t('dialog.preview', 'Configuration Preview')}</Label>
-              <div className="bg-muted rounded-lg p-4">
-                <pre className="text-xs font-mono overflow-auto max-h-[200px]">
-                  {JSON.stringify({ hooks: { [editForm.type]: [buildHookConfig(editForm.actions)] } }, null, 2)}
-                </pre>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('dialog.previewHint', 'This configuration will be saved to settings.json')}
-              </p>
-              {editForm.actions.some((a) => a.type === 'command' && a.useScriptFile && a.scriptPath) && (
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  {t('dialog.scriptWillBeCreated', 'Script file(s) will be created automatically')}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            {saveSuccess && (
-              <div className="flex flex-col gap-1 mr-auto text-left">
-                <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-                  <Check className="h-4 w-4" />
-                  {t('saveSuccess')}
-                </span>
-                <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {t('saveSuccessRestartHint')}
-                </span>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCancelEdit}>
-                <X className="h-4 w-4 mr-1" />
-                {t('dialog.cancel')}
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                <Save className="h-4 w-4 mr-1" />
-                {saving ? t('dialog.saving') : t('dialog.save')}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HookEditDialog
+        open={isEditing || isCreating}
+        isCreating={isCreating}
+        editForm={editForm}
+        setEditForm={setEditForm}
+        validationErrors={validationErrors}
+        saving={saving}
+        saveSuccess={saveSuccess}
+        onSave={handleSave}
+        onCancel={handleCancelEdit}
+        onSelectProjectPath={handleSelectProjectPath}
+        buildHookConfig={buildHookConfig}
+        t={t}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
