@@ -96,7 +96,7 @@
 
 | 编号 | 标题 | Phase | 对应 ID | 状态 |
 |---|---|---|---|---|
-| spec014 | session-jsonl 解析层 | P2 | OBS-01 | 就绪 |
+| spec014 | session-jsonl 解析层 | P2 | OBS-01 | ✅ 完成 |
 | spec015 | Session 监视器 | P2 | ORCH-01/02/04/05、OBS-06 | 就绪 |
 | spec016 | Subagent 调用树与 Workflow 编排视图 | P2 | ORCH-06/09 | 就绪 |
 | spec017 | Token-Usage 面板 | P2 | OBS-02/03/05 | 就绪 |
