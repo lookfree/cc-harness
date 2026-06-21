@@ -27,24 +27,9 @@ import {
 import { Search, Terminal, Globe, FolderOpen, FileText, Plus, Pencil, Trash2, Save, X, AlertCircle, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SourceBadge } from '@/components/SourceBadge'
+import { sourceOf as cmdSource, sourceKey as cmdKey, sourceLabel as cmdSourceLabel } from '@/lib/source'
 
 type SourceFilter = 'all' | 'user' | 'project' | 'plugin'
-
-/** 命令来源（带兼容回退）：source 优先，回退旧 location，再回退 'user'。 */
-function cmdSource(cmd: SlashCommand): string {
-  return cmd.source ?? cmd.location ?? 'user'
-}
-
-/** 列表 key / 选中比较用的稳定标识（同名命令可来自多来源）。 */
-function cmdKey(cmd: SlashCommand): string {
-  return `${cmdSource(cmd)}:${cmd.pluginName ?? ''}:${cmd.version ?? ''}:${cmd.name}`
-}
-
-/** 来源 Badge 文案：plugin 带 pluginName@version，其余取 filter.<source>。 */
-function cmdSourceLabel(cmd: SlashCommand, t: (k: string) => string): string {
-  const src = cmdSource(cmd)
-  return src === 'plugin' ? `${t('filter.plugin')} · ${cmd.pluginName}@${cmd.version}` : t(`filter.${src}`)
-}
 
 export default function Commands() {
   const { t } = useTranslation('commands')

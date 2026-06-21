@@ -7,19 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SourceBadge } from '@/components/SourceBadge'
+import { sourceOf, sourceKey, sourceLabel } from '@/lib/source'
 import { Bot, Search, Wrench, Cpu, FileCode, AlertCircle, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type SourceFilter = 'all' | 'user' | 'project' | 'plugin'
-
-/** agent 来源（带兼容回退）：source 优先，回退旧 location，再回退 'user'。 */
-function agentSource(a: Agent): string {
-  return a.source ?? a.location ?? 'user'
-}
-
-function agentKey(a: Agent): string {
-  return `${agentSource(a)}:${a.pluginName ?? ''}:${a.version ?? ''}:${a.name}`
-}
 
 export default function Agents() {
   const { t } = useTranslation('agents')
@@ -38,17 +30,13 @@ export default function Agents() {
       .catch((e) => console.error('[Agents] load failed:', e))
   }, [])
 
-  const sourceLabel = (a: Agent) => {
-    const src = agentSource(a)
-    return src === 'plugin' ? `${t('filter.plugin')} · ${a.pluginName}@${a.version}` : t(`filter.${src}`)
-  }
-
   const filtered = agents.filter(
     (a) =>
-      (sourceFilter === 'all' || agentSource(a) === sourceFilter) &&
+      (sourceFilter === 'all' || sourceOf(a) === sourceFilter) &&
       (a.name.toLowerCase().includes(search.toLowerCase()) ||
         a.description.toLowerCase().includes(search.toLowerCase()))
   )
+  const selectedKey = selected ? sourceKey(selected) : null
 
   return (
     <div className="h-full flex flex-col">
@@ -81,11 +69,11 @@ export default function Agents() {
             ) : (
               filtered.map((a) => (
                 <button
-                  key={agentKey(a)}
+                  key={sourceKey(a)}
                   onClick={() => setSelected(a)}
                   className={cn(
                     'w-full text-left px-3 py-2 rounded-lg border transition-colors',
-                    selected && agentKey(selected) === agentKey(a) ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-accent border-border',
+                    selectedKey === sourceKey(a) ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-accent border-border',
                     a.overriddenBy && 'opacity-60'
                   )}
                 >
@@ -94,7 +82,7 @@ export default function Agents() {
                     {a.overriddenBy && <Badge variant="outline" className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 shrink-0">{t('overridden')}</Badge>}
                   </div>
                   <p className="text-xs opacity-70 mt-0.5 line-clamp-2">{a.description}</p>
-                  <div className="mt-1"><SourceBadge source={agentSource(a)} label={sourceLabel(a)} /></div>
+                  <div className="mt-1"><SourceBadge source={sourceOf(a)} label={sourceLabel(a, t)} /></div>
                 </button>
               ))
             )}
@@ -113,7 +101,7 @@ export default function Agents() {
           </div>
 
           {selected ? (
-            <AgentDetail agent={selected} sourceLabel={sourceLabel(selected)} />
+            <AgentDetail agent={selected} />
           ) : (
             <div className="text-center text-muted-foreground py-8 text-sm">{t('noSelection')}</div>
           )}
@@ -123,15 +111,15 @@ export default function Agents() {
   )
 }
 
-function AgentDetail({ agent, sourceLabel }: { agent: Agent; sourceLabel: string }) {
+function AgentDetail({ agent }: { agent: Agent }) {
   const { t } = useTranslation('agents')
-  const src = agentSource(agent)
+  const src = sourceOf(agent)
   return (
     <div className="space-y-4">
       <div>
         <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-2xl font-bold">{agent.name}</h2>
-          <SourceBadge source={src} label={sourceLabel} />
+          <SourceBadge source={src} label={sourceLabel(agent, t)} />
           {src === 'plugin' && <Badge variant="outline" className="text-xs">{t('detail.readOnly')}</Badge>}
         </div>
         {agent.description && <p className="text-muted-foreground mt-1">{agent.description}</p>}

@@ -12,13 +12,6 @@ interface AgentScanOpts {
 }
 
 export class FileManagerAgents extends FileManagerSkills {
-  /** agent 稳定唯一标识：plugin 含 marketplace/plugin/version，否则 source:name（与 computeSkillUid 同构）。 */
-  private computeAgentUid(a: Agent): string {
-    return a.source === 'plugin'
-      ? `plugin:${a.marketplace}/${a.pluginName}@${a.version}/${a.name}`
-      : `${a.source ?? 'user'}:${a.name}`
-  }
-
   /** 扫一个 agents 目录下的 *.md，解析后用 opts 装饰推入 out。目录不存在静默跳过（scanDirectory 返回 []）。 */
   private async scanAgentDir(dir: string, opts: AgentScanOpts, out: Agent[]): Promise<void> {
     const files = await this.scanDirectory(dir, '.md')
@@ -81,20 +74,12 @@ export class FileManagerAgents extends FileManagerSkills {
     await this.scanAgentDir(path.join(this.projectPath, '.claude', 'agents'), { source: 'project' }, out)
 
     // plugin：installed_plugins.json 为准只扫激活版本，按 enabledPlugins 跳过显式禁用的（复用 spec004）
-    const enabled = await this.readEnabledPlugins()
-    for (const pl of await this.readInstalledPlugins()) {
-      if (enabled[`${pl.pluginName}@${pl.marketplace}`] === false) continue
-      await this.scanAgentDir(path.join(pl.installPath, 'agents'), {
-        source: 'plugin',
-        marketplace: pl.marketplace,
-        pluginName: pl.pluginName,
-        version: pl.version,
-        pluginScope: pl.scope,
-      }, out)
+    for (const { dir, opts } of await this.iterEnabledPluginDirs('agents')) {
+      await this.scanAgentDir(dir, opts, out)
     }
 
     // 同名覆盖检测：winner 正常、其余标 overriddenBy（user>project>plugin）
-    this.markOverrides(out, (a) => this.computeAgentUid(a))
+    this.markOverrides(out, (a) => this.computeSourceUid(a))
     return out
   }
 

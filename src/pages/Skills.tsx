@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Search, Plus, FileCode, BarChart3, FileText, Zap, BookOpen, Code, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SOURCE_BADGE_CLASS } from '@/components/SourceBadge'
+import { SourceBadge } from '@/components/SourceBadge'
+import { sourceOf as skillSource, sourceLabel } from '@/lib/source'
 import { analyzeTriggers, generateExampleQueries } from '@/utils/triggerAnalyzer'
 import { generateSkillDiagram, type DiagramLayout } from '@/utils/diagramGenerator'
 import mermaid from 'mermaid'
@@ -24,24 +25,6 @@ type SourceFilter = 'all' | 'user' | 'project' | 'plugin'
 
 // diagram 渲染序号：保证 mermaid.render 的 id 每次唯一（Date.now 在同毫秒会撞 id）。
 let diagramRenderSeq = 0
-
-/** skill 来源（带兼容回退）：source 优先，回退旧 location，再回退 'user'。 */
-function skillSource(skill: Skill): string {
-  return skill.source ?? skill.location ?? 'user'
-}
-
-/** 来源染色 Badge：user 绿 / project 蓝 / plugin 紫（plugin 显示 pluginName@version）。spec006 Commands 可复用。 */
-function SourceBadge({ skill }: { skill: Skill }) {
-  const { t } = useTranslation('skills')
-  const src = skillSource(skill)
-  const label =
-    src === 'plugin' ? `${t('filter.plugin')} · ${skill.pluginName}@${skill.version}` : t(`filter.${src}`)
-  return (
-    <Badge variant="outline" className={cn('text-xs', SOURCE_BADGE_CLASS[src])}>
-      {label}
-    </Badge>
-  )
-}
 
 export default function Skills() {
   const { t } = useTranslation('skills')
@@ -311,7 +294,7 @@ export default function Skills() {
                   {skill.name}
                 </div>
                 <div className="flex items-center gap-1 mt-1">
-                  <SourceBadge skill={skill} />
+                  <SourceBadge source={skillSource(skill)} label={sourceLabel(skill, t)} />
                   {skill.overriddenBy && (
                     <Badge
                       variant="outline"
@@ -414,7 +397,7 @@ export default function Skills() {
                   <Badge variant={selectedSkill.enabled !== false ? 'default' : 'secondary'}>
                     {selectedSkill.enabled !== false ? 'Enabled' : 'Disabled'}
                   </Badge>
-                  <SourceBadge skill={selectedSkill} />
+                  <SourceBadge source={skillSource(selectedSkill)} label={sourceLabel(selectedSkill, t)} />
                 </div>
                 <p className="text-muted-foreground mt-2">{selectedSkill.description}</p>
                 {selectedSkill.overriddenBy && (

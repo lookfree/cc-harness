@@ -207,6 +207,34 @@ export abstract class FileManagerBase {
     return (v ?? '0').split('.').map((n) => String(parseInt(n, 10) || 0).padStart(6, '0')).join('.')
   }
 
+  /** 三层来源条目的稳定唯一标识：plugin 含 marketplace/plugin/version，否则 source:name。skills/commands/agents 共用。 */
+  protected computeSourceUid<
+    T extends { name: string; source?: string; marketplace?: string; pluginName?: string; version?: string }
+  >(x: T): string {
+    return x.source === 'plugin'
+      ? `plugin:${x.marketplace}/${x.pluginName}@${x.version}/${x.name}`
+      : `${x.source ?? 'user'}:${x.name}`
+  }
+
+  /**
+   * 列出所有 enabled plugin 的某子目录（skills/commands/agents）+ 对应 plugin 来源 opts。
+   * 收口「installed_plugins.json 为准、按 enabledPlugins 跳过显式禁用」的真相源逻辑，三域共用，避免 enable-skip key 漂移。
+   */
+  protected async iterEnabledPluginDirs(
+    subdir: string
+  ): Promise<Array<{ dir: string; opts: { source: 'plugin'; marketplace: string; pluginName: string; version: string; pluginScope: 'user' | 'project' } }>> {
+    const enabled = await this.readEnabledPlugins()
+    const out: Array<{ dir: string; opts: { source: 'plugin'; marketplace: string; pluginName: string; version: string; pluginScope: 'user' | 'project' } }> = []
+    for (const pl of await this.readInstalledPlugins()) {
+      if (enabled[`${pl.pluginName}@${pl.marketplace}`] === false) continue
+      out.push({
+        dir: path.join(pl.installPath, subdir),
+        opts: { source: 'plugin', marketplace: pl.marketplace, pluginName: pl.pluginName, version: pl.version, pluginScope: pl.scope },
+      })
+    }
+    return out
+  }
+
   /**
    * 通用同名覆盖检测：优先级 user > project > plugin；同为 plugin 时 user-scope > project-scope，再版本号高者。
    * winner 正常显示，其余标 overriddenBy=winner 的 uid（不丢，供 UI 灰显）。skills/commands 共用（spec004/006）。

@@ -1,19 +1,12 @@
 import fs from 'fs/promises'
 import path from 'path'
-import type { Skill, SkillSource, SkillUid } from '../../shared/types'
+import type { Skill, SkillSource } from '../../shared/types'
 import { globScan } from './glob-scan'
 import { FileManagerPlugins } from './file-manager-plugins'
 
 export class FileManagerSkills extends FileManagerPlugins {
   // Cache for parsed skills
   private skillCache = new Map<string, { skill: Skill; mtime: number }>()
-
-  /** skill 稳定唯一标识：plugin 含 marketplace/plugin/version，否则 source:name。 */
-  private computeSkillUid(s: Skill): SkillUid {
-    return s.source === 'plugin'
-      ? `plugin:${s.marketplace}/${s.pluginName}@${s.version}/${s.name}`
-      : `${s.source ?? 'user'}:${s.name}`
-  }
 
   /**
    * 扫一个 skill 根目录下的 <name>/SKILL.md，解析后用 opts 装饰（source + plugin 元信息）推入 out。
@@ -50,20 +43,12 @@ export class FileManagerSkills extends FileManagerPlugins {
     }
 
     // 3) plugin：installed_plugins.json 为准只扫激活版本，按 enabledPlugins 跳过显式禁用的
-    const enabled = await this.readEnabledPlugins()
-    for (const pl of await this.readInstalledPlugins()) {
-      if (enabled[`${pl.pluginName}@${pl.marketplace}`] === false) continue
-      await this.scanSkillDir(path.join(pl.installPath, 'skills'), {
-        source: 'plugin',
-        marketplace: pl.marketplace,
-        pluginName: pl.pluginName,
-        version: pl.version,
-        pluginScope: pl.scope,
-      }, out)
+    for (const { dir, opts } of await this.iterEnabledPluginDirs('skills')) {
+      await this.scanSkillDir(dir, opts, out)
     }
 
     // 4) 同名覆盖检测：winner 正常、其余标 overriddenBy
-    this.markOverrides(out, (s) => this.computeSkillUid(s))
+    this.markOverrides(out, (s) => this.computeSourceUid(s))
 
     this.logger.info('getSkills() returning', out.length, 'skills')
     return out
@@ -82,15 +67,15 @@ export class FileManagerSkills extends FileManagerPlugins {
 
       const content = await fs.readFile(filePath, 'utf-8')
 
-      // Parse YAML frontmatter
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+      // Parse YAML frontmatter（容忍 CRLF）
+      const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
       if (!frontmatterMatch) {
         this.logger.warn(`No frontmatter found, skipping: ${filePath}`)
         return null
       }
 
       const frontmatter = frontmatterMatch[1]
-      const lines = frontmatter.split('\n')
+      const lines = frontmatter.split(/\r?\n/)
       const metadata: Record<string, string> = {}
 
       for (const line of lines) {

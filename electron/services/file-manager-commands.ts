@@ -5,14 +5,6 @@ import { isMissing } from './glob-scan'
 import { FileManagerMcp } from './file-manager-mcp'
 
 export class FileManagerCommands extends FileManagerMcp {
-  // Commands
-  /** command 稳定唯一标识：plugin 含 marketplace/plugin/version，否则 source:name（与 computeSkillUid 同构）。 */
-  private computeCommandUid(c: SlashCommand): string {
-    return c.source === 'plugin'
-      ? `plugin:${c.marketplace}/${c.pluginName}@${c.version}/${c.name}`
-      : `${c.source ?? 'user'}:${c.name}`
-  }
-
   /**
    * 递归扫一个 commands 根目录下的 *.md，命令名 = 相对 dir 的路径去 .md、子目录用 ':' 连（Claude Code 命名空间约定）。
    * 兼容本工具历史写法 commands/<name>/<name>.md：尾段与父目录同名时折叠，避免出现 name:name。
@@ -64,20 +56,12 @@ export class FileManagerCommands extends FileManagerMcp {
     await this.scanCommandDir(path.join(this.projectPath, '.claude', 'commands'), { source: 'project' }, out)
 
     // plugin：installed_plugins.json 为准只扫激活版本，按 enabledPlugins 跳过显式禁用的
-    const enabled = await this.readEnabledPlugins()
-    for (const pl of await this.readInstalledPlugins()) {
-      if (enabled[`${pl.pluginName}@${pl.marketplace}`] === false) continue
-      await this.scanCommandDir(path.join(pl.installPath, 'commands'), {
-        source: 'plugin',
-        marketplace: pl.marketplace,
-        pluginName: pl.pluginName,
-        version: pl.version,
-        pluginScope: pl.scope,
-      }, out)
+    for (const { dir, opts } of await this.iterEnabledPluginDirs('commands')) {
+      await this.scanCommandDir(dir, opts, out)
     }
 
     // 同名覆盖检测：winner 正常、其余标 overriddenBy
-    this.markOverrides(out, (c) => this.computeCommandUid(c))
+    this.markOverrides(out, (c) => this.computeSourceUid(c))
     this.logger.info('getCommands() returning', out.length, 'commands')
     return out
   }
@@ -88,13 +72,13 @@ export class FileManagerCommands extends FileManagerMcp {
     opts: { source: CommandSource; marketplace?: string; pluginName?: string; version?: string; pluginScope?: 'user' | 'project'; commandName: string }
   ): SlashCommand | null {
     try {
-      // Extract frontmatter
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+      // Extract frontmatter（容忍 CRLF）
+      const frontmatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
       const frontmatter: Record<string, string> = {}
 
       if (frontmatterMatch) {
         const frontmatterContent = frontmatterMatch[1]
-        frontmatterContent.split('\n').forEach(line => {
+        frontmatterContent.split(/\r?\n/).forEach(line => {
           const [key, ...valueParts] = line.split(':')
           if (key && valueParts.length > 0) {
             frontmatter[key.trim()] = valueParts.join(':').trim()
