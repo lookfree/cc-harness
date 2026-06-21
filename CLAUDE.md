@@ -31,7 +31,9 @@ npm run electron:build    # 出包
 ## 架构
 
 ```
-electron/services/file-manager.ts   # 核心：扫描/读写 ~/.claude 和项目 .claude 配置（1400 行）
+electron/services/file-manager*.ts  # 核心：扫描/读写 ~/.claude 和项目 .claude 配置。
+                                    # 按域拆成继承链（base→plugins→skills→agents→hooks→mcp→commands→claudemd→FileManager）；
+                                    # FileManager 仍是单例门面，对外 API 不变。新增方法放对应 domain 文件，跨域共享的低层 helper 放 base（protected）。
 electron/services/provider-manager.ts
 electron/ipc/*.ts                    # 每个域一个 registerXxxHandlers(ipcMain, fileManager)
 electron/preload.cjs                 # contextBridge（必须 .cjs）
