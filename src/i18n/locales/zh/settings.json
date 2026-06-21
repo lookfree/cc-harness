@@ -37,6 +37,7 @@
     "note": "--worktree 启动隔离是 CLI flag，此处仅配置落盘的 baseRef/bgIsolation（2.1.133/2.1.143）。",
     "targetLevel": "写入层",
     "baseRef": "基准 ref",
+    "baseRefPlaceholder": "main",
     "bgIsolation": "后台会话隔离",
     "isolation": {
       "none": "不隔离",

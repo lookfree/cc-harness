@@ -60,13 +60,17 @@ export default function Settings() {
   const [baseRefDraft, setBaseRefDraft] = useState('')
 
   const load = async () => {
-    const [m, tg, wt] = await Promise.all([api.settings.getModel(), api.settings.getToggles(), api.settings.getWorktree()])
-    setModel(m)
-    setToggles(tg)
-    setWorktree(wt)
-    setBaseRefDraft(wt.baseRef ?? '')
-    // 默认写入层对齐当前值的来源层（否则在 project 写而值来自 user，徽章会突变、看似没改对）
-    setWtLevel(wt.sources?.baseRef ?? wt.sources?.bgIsolation ?? 'project')
+    try {
+      const [m, tg, wt] = await Promise.all([api.settings.getModel(), api.settings.getToggles(), api.settings.getWorktree()])
+      setModel(m)
+      setToggles(tg)
+      setWorktree(wt)
+      setBaseRefDraft(wt.baseRef ?? '')
+      // 默认写入层对齐当前值的来源层（否则在 project 写而值来自 user，徽章会突变、看似没改对）
+      setWtLevel(wt.sources?.baseRef ?? wt.sources?.bgIsolation ?? 'project')
+    } catch (error) {
+      console.error('[Settings] load failed:', error)
+    }
   }
   useEffect(() => {
     load()
@@ -122,12 +126,19 @@ export default function Settings() {
   }
 
   const saveWorktree = async (key: 'baseRef' | 'bgIsolation', value: string | undefined) => {
-    await api.settings.setWorktreeKey(wtLevel, key, value)
-    await load()
+    try {
+      await api.settings.setWorktreeKey(wtLevel, key, value)
+    } catch (error) {
+      console.error('[Settings] worktree save failed:', error)
+    }
+    await load() // 写成功或失败都 reload，把 UI 同步回磁盘真实态（失败时不留陈旧草稿）
   }
   const saveBaseRef = async () => {
     const v = baseRefDraft.trim()
-    if (v === (worktree?.baseRef ?? '')) return // 无变化不写
+    if (v === (worktree?.baseRef ?? '')) {
+      setBaseRefDraft(worktree?.baseRef ?? '') // 规整化（去掉纯空白/尾随空格等无效编辑），与磁盘态一致
+      return
+    }
     await saveWorktree('baseRef', v || undefined)
   }
 
@@ -260,7 +271,7 @@ export default function Settings() {
               <Input
                 className="md:w-80 font-mono"
                 value={baseRefDraft}
-                placeholder="main"
+                placeholder={t('worktree.baseRefPlaceholder')}
                 onChange={(e) => setBaseRefDraft(e.target.value)}
                 onBlur={saveBaseRef}
                 onKeyDown={(e) => e.key === 'Enter' && saveBaseRef()}

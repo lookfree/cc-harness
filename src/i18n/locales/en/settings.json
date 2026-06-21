@@ -37,6 +37,7 @@
     "note": "--worktree launch isolation is a CLI flag; this only configures the on-disk baseRef/bgIsolation (2.1.133/2.1.143).",
     "targetLevel": "Write to",
     "baseRef": "Base ref",
+    "baseRefPlaceholder": "main",
     "bgIsolation": "Background isolation",
     "isolation": {
       "none": "No isolation",
