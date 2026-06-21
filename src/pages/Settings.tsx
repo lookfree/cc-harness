@@ -135,8 +135,9 @@ export default function Settings() {
   }
   const saveBaseRef = async () => {
     const v = baseRefDraft.trim()
-    if (v === (worktree?.baseRef ?? '')) {
-      setBaseRefDraft(worktree?.baseRef ?? '') // 规整化（去掉纯空白/尾随空格等无效编辑），与磁盘态一致
+    const stored = worktree?.baseRef ?? ''
+    if (v === stored) {
+      setBaseRefDraft(stored) // 规整化（去掉纯空白/尾随空格等无效编辑），与磁盘态一致
       return
     }
     await saveWorktree('baseRef', v || undefined)
@@ -293,10 +294,10 @@ export default function Settings() {
                 <SelectTrigger className="md:w-80"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {BG_ISOLATION_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
+                    <SelectItem key={o} value={o}>
                       <div className="flex flex-col">
-                        <span>{t(o.labelKey)}</span>
-                        <span className="text-xs text-muted-foreground">{t(o.hintKey)}</span>
+                        <span>{t(`worktree.isolation.${o}`)}</span>
+                        <span className="text-xs text-muted-foreground">{t(`worktree.isolation.${o}Hint`)}</span>
                       </div>
                     </SelectItem>
                   ))}

@@ -12,8 +12,5 @@ export interface WorktreeConfig {
   sources?: Partial<Record<'baseRef' | 'bgIsolation', SettingsLevel>>
 }
 
-/** bgIsolation 选项的展示元数据（驱动下拉 + 说明）。可扩展，新增官方枚举值同步加。 */
-export const BG_ISOLATION_OPTIONS: Array<{ value: WorktreeBgIsolation; labelKey: string; hintKey: string }> = [
-  { value: 'none', labelKey: 'worktree.isolation.none', hintKey: 'worktree.isolation.noneHint' },
-  { value: 'worktree', labelKey: 'worktree.isolation.worktree', hintKey: 'worktree.isolation.worktreeHint' },
-]
+/** bgIsolation 下拉选项。label/hint 走 i18n `worktree.isolation.<value>` / `<value>Hint`（与全仓 `t(`prefix.${value}`)` 约定一致）。 */
+export const BG_ISOLATION_OPTIONS: WorktreeBgIsolation[] = ['none', 'worktree']
