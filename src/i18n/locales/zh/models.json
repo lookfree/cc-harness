@@ -34,6 +34,8 @@
     "roleMappingDesc": "把 opus/sonnet/haiku/fable 映射到该家的模型（激活时写 ANTHROPIC_DEFAULT_*_MODEL）",
     "apiFormat": "API 格式",
     "supports1m": "1M 上下文",
+    "openaiWarning": "OpenAI 格式 Claude Code 不能直连——需网关代理（如 claude-code-router）转成 Anthropic，Base URL 指向网关。",
+    "restartHint": "切换后需重开 Claude Code 会话才生效（env 在启动时读取）。",
     "cancel": "取消",
     "save": "保存"
   },

@@ -172,7 +172,7 @@ export default function Models() {
         const v = formData.models[role]?.trim()
         if (v) cleanModels[role] = v
       }
-      const payload = { ...formData, models: cleanModels }
+      const payload = { ...formData, model: formData.model.trim(), models: cleanModels }
 
       if (editingProvider) {
         // Update existing
@@ -263,7 +263,7 @@ export default function Models() {
                       </Badge>
                     </CardTitle>
                     <CardDescription>
-                      当前使用的 AI 模型
+                      {t('dialog.restartHint')}
                     </CardDescription>
                   </div>
                 </div>
@@ -560,10 +560,20 @@ export default function Models() {
                     checked={formData.supports1m}
                     onCheckedChange={(v) => setFormData({ ...formData, supports1m: v })}
                   />
-                  <span className="text-xs text-muted-foreground">1M context</span>
+                  <span className="text-xs text-muted-foreground">{t('dialog.supports1m')}</span>
                 </div>
               </div>
             </div>
+
+            {/* OpenAI 格式需网关提示 */}
+            {formData.apiFormat === 'openai' && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-sm text-amber-900 dark:text-amber-100">⚠️ {t('dialog.openaiWarning')}</p>
+              </div>
+            )}
+
+            {/* 切换生效需重启会话提示 */}
+            <p className="text-xs text-muted-foreground">💡 {t('dialog.restartHint')}</p>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

@@ -34,6 +34,8 @@
     "roleMappingDesc": "Maps opus/sonnet/haiku/fable to this provider's models (sets ANTHROPIC_DEFAULT_*_MODEL when active)",
     "apiFormat": "API format",
     "supports1m": "1M context",
+    "openaiWarning": "OpenAI format can't be used by Claude Code directly — it needs a gateway proxy (e.g. claude-code-router) translating to Anthropic; point Base URL at the gateway.",
+    "restartHint": "Switching takes effect after you restart your Claude Code session (env is read at launch).",
     "cancel": "Cancel",
     "save": "Save"
   },
