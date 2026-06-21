@@ -40,11 +40,11 @@ export default function Sessions() {
   const primarySummary = summaries.find((s) => s.sessionId === primaryId)
   const isLive = api.isElectron() && !!primaryId
 
-  const compareLists = useMemo(
-    () => selectedIds.map((id) => eventsBySession[id] ?? []),
-    [selectedIds, eventsBySession]
+  // domain 仅比对模式用；非比对时早返回，避免每次 push（含无关 session）白扫选中会话的事件
+  const domain = useMemo(
+    () => (compareMode ? sharedDomain(selectedIds.map((id) => eventsBySession[id] ?? [])) : { minMs: 0, maxMs: 1 }),
+    [compareMode, selectedIds, eventsBySession]
   )
-  const domain = useMemo(() => sharedDomain(compareLists), [compareLists])
 
   const onSeek = (seq: number) => {
     setSeekSeq(seq)

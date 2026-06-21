@@ -113,14 +113,17 @@ async function ensureLoaded(id: string, get: Get, set: Set): Promise<void> {
   }
 }
 
-/** 合并一批 push 事件：按 seq 去重排序 + 用 shared summarizer 重算该 session 的 live 概要。 */
+/** 合并一批 push 事件 + 用 shared summarizer 重算该 session 的 live 概要。 */
 function ingest(payload: SessionEventsPush, set: Set): void {
   const { sessionId, events, truncated } = payload
   set((state) => {
     const prev = truncated ? [] : state.eventsBySession[sessionId] ?? []
-    const bySeq = new Map(prev.map((e) => [e.seq, e]))
-    for (const e of events) bySeq.set(e.seq, e)
-    const merged = [...bySeq.values()].sort((a, b) => a.seq - b.seq)
+    // 增量天然 append-only（seq 单调，parseChunk 升序发出，tailer 不回读），prev 始终有序 →
+    // 只接 seq 大于已有最大值的新事件，免去每次 push 重建 Map + 全量排序
+    const maxSeq = prev.length ? prev[prev.length - 1].seq : -1
+    const fresh = events.filter((e) => e.seq > maxSeq)
+    if (fresh.length === 0 && prev.length) return {} // 重复 push、无新事件 → 不动
+    const merged = prev.length ? [...prev, ...fresh] : fresh
 
     const eventsBySession = { ...state.eventsBySession, [sessionId]: merged }
 

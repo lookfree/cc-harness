@@ -68,7 +68,7 @@ export function SessionTimeline({ events, domain, onSeek, label }: Props) {
           const width = Math.abs(rx - p.x)
           return (
             <div
-              key={`line-${p.event.seq}`}
+              key={`line-${p.event.toolUseId}`}
               className="absolute top-1/2 h-px bg-amber-400/60"
               style={{ left: `${left}%`, width: `${width}%` }}
             />
@@ -77,7 +77,7 @@ export function SessionTimeline({ events, domain, onSeek, label }: Props) {
         {/* 事件刻度点 */}
         {placed.map((p) => (
           <button
-            key={`tick-${p.event.seq}`}
+            key={`tick-${p.event.uuid}`}
             onClick={() => onSeek?.(p.event.seq)}
             title={tickTitle(p.event, t)}
             className={cn(
