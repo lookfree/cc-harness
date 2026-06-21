@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -119,6 +119,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   enablePlugin: (key: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:enable', key),
   disablePlugin: (key: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:disable', key),
   initPlugin: (name: string, cwd?: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:init', name, cwd),
+
+  // Permissions
+  getPermissionModel: (): Promise<PermissionModel> => ipcRenderer.invoke('permissions:getModel'),
+  savePermissionRule: (level: PermissionLevel, effect: PermissionEffect, rule: string): Promise<void> =>
+    ipcRenderer.invoke('permissions:saveRule', level, effect, rule),
+  deletePermissionRule: (level: PermissionLevel, effect: PermissionEffect, rule: string): Promise<void> =>
+    ipcRenderer.invoke('permissions:deleteRule', level, effect, rule),
+  getDisallowedTools: (filePath: string): Promise<string[]> => ipcRenderer.invoke('permissions:getDisallowedTools', filePath),
+  setDisallowedTools: (filePath: string, tools: string[]): Promise<void> =>
+    ipcRenderer.invoke('permissions:setDisallowedTools', filePath, tools),
 })
 
 console.log('[Preload] electronAPI exposed to window')
@@ -236,6 +246,11 @@ declare global {
       enablePlugin: (key: string) => Promise<PluginCliResult>
       disablePlugin: (key: string) => Promise<PluginCliResult>
       initPlugin: (name: string, cwd?: string) => Promise<PluginCliResult>
+      getPermissionModel: () => Promise<PermissionModel>
+      savePermissionRule: (level: PermissionLevel, effect: PermissionEffect, rule: string) => Promise<void>
+      deletePermissionRule: (level: PermissionLevel, effect: PermissionEffect, rule: string) => Promise<void>
+      getDisallowedTools: (filePath: string) => Promise<string[]>
+      setDisallowedTools: (filePath: string, tools: string[]) => Promise<void>
     }
   }
 }

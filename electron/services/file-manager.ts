@@ -1,6 +1,6 @@
-import { FileManagerClaudeMd } from './file-manager-claudemd'
+import { FileManagerPermissions } from './file-manager-permissions'
 
-export class FileManager extends FileManagerClaudeMd {
+export class FileManager extends FileManagerPermissions {
   private static instance: FileManager
 
   private constructor() {

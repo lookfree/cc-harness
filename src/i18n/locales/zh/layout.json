@@ -11,6 +11,7 @@
     "skills": "技能",
     "plugins": "插件",
     "hooks": "钩子",
+    "permissions": "权限",
     "models": "AI 模型",
     "graph": "依赖关系图",
     "settings": "设置"

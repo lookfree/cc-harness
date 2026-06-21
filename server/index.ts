@@ -122,6 +122,30 @@ app.post('/api/hooks/validate', asyncHandler(async (req, res) => {
   res.json(validateHook(req.body.hook))
 }))
 
+// ============ Permissions API ============
+app.get('/api/permissions', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getPermissionModel())
+}))
+
+app.post('/api/permissions/rule', asyncHandler(async (req, res) => {
+  await fileManager.savePermissionRule(req.body.level, req.body.effect, req.body.rule)
+  res.json({ success: true })
+}))
+
+app.post('/api/permissions/rule/delete', asyncHandler(async (req, res) => {
+  await fileManager.deletePermissionRule(req.body.level, req.body.effect, req.body.rule)
+  res.json({ success: true })
+}))
+
+app.get('/api/permissions/disallowed-tools', asyncHandler(async (req, res) => {
+  res.json(await fileManager.getDisallowedTools(String(req.query.filePath)))
+}))
+
+app.post('/api/permissions/disallowed-tools', asyncHandler(async (req, res) => {
+  await fileManager.setDisallowedTools(req.body.filePath, req.body.tools)
+  res.json({ success: true })
+}))
+
 app.delete('/api/hooks/:name', asyncHandler(async (req, res) => {
   await fileManager.deleteHook(req.params.name)
   res.json({ success: true })

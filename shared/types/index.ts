@@ -6,6 +6,7 @@ export * from './command'
 export * from './claudemd'
 export * from './provider'
 export * from './plugin'
+export * from './permission'
 
 export interface ConfigFile {
   path: string

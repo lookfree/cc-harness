@@ -11,6 +11,7 @@
     "skills": "Skills",
     "plugins": "Plugins",
     "hooks": "Hooks",
+    "permissions": "Permissions",
     "models": "AI Models",
     "graph": "Dependency Graph",
     "settings": "Settings"

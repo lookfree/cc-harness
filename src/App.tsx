@@ -5,6 +5,7 @@ import Skills from './pages/Skills'
 import Plugins from './pages/Plugins'
 import Agents from './pages/Agents'
 import Hooks from './pages/Hooks'
+import Permissions from './pages/Permissions'
 import MCP from './pages/MCP'
 import Commands from './pages/Commands'
 import ClaudeMd from './pages/ClaudeMd'
@@ -26,6 +27,7 @@ function App() {
           <Route path="/skills" element={<Skills />} />
           <Route path="/plugins" element={<Plugins />} />
           <Route path="/hooks" element={<Hooks />} />
+          <Route path="/permissions" element={<Permissions />} />
           <Route path="/models" element={<Models />} />
           <Route path="/graph" element={<Graph />} />
           <Route path="/settings" element={<Settings />} />

@@ -89,7 +89,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pluginDetails: (key) => ipcRenderer.invoke('plugins:details', key),
   enablePlugin: (key) => ipcRenderer.invoke('plugins:enable', key),
   disablePlugin: (key) => ipcRenderer.invoke('plugins:disable', key),
-  initPlugin: (name, cwd) => ipcRenderer.invoke('plugins:init', name, cwd)
+  initPlugin: (name, cwd) => ipcRenderer.invoke('plugins:init', name, cwd),
+
+  // Permissions
+  getPermissionModel: () => ipcRenderer.invoke('permissions:getModel'),
+  savePermissionRule: (level, effect, rule) => ipcRenderer.invoke('permissions:saveRule', level, effect, rule),
+  deletePermissionRule: (level, effect, rule) => ipcRenderer.invoke('permissions:deleteRule', level, effect, rule),
+  getDisallowedTools: (filePath) => ipcRenderer.invoke('permissions:getDisallowedTools', filePath),
+  setDisallowedTools: (filePath, tools) => ipcRenderer.invoke('permissions:setDisallowedTools', filePath, tools)
 })
 
 console.log('[Preload] electronAPI exposed to window')

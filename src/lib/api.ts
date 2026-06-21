@@ -12,6 +12,9 @@ import type {
   Marketplace,
   Plugin,
   PluginCliResult,
+  PermissionModel,
+  PermissionLevel,
+  PermissionEffect,
 } from '@shared/types'
 
 // Detect if running in Electron
@@ -606,6 +609,30 @@ export const api = {
         return await window.electronAPI.initPlugin(name, cwd)
       }
       return { ok: false, cliAvailable: false, message: 'init 仅桌面端可用' }
+    },
+  },
+
+  // Permissions
+  permissions: {
+    getModel: async (): Promise<PermissionModel> => {
+      if (isElectron) return window.electronAPI.getPermissionModel()
+      return httpGet<PermissionModel>('/api/permissions')
+    },
+    saveRule: async (level: PermissionLevel, effect: PermissionEffect, rule: string): Promise<void> => {
+      if (isElectron) return window.electronAPI.savePermissionRule(level, effect, rule)
+      await httpPost('/api/permissions/rule', { level, effect, rule })
+    },
+    deleteRule: async (level: PermissionLevel, effect: PermissionEffect, rule: string): Promise<void> => {
+      if (isElectron) return window.electronAPI.deletePermissionRule(level, effect, rule)
+      await httpPost('/api/permissions/rule/delete', { level, effect, rule })
+    },
+    getDisallowedTools: async (filePath: string): Promise<string[]> => {
+      if (isElectron) return window.electronAPI.getDisallowedTools(filePath)
+      return httpGet<string[]>(`/api/permissions/disallowed-tools?filePath=${encodeURIComponent(filePath)}`)
+    },
+    setDisallowedTools: async (filePath: string, tools: string[]): Promise<void> => {
+      if (isElectron) return window.electronAPI.setDisallowedTools(filePath, tools)
+      await httpPost('/api/permissions/disallowed-tools', { filePath, tools })
     },
   },
 

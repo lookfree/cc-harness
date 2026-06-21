@@ -1,0 +1,45 @@
+{
+  "title": "权限",
+  "description": "可视化编辑 user / project / local 三层的 Tool(param:value) 规则",
+  "effects": {
+    "allow": "允许",
+    "deny": "拒绝",
+    "ask": "询问"
+  },
+  "levels": {
+    "user": "用户",
+    "project": "项目",
+    "local": "本地"
+  },
+  "matrix": {
+    "title": "分层规则",
+    "empty": "该层暂无规则",
+    "overriddenBy": "被 {{level}} 层覆盖",
+    "noFile": "文件不存在"
+  },
+  "builder": {
+    "title": "新增规则",
+    "tool": "工具",
+    "toolPlaceholder": "Bash / WebFetch / Read ...",
+    "param": "参数",
+    "paramKey": "键",
+    "paramValue": "值",
+    "addParam": "添加参数",
+    "level": "目标层",
+    "effect": "效果",
+    "preview": "预览",
+    "add": "添加规则",
+    "glob": "通配"
+  },
+  "disallowed": {
+    "title": "disallowed-tools（frontmatter）",
+    "description": "在 skill/command 中声明禁用的工具",
+    "pickFile": "选择一个 skill 或 command",
+    "noSelection": "选择一个文件来编辑它的 disallowed-tools",
+    "addTool": "添加工具",
+    "toolPlaceholder": "工具名",
+    "empty": "暂无禁用工具",
+    "skills": "技能",
+    "commands": "命令"
+  }
+}

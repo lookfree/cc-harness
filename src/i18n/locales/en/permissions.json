@@ -1,0 +1,45 @@
+{
+  "title": "Permissions",
+  "description": "Visual editor for Tool(param:value) rules across user / project / local layers",
+  "effects": {
+    "allow": "Allow",
+    "deny": "Deny",
+    "ask": "Ask"
+  },
+  "levels": {
+    "user": "User",
+    "project": "Project",
+    "local": "Local"
+  },
+  "matrix": {
+    "title": "Layered rules",
+    "empty": "No rules in this layer",
+    "overriddenBy": "Overridden by {{level}}",
+    "noFile": "File does not exist"
+  },
+  "builder": {
+    "title": "Add a rule",
+    "tool": "Tool",
+    "toolPlaceholder": "Bash / WebFetch / Read ...",
+    "param": "Parameter",
+    "paramKey": "key",
+    "paramValue": "value",
+    "addParam": "Add parameter",
+    "level": "Layer",
+    "effect": "Effect",
+    "preview": "Preview",
+    "add": "Add rule",
+    "glob": "glob"
+  },
+  "disallowed": {
+    "title": "disallowed-tools (frontmatter)",
+    "description": "Declare tools disabled inside a skill/command",
+    "pickFile": "Pick a skill or command",
+    "noSelection": "Select a file to edit its disallowed-tools",
+    "addTool": "Add tool",
+    "toolPlaceholder": "Tool name",
+    "empty": "No disallowed tools",
+    "skills": "Skills",
+    "commands": "Commands"
+  }
+}

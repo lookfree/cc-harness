@@ -85,7 +85,7 @@
 | spec005 | Plugin Marketplace 浏览器 | P1 | SKILL-05/06 | ✅ 完成 |
 | spec006 | Commands 三层来源 | P1 | SKILL（Commands 部分） | ✅ 完成 |
 | spec007 | Hooks 类型系统补全 | P1 | HOOK-01..11 | ✅ 完成 |
-| spec008 | 权限编辑器 | P1 | PERM-01/03/04 | 就绪 |
+| spec008 | 权限编辑器 | P1 | PERM-01/03/04 | ✅ 完成 |
 | spec009 | 配置写入与 settings 分层 | P1 | PERM-02/07 | 就绪 |
 | spec010 | 模型治理面板 | P1 | MODEL-01..05、PERM-05/06 | 就绪 |
 | spec011 | Worktree 配置面板 | P1 | MISC-03 | 就绪 |

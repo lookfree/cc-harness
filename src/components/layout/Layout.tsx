@@ -13,6 +13,7 @@ import {
   FileText,
   Cpu,
   Puzzle,
+  ShieldCheck,
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
@@ -30,6 +31,7 @@ const navigationKeys = [
   { key: 'skills', href: '/skills', icon: Zap },
   { key: 'plugins', href: '/plugins', icon: Puzzle },
   { key: 'hooks', href: '/hooks', icon: Webhook },
+  { key: 'permissions', href: '/permissions', icon: ShieldCheck },
   { key: 'graph', href: '/graph', icon: GitBranch },
   { key: 'settings', href: '/settings', icon: Settings },
 ] as const
