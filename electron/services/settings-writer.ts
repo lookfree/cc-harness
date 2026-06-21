@@ -119,6 +119,17 @@ export class SettingsWriter {
     await fs.rename(tmp, filePath)
   }
 
+  /** 单个点号路径的有效值与来源层（local>project>user，第一个定义的高层胜）。无定义 → undefined。 */
+  async getEffective(keyPath: string): Promise<{ value: unknown; source: SettingsLevel } | undefined> {
+    const layers = await Promise.all(LEVELS.map((l) => this.readLayer(l)))
+    for (const level of [...LEVELS].reverse()) {
+      const layer = layers.find((l) => l.level === level)!
+      const value = getByPath(layer.raw, keyPath)
+      if (value !== undefined) return { value, source: level }
+    }
+    return undefined
+  }
+
   /** 读三层、计算 effective 合并视图（local > project > user）。 */
   async getModel(): Promise<SettingsModel> {
     const layers = await Promise.all(LEVELS.map((l) => this.readLayer(l)))

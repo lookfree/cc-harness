@@ -13,13 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Settings as SettingsIcon, Pencil, Trash2, Save, X, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const LEVELS: SettingsLevel[] = ['user', 'project', 'local']
-const LEVEL_BADGE: Record<SettingsLevel, string> = {
-  user: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  project: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30',
-  local: 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30',
-}
+import { SETTINGS_LEVELS as LEVELS, LEVEL_BADGE_CLASS as LEVEL_BADGE } from '@/lib/settingsLevels'
 
 function LevelSelect({ value, onChange, className }: { value: SettingsLevel; onChange: (v: SettingsLevel) => void; className?: string }) {
   const { t } = useTranslation('settings')

@@ -64,7 +64,7 @@ shared/types/*.ts                    # 主进程/渲染进程共享类型
 - ~~`getCommands()` 用 `<dir>/<dir>.md` 子目录约定，真实是平铺 `commands/*.md`~~（spec006 已修：改扫平铺/命名空间 `commands/**/*.md`，三层来源 + 覆盖检测，plugin 只读）。
 - `getAgents()` 扫 `.json`，但 agent 真相源是 `.md` + YAML frontmatter（spec012 修）。
 - `file-manager.ts:108` chokidar `ignored:/(^|[/\\])\../` 忽略 dotfile——监听 `~/.claude` 实际失效，tail jsonl 不能照搬这条正则（spec014 修）。
-- ~~三层路径里 local 层被误标 `'project'`~~（spec009 已修：base `settingsLayerPaths()` 正确区分 user/project/local，settings 合并视图按 local>project>user）。注：`getHooks` 的 `Hook.location` 仍是二值 `user|project`（local settings.local.json 的 hook 归为 project 展示），改成三值会牵动 save/delete/UI，未做、低优先。
+- ~~三层路径里 local 层被误标 `'project'`~~（spec009 已修：base `settingsLayerPaths()` 正确区分 user/project/local，settings 合并视图按 local>project>user）。注：`getHooks` 的 `Hook.location` 仍是二值 `user|project`，local settings.local.json 的 hook 归为 project 展示**且回写时落到 project settings.json（不是 local）**——改成三值会牵动 save/delete/UI/preload 签名，未做、低优先；动 hooks local 层前先把 `Hook.location` 拓成 `SettingsLevel`。
 - **reactflow 在 deps 但项目从未用过**（`Graph.tsx` 是 lucide 自绘）——Phase 2 拓扑图是首次集成，不是复用。
 
 ## 约定

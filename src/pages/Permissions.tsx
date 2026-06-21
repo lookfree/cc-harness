@@ -11,15 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ShieldCheck, Plus, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SETTINGS_LEVELS as LEVELS, LEVEL_BADGE_CLASS as LEVEL_BADGE } from '@/lib/settingsLevels'
 
-const LEVELS: PermissionLevel[] = ['user', 'project', 'local']
 const EFFECTS: PermissionEffect[] = ['allow', 'deny', 'ask']
 
-const LEVEL_BADGE: Record<PermissionLevel, string> = {
-  user: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  project: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30',
-  local: 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30',
-}
 const EFFECT_BADGE: Record<PermissionEffect, string> = {
   allow: 'bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30',
   deny: 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30',
