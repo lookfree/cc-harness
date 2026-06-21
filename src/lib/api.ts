@@ -19,6 +19,9 @@ import type {
   SettingsLevel,
   SafetyToggles,
   WorktreeConfig,
+  SessionSummary,
+  SessionEvent,
+  SessionEventsPush,
 } from '@shared/types'
 
 // Detect if running in Electron
@@ -666,6 +669,36 @@ export const api = {
     setWorktreeKey: async (level: SettingsLevel, key: 'baseRef' | 'bgIsolation', value: string | undefined): Promise<void> => {
       if (isElectron) return window.electronAPI.setWorktreeKey(level, key, value)
       throw new Error('Editing settings is only available in the desktop app')
+    },
+  },
+
+  // Session monitor (spec015)
+  session: {
+    list: async (): Promise<SessionSummary[]> => {
+      if (isElectron) return window.electronAPI.getSessions()
+      return httpGet<SessionSummary[]>('/api/sessions')
+    },
+    // Web 用 id 反查 filePath（服务端从 listSessions 解析）；桌面端传完整 filePath
+    snapshot: async (id: string, filePath: string): Promise<SessionEvent[]> => {
+      if (isElectron) return window.electronAPI.getSessionSnapshot(id, filePath)
+      return httpGet<SessionEvent[]>(`/api/sessions/${encodeURIComponent(id)}`)
+    },
+    subscribe: async (id: string, filePath: string): Promise<void> => {
+      if (isElectron) {
+        await window.electronAPI.subscribeSession(id, filePath)
+        return
+      }
+      // Web 模式保持只读浏览：无推流（演进路径约定）
+      console.warn('[API] Live session subscription is desktop-only')
+    },
+    unsubscribe: async (id: string): Promise<void> => {
+      if (isElectron) await window.electronAPI.unsubscribeSession(id)
+    },
+    /** 订阅增量事件 push；返回取消监听函数。Web 模式 no-op。 */
+    onEvents: (cb: (payload: SessionEventsPush) => void): (() => void) => {
+      if (isElectron) return window.electronAPI.onSessionEvents(cb)
+      console.warn('[API] Live session events are desktop-only')
+      return () => {}
     },
   },
 

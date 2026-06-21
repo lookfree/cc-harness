@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { FileManager } from '../electron/services/file-manager'
 import { validateHook } from '../electron/services/hook-validation'
+import { SessionMonitor, listSessions } from '../electron/services/session'
 import type { Skill, Agent, Hook, MCPServerConfig, SlashCommand, Provider } from '../shared/types'
 
 const app = express()
@@ -16,6 +17,9 @@ app.use(express.json())
 const fileManager = FileManager.getInstance()
 fileManager.initialize()
 
+// Session 监视器（Web 只读：无推流窗口，仅 list/snapshot）
+const sessionMonitor = new SessionMonitor(() => null)
+
 // Error handling wrapper
 const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
   (req: Request, res: Response, next: NextFunction) => {
@@ -27,6 +31,23 @@ app.get('/api/skills', asyncHandler(async (_req, res) => {
   console.log('[API] GET /api/skills')
   const skills = await fileManager.getSkills()
   res.json(skills)
+}))
+
+// ============ Sessions API (spec015, Web 只读快照，无推流) ============
+app.get('/api/sessions', asyncHandler(async (_req, res) => {
+  console.log('[API] GET /api/sessions')
+  res.json(await sessionMonitor.list())
+}))
+
+app.get('/api/sessions/:id', asyncHandler(async (req, res) => {
+  // Web 端只给 id，服务端反查 filePath 再出全量快照
+  const metas = await listSessions()
+  const meta = metas.find((m) => m.sessionId === req.params.id)
+  if (!meta) {
+    res.status(404).json({ error: 'Session not found' })
+    return
+  }
+  res.json(await sessionMonitor.snapshot(meta.sessionId, meta.filePath))
 }))
 
 // Plugins / Marketplaces — Web 只读镜像（enable/disable/init/details 仅桌面端）

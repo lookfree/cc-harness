@@ -4,6 +4,7 @@
   "version": "v{{version}}",
   "nav": {
     "dashboard": "仪表板",
+    "sessions": "会话监视",
     "claudeMd": "CLAUDE.md",
     "commands": "命令",
     "agents": "子代理",

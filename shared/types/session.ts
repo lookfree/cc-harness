@@ -100,3 +100,51 @@ export interface SessionFileMeta {
   /** 是否含 subagents/ 子目录（spec016 用） */
   hasSubagents: boolean
 }
+
+/**
+ * token 用量小计（spec015 列表展示用，spec017 token 面板会扩展更细粒度）。
+ * total = input + output + cacheCreation + cacheRead（含缓存命中，便于看真实上下文规模）。
+ */
+export interface TokenUsageRollup {
+  inputTokens: number
+  outputTokens: number
+  cacheCreationInputTokens: number
+  cacheReadInputTokens: number
+  /** 全部相加，UI 小计直接用 */
+  totalTokens: number
+}
+
+/** 主→渲染推流 payload（session:events channel，spec015）。 */
+export interface SessionEventsPush {
+  sessionId: string
+  events: SessionEvent[]
+  /** 首屏全量批（订阅瞬间）为 true，后续增量为 false */
+  initial: boolean
+  /** 文件被截断/轮转重置 */
+  truncated?: boolean
+}
+
+/** 会话实时状态（启发式推断，非 CLI 权威——见 spec015 风险节）。 */
+export type SessionLiveStatus = 'active' | 'idle' | 'waiting' | 'completed' | 'unknown'
+
+/** 一个 session 的概要（左栏列表项 + 状态推断结果）。 */
+export interface SessionSummary {
+  sessionId: string
+  cwd: string
+  filePath: string
+  /** 来自 ai-title 元事件（最后一条）；无则前端回落 cwd 短名 */
+  title?: string
+  lastModelUsed?: string
+  status: SessionLiveStatus
+  /** 推断的"在等什么"：最后一条若是无匹配 tool_result 的 tool_use → 工具名 */
+  waitingFor?: string
+  turnCount: number
+  toolUseCount: number
+  totalTokens: TokenUsageRollup
+  startedAt?: string
+  /** = 最后事件 timestamp 或文件 mtime（ISO） */
+  lastActivityAt: string
+  hasSubagents: boolean
+  /** ORCH-05 pinned——本地无稳定契约，暂留空不展示（见 spec015 风险节） */
+  pinned?: boolean
+}

@@ -67,6 +67,8 @@ shared/types/*.ts                    # 主进程/渲染进程共享类型
 - ~~三层路径里 local 层被误标 `'project'`~~（spec009 已修：base `settingsLayerPaths()` 正确区分 user/project/local，settings 合并视图按 local>project>user）。注：`getHooks` 的 `Hook.location` 仍是二值 `user|project`，local settings.local.json 的 hook 归为 project 展示**且回写时落到 project settings.json（不是 local）**——改成三值会牵动 save/delete/UI/preload 签名，未做、低优先；动 hooks local 层前先把 `Hook.location` 拓成 `SettingsLevel`。
 - **reactflow 在 deps 但项目从未用过**（`Graph.tsx` 是 lucide 自绘）——Phase 2 拓扑图是首次集成，不是复用。
 
+**主进程持续推流范式（spec015 建立）**：原先只有 invoke 请求/响应，唯一"push"是 `onFilesChanged`——但它其实**从未接线**（preload 监听 `files:changed`，没人 `webContents.send`）。spec015 才真正建起：`SessionMonitor(() => mainWindow)`（`electron/services/session/session-monitor.ts`）在 `main.ts` 实例化，`SessionTailer` 的增量经 `mainWindow.webContents.send('session:events', payload)` push；preload `onSessionEvents(cb)` 接收并**返回取消监听句柄**（用 `ipcRenderer.removeListener`，别像旧 `onFilesChanged` 那样泄漏）。窗口关闭/退出在 `main.ts` 调 `sessionMonitor.unsubscribeAll()` 防句柄泄漏。**会话状态推断是纯函数** `summarizeEvents`（`shared/session-summary.ts`，无 fs/electron 依赖），后端 `list()` 与前端 store live 更新**共用同一套**——状态/计数/token 只此一处真相，别在前端另写一份。`sessions` i18n namespace 已建（en+zh）。
+
 ## 约定
 
 - 改主进程（`electron/`）要重启 Electron；改前端（`src/`）有热重载。

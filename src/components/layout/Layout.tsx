@@ -14,6 +14,7 @@ import {
   Cpu,
   Puzzle,
   ShieldCheck,
+  Activity,
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
@@ -23,6 +24,7 @@ interface LayoutProps {
 
 const navigationKeys = [
   { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { key: 'sessions', href: '/sessions', icon: Activity },
   { key: 'models', href: '/models', icon: Cpu },
   { key: 'claudeMd', href: '/claude-md', icon: FileText },
   { key: 'commands', href: '/commands', icon: Terminal },

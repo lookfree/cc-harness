@@ -4,6 +4,7 @@
   "version": "v{{version}}",
   "nav": {
     "dashboard": "Dashboard",
+    "sessions": "Sessions",
     "claudeMd": "CLAUDE.md",
     "commands": "Commands",
     "agents": "Subagents",

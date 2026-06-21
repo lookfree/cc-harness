@@ -1,0 +1,42 @@
+{
+  "title": "Session Monitor",
+  "search": "Search title or path…",
+  "empty": "No sessions found",
+  "selectPrompt": "Select a session to view its replay and timeline",
+  "heuristicNote": "Status is heuristically inferred (no CLI), not authoritative",
+  "compare": "Compare",
+  "compareEmpty": "Pick up to 3 sessions from the list to compare their timelines",
+  "compareHint": "Multi-select up to {{max}} sessions; timelines share one aligned time axis",
+  "waitingFor": "waiting: {{tool}}",
+  "filter": {
+    "all": "All"
+  },
+  "status": {
+    "active": "Active",
+    "waiting": "Waiting",
+    "idle": "Idle",
+    "completed": "Completed",
+    "unknown": "Unknown"
+  },
+  "tab": {
+    "replay": "Replay",
+    "timeline": "Timeline"
+  },
+  "replay": {
+    "count": "{{count}} events",
+    "following": "Following",
+    "paused": "Paused",
+    "locked": "Auto-scroll on",
+    "unlocked": "Auto-scroll off"
+  },
+  "card": {
+    "user": "User",
+    "assistant": "Assistant",
+    "toolUse": "Tool",
+    "toolResult": "Result",
+    "toolError": "Error",
+    "system": "System",
+    "thinking": "thinking · {{chars}} chars",
+    "noText": "(no text)"
+  }
+}

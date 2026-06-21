@@ -68,6 +68,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('files:changed', (_event, files) => callback(files))
   },
 
+  // Session monitor (spec015)
+  getSessions: () => ipcRenderer.invoke('session:list'),
+  getSessionSnapshot: (id, filePath) => ipcRenderer.invoke('session:snapshot', id, filePath),
+  subscribeSession: (id, filePath) => ipcRenderer.invoke('session:subscribe', id, filePath),
+  unsubscribeSession: (id) => ipcRenderer.invoke('session:unsubscribe', id),
+  onSessionEvents: (callback) => {
+    const handler = (_event, payload) => callback(payload)
+    ipcRenderer.on('session:events', handler)
+    return () => ipcRenderer.removeListener('session:events', handler)
+  },
+
   // Dependencies
   getDependencyGraph: () => ipcRenderer.invoke('dependencies:getGraph'),
 

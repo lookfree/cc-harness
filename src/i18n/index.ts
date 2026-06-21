@@ -16,6 +16,7 @@ import permissionsEn from './locales/en/permissions.json'
 import settingsEn from './locales/en/settings.json'
 import agentsEn from './locales/en/agents.json'
 import mcpEn from './locales/en/mcp.json'
+import sessionsEn from './locales/en/sessions.json'
 
 import commonZh from './locales/zh/common.json'
 import layoutZh from './locales/zh/layout.json'
@@ -29,6 +30,7 @@ import permissionsZh from './locales/zh/permissions.json'
 import settingsZh from './locales/zh/settings.json'
 import agentsZh from './locales/zh/agents.json'
 import mcpZh from './locales/zh/mcp.json'
+import sessionsZh from './locales/zh/sessions.json'
 
 export const resources = {
   en: {
@@ -44,6 +46,7 @@ export const resources = {
     settings: settingsEn,
     agents: agentsEn,
     mcp: mcpEn,
+    sessions: sessionsEn,
   },
   zh: {
     common: commonZh,
@@ -58,6 +61,7 @@ export const resources = {
     settings: settingsZh,
     agents: agentsZh,
     mcp: mcpZh,
+    sessions: sessionsZh,
   },
 } as const
 

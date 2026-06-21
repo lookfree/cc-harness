@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -95,6 +95,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File watching
   onFilesChanged: (callback: (files: ConfigFile[]) => void) => {
     ipcRenderer.on('files:changed', (_event, files) => callback(files))
+  },
+
+  // Session monitor (spec015)
+  getSessions: (): Promise<SessionSummary[]> => ipcRenderer.invoke('session:list'),
+  getSessionSnapshot: (id: string, filePath: string): Promise<SessionEvent[]> =>
+    ipcRenderer.invoke('session:snapshot', id, filePath),
+  subscribeSession: (id: string, filePath: string): Promise<boolean> =>
+    ipcRenderer.invoke('session:subscribe', id, filePath),
+  unsubscribeSession: (id: string): Promise<boolean> => ipcRenderer.invoke('session:unsubscribe', id),
+  onSessionEvents: (callback: (payload: SessionEventsPush) => void): (() => void) => {
+    const handler = (_event: unknown, payload: SessionEventsPush) => callback(payload)
+    ipcRenderer.on('session:events', handler)
+    return () => ipcRenderer.removeListener('session:events', handler)
   },
 
   // Dependencies
@@ -233,6 +246,13 @@ declare global {
 
       // File watching
       onFilesChanged: (callback: (files: ConfigFile[]) => void) => void
+
+      // Session monitor (spec015)
+      getSessions: () => Promise<SessionSummary[]>
+      getSessionSnapshot: (id: string, filePath: string) => Promise<SessionEvent[]>
+      subscribeSession: (id: string, filePath: string) => Promise<boolean>
+      unsubscribeSession: (id: string) => Promise<boolean>
+      onSessionEvents: (callback: (payload: SessionEventsPush) => void) => () => void
 
       // Dependencies
       getDependencyGraph: () => Promise<{ nodes: unknown[]; edges: unknown[] }>

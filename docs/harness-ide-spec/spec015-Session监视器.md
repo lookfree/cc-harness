@@ -122,16 +122,23 @@ Web 模式（`server/index.ts`）：只加 `GET /api/sessions`（list）+ `GET /
 
 ## 实现步骤
 
-- [ ] 1. `shared/types/session.ts`：加 `SessionLiveStatus` / `SessionSummary`。
-- [ ] 2. `electron/services/session/session-monitor.ts`：`SessionMonitor`（list/snapshot/subscribe + 状态推断）。
-- [ ] 3. `electron/ipc/session.ts`：4 个 handler；在 `electron/ipc/index.ts` 注册（new `registerSessionHandlers`）。
-- [ ] 4. `electron/preload.cjs` + `preload.ts`：暴露 getSessions/snapshot/subscribe/unsubscribe/onSessionEvents/onSessionStatus。
-- [ ] 5. `src/lib/api.ts`：`session` 命名空间。
-- [ ] 6. `server/index.ts`：`GET /api/sessions` + `GET /api/sessions/:id`（只读快照）。
-- [ ] 7. `src/stores/sessionStore.ts`：Zustand store + push 合并逻辑。
-- [ ] 8. `src/pages/Sessions.tsx`：左列表 / 双视图 Tab / 多选比对；接路由与侧栏（`src/components/layout/Layout.tsx`）。
-- [ ] 9. （可选）CLI 探测增强 `claude agents --json`。
-- [ ] 10. i18n：`src/i18n/locales/{en,zh}/sessions.json`。
+- [x] 1. `shared/types/session.ts`：加 `SessionLiveStatus` / `SessionSummary` / `TokenUsageRollup` / `SessionEventsPush`。
+- [x] 2. `electron/services/session/session-monitor.ts`：`SessionMonitor`（list/snapshot/subscribe）。状态推断抽到 `shared/session-summary.ts` 的纯函数 `summarizeEvents`，前后端共用（单一真相源）。
+- [x] 3. `electron/ipc/session.ts`：4 个 handler；`main.ts` 实例化 `SessionMonitor(() => mainWindow)` 并 `registerSessionHandlers`（注：原 `files:changed` push 其实从未接线，本 spec 才真正建立推流范式）。
+- [x] 4. `electron/preload.cjs` + `preload.ts`：暴露 getSessions/getSessionSnapshot/subscribeSession/unsubscribeSession/onSessionEvents（返回取消监听句柄）。
+- [x] 5. `src/lib/api.ts`：`session` 命名空间。
+- [x] 6. `server/index.ts`：`GET /api/sessions` + `GET /api/sessions/:id`（只读快照，Web 端按 id 反查 filePath）。
+- [x] 7. `src/stores/sessionStore.ts`：Zustand store + push 按 `seq` 去重合并 + `summarizeEvents` 重算 live 状态。
+- [x] 8. `src/pages/Sessions.tsx` + `src/components/sessions/{SessionList,ConversationReplay,SessionTimeline,sessionStatus}`：左列表 / 双视图 Tab / 多选比对；接路由与侧栏。
+- [ ] 9. （可选，未做）CLI 探测增强 `claude agents --json`——`claude` 不在 PATH，留待后续。
+- [x] 10. i18n：`src/i18n/locales/{en,zh}/sessions.json` + 注册 + layout nav 标签。
+
+### 实际实现（与方案的偏差，已落地）
+
+- **不另起 `session:status` channel**：状态由客户端从累积事件经 `summarizeEvents`（shared 纯函数）派生，与后端 `list()` 同一套逻辑 → 单一真相源、单推流通道、无死 API。`onSessionStatus` 因此未暴露。
+- **桌面端首屏不单独调 `snapshot`**：订阅时 `SessionTailer` 的 initial 全量 push（`initial:true`）即灌满首屏；`snapshot()` 仅 Web 用 + 作显式 API。两路 `seq` 一致，store 按 seq 去重，重复也无害。
+- **`pinned`（ORCH-05）/ bg（ORCH-04）留空不展示**——本地无稳定文件契约，避免编造（见风险节）。
+- **`list()` 全量解析每个文件**算概要：实测本机 40 个 session（含 35MB 大会话）≈ 488ms，可接受；后续大规模再加 mtime 缓存。
 
 ## 验收标准
 

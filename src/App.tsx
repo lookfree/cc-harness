@@ -12,6 +12,7 @@ import ClaudeMd from './pages/ClaudeMd'
 import Graph from './pages/Graph'
 import Models from './pages/Models'
 import Settings from './pages/Settings'
+import Sessions from './pages/Sessions'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/sessions" element={<Sessions />} />
           <Route path="/claude-md" element={<ClaudeMd />} />
           <Route path="/commands" element={<Commands />} />
           <Route path="/agents" element={<Agents />} />

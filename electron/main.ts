@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url'
 import fs from 'fs'
 import { FileManager } from './services/file-manager'
 import { registerIPCHandlers } from './ipc'
+import { registerSessionHandlers } from './ipc/session'
+import { SessionMonitor } from './services/session'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -27,6 +29,8 @@ process.stderr?.on('error', (err) => {
 })
 
 let mainWindow: BrowserWindow | null = null
+// spec015：session 监视器，建立"主进程持续推流"范式（getWin 始终拿当前窗口）
+const sessionMonitor = new SessionMonitor(() => mainWindow)
 
 const createWindow = () => {
   // In development and production, preload.cjs is in the same directory as main.js after build
@@ -69,6 +73,8 @@ const createWindow = () => {
   }
 
   mainWindow.on('closed', () => {
+    // 窗口关闭时停掉所有 session tail，防 chokidar 句柄泄漏
+    sessionMonitor.unsubscribeAll()
     mainWindow = null
   })
 }
@@ -81,6 +87,7 @@ app.whenReady().then(() => {
 
   // Register IPC handlers
   registerIPCHandlers(ipcMain, fileManager)
+  registerSessionHandlers(ipcMain, sessionMonitor)
 
   createWindow()
 
@@ -101,6 +108,7 @@ app.on('window-all-closed', () => {
 
 // Handle app quit
 app.on('will-quit', () => {
+  sessionMonitor.unsubscribeAll()
   const fileManager = FileManager.getInstance()
   fileManager.cleanup()
 })

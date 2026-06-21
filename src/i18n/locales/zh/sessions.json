@@ -1,0 +1,42 @@
+{
+  "title": "Session 监视器",
+  "search": "搜索标题或路径…",
+  "empty": "没有找到 session",
+  "selectPrompt": "选择一个 session 查看对话回放与时间线",
+  "heuristicNote": "状态为启发式推断（无 CLI），非权威",
+  "compare": "比对",
+  "compareEmpty": "从列表勾选最多 3 个 session 比对时间线",
+  "compareHint": "最多多选 {{max}} 个 session，时间线共享同一对齐时间轴",
+  "waitingFor": "在等：{{tool}}",
+  "filter": {
+    "all": "全部"
+  },
+  "status": {
+    "active": "活跃",
+    "waiting": "等待中",
+    "idle": "空闲",
+    "completed": "已结束",
+    "unknown": "未知"
+  },
+  "tab": {
+    "replay": "对话回放",
+    "timeline": "时间线"
+  },
+  "replay": {
+    "count": "{{count}} 条事件",
+    "following": "跟随",
+    "paused": "已暂停",
+    "locked": "自动滚动开",
+    "unlocked": "自动滚动关"
+  },
+  "card": {
+    "user": "用户",
+    "assistant": "助手",
+    "toolUse": "工具",
+    "toolResult": "结果",
+    "toolError": "错误",
+    "system": "系统",
+    "thinking": "思考 · {{chars}} 字",
+    "noText": "（无文本）"
+  }
+}
