@@ -42,7 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // MCP
   getMCPServers: () => ipcRenderer.invoke('mcp:getAll'),
   getMCPServer: (name) => ipcRenderer.invoke('mcp:get', name),
-  saveMCPServer: (name, config) => ipcRenderer.invoke('mcp:save', name, config),
+  saveMCPServer: (name, config, location) => ipcRenderer.invoke('mcp:save', name, config, location),
+  getMCPServerSources: () => ipcRenderer.invoke('mcp:getSources'),
   deleteMCPServer: (name) => ipcRenderer.invoke('mcp:delete', name),
   testMCPConnection: (name) => ipcRenderer.invoke('mcp:test', name),
 

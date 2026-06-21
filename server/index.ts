@@ -237,6 +237,10 @@ app.get('/api/mcp', asyncHandler(async (_req, res) => {
   res.json(servers)
 }))
 
+app.get('/api/mcp/sources', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getMCPServerSources())
+}))
+
 app.get('/api/mcp/:name', asyncHandler(async (req, res) => {
   const servers = await fileManager.getMCPServers()
   const server = servers[req.params.name]
@@ -248,16 +252,15 @@ app.get('/api/mcp/:name', asyncHandler(async (req, res) => {
 }))
 
 app.post('/api/mcp/:name', asyncHandler(async (req, res) => {
-  const servers = await fileManager.getMCPServers()
-  servers[req.params.name] = req.body as MCPServerConfig
-  await fileManager.saveMCPServers(servers)
+  // 兼容旧 body（直接是 config）与新 body（{config, location}）
+  const body = req.body as { config?: MCPServerConfig; location?: 'user' | 'project' } & MCPServerConfig
+  const config = (body.config ?? body) as MCPServerConfig
+  await fileManager.saveMCPServer(req.params.name, config, body.location)
   res.json({ success: true })
 }))
 
 app.delete('/api/mcp/:name', asyncHandler(async (req, res) => {
-  const servers = await fileManager.getMCPServers()
-  delete servers[req.params.name]
-  await fileManager.saveMCPServers(servers)
+  await fileManager.deleteMCPServer(req.params.name)
   res.json({ success: true })
 }))
 

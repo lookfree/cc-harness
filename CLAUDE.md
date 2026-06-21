@@ -57,12 +57,12 @@ shared/types/*.ts                    # 主进程/渲染进程共享类型
 - **Auto Memory** → `~/.claude/projects/<encoded-cwd>/memory/MEMORY.md` + topic 文件。
 - `claude` CLI **不在 PATH**——所有"改配置"以直接读写文件为主路径，CLI 仅作可选增强。
 
-**写 settings.json 的铁律（spec009 已落地）**：统一走 `electron/services/settings-writer.ts` 的 `SettingsWriter`（read-modify-write 整对象 + `.tmp`+rename 原子写 + 保留未知字段；`writeKey(level,keyPath,value)` 点号路径，`value===undefined` 即 unset）。FileManager 在 base 持有 `settingsWriter`，门面 `getSettingsModel/setSettingKey/getSafetyToggles`。**禁止** `writeJSONFile` 整覆盖 settings。hooks（`saveHookToSettings`/`deleteHookFromSettings`）、permissions（`savePermissionRule`/`deletePermissionRule`）已收口到它。**未迁的唯一例外**：`provider-manager.ts` 的 `syncToClaudeSettings`（只动 `env.ANTHROPIC_*`）仍自管 read-modify-write——spec009 步骤 4b 登记的跟进项（并发 lost-update 风险），后续应一并迁入或加进程内写锁。新写 settings 一律走 `settingsWriter`。
+**写 settings.json 的铁律（spec009 已落地）**：统一走 `electron/services/settings-writer.ts` 的 `SettingsWriter`（read-modify-write 整对象 + `.tmp`+rename 原子写 + 保留未知字段；`writeKey(level,keyPath,value)` 点号路径，`value===undefined` 即 unset）。FileManager 在 base 持有 `settingsWriter`，门面 `getSettingsModel/setSettingKey/getSafetyToggles`。**禁止** `writeJSONFile` 整覆盖 settings。hooks（`saveHookToSettings`/`deleteHookFromSettings`）、permissions（`savePermissionRule`/`deletePermissionRule`）已收口到它；**MCP**（spec013）也复用同一个 `SettingsWriter`——`file-manager-mcp.ts` 用 MCP 路径（user→`claude_mcp_config.json` / project→`.claude/mcpServers.json`）实例化一个 `mcpWriter`，单 server upsert/delete 走它的 read-modify-write，不另写原子写。**未迁的唯一例外**：`provider-manager.ts` 的 `syncToClaudeSettings`（只动 `env.ANTHROPIC_*`）仍自管 read-modify-write——spec009 步骤 4b 登记的跟进项（并发 lost-update 风险），后续应一并迁入或加进程内写锁。新写 settings 一律走 `settingsWriter`。
 
 **现状里几个已知偏差（spec 已认领修）**：
 - `file-manager.ts:192` 硬编码扫 `plugins/marketplaces/anthropic-agent-skills`——该目录在 2.1.x 已不存在，导致 Skills 页扫不到任何 plugin skill（spec003/004 修）。
 - ~~`getCommands()` 用 `<dir>/<dir>.md` 子目录约定，真实是平铺 `commands/*.md`~~（spec006 已修：改扫平铺/命名空间 `commands/**/*.md`，三层来源 + 覆盖检测，plugin 只读）。
-- `getAgents()` 扫 `.json`，但 agent 真相源是 `.md` + YAML frontmatter（spec012 修）。
+- ~~`getAgents()` 扫 `.json`，但 agent 真相源是 `.md` + YAML frontmatter~~（spec012 已修：扫 `*.md` + frontmatter，三层来源 + 覆盖检测，plugin 只读）。
 - `file-manager.ts:108` chokidar `ignored:/(^|[/\\])\../` 忽略 dotfile——监听 `~/.claude` 实际失效，tail jsonl 不能照搬这条正则（spec014 修）。
 - ~~三层路径里 local 层被误标 `'project'`~~（spec009 已修：base `settingsLayerPaths()` 正确区分 user/project/local，settings 合并视图按 local>project>user）。注：`getHooks` 的 `Hook.location` 仍是二值 `user|project`，local settings.local.json 的 hook 归为 project 展示**且回写时落到 project settings.json（不是 local）**——改成三值会牵动 save/delete/UI/preload 签名，未做、低优先；动 hooks local 层前先把 `Hook.location` 拓成 `SettingsLevel`。
 - **reactflow 在 deps 但项目从未用过**（`Graph.tsx` 是 lucide 自绘）——Phase 2 拓扑图是首次集成，不是复用。

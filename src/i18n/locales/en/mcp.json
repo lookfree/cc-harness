@@ -1,0 +1,48 @@
+{
+  "title": "MCP Servers",
+  "description": "Configure Model Context Protocol servers (config layer)",
+  "loading": "Loading MCP servers...",
+  "empty": "No MCP servers configured yet.",
+  "parallelNote": "MCP parallel startup (2.1.116) is controlled by the Claude Code runtime; this page only configures. alwaysLoad force-loads a server (2.1.121).",
+  "healthNote": "Connection status / handshake / call stats live in the MCP Health panel (Phase 2).",
+  "groups": {
+    "local": "Local stdio servers",
+    "remote": "Remote connectors (claude.ai / http / sse)"
+  },
+  "fields": {
+    "command": "Command",
+    "args": "Arguments",
+    "env": "Environment variables",
+    "url": "URL",
+    "headers": "Headers",
+    "timeout": "Timeout",
+    "alwaysLoad": "Always load",
+    "alwaysLoadDesc": "Force-load this server (2.1.121)",
+    "elicitation": "Elicitation",
+    "elicitationSupported": "Supports elicitation",
+    "disabled": "Disabled",
+    "transport": "Transport"
+  },
+  "actions": {
+    "add": "Add server",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "dialog": {
+    "addTitle": "Add MCP server",
+    "editTitle": "Edit MCP server",
+    "name": "Name",
+    "namePlaceholder": "my-server",
+    "descriptionLabel": "Description",
+    "targetFile": "Target file",
+    "fileUser": "User (claude_mcp_config.json)",
+    "fileProject": "Project (.claude/mcpServers.json)",
+    "commandPlaceholder": "npx",
+    "argsPlaceholder": "-y, @modelcontextprotocol/server-filesystem",
+    "urlPlaceholder": "https://mcp.example.com/sse",
+    "descriptionPlaceholder": "What this server does",
+    "confirmDelete": "Delete MCP server \"{{name}}\"?"
+  }
+}

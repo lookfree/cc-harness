@@ -360,11 +360,15 @@ export const api = {
         }
       }
     },
-    save: async (name: string, config: MCPServerConfig): Promise<void> => {
+    getSources: async (): Promise<Record<string, 'user' | 'project'>> => {
+      if (isElectron) return window.electronAPI.getMCPServerSources()
+      return httpGet<Record<string, 'user' | 'project'>>('/api/mcp/sources')
+    },
+    save: async (name: string, config: MCPServerConfig, location?: 'user' | 'project'): Promise<void> => {
       if (isElectron) {
-        return window.electronAPI.saveMCPServer(name, config)
+        return window.electronAPI.saveMCPServer(name, config, location)
       } else {
-        await httpPost(`/api/mcp/${encodeURIComponent(name)}`, config)
+        await httpPost(`/api/mcp/${encodeURIComponent(name)}`, { config, location })
       }
     },
     delete: async (name: string): Promise<void> => {

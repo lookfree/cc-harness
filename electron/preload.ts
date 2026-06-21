@@ -71,7 +71,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // MCP
   getMCPServers: (): Promise<MCPServers> => ipcRenderer.invoke('mcp:getAll'),
   getMCPServer: (name: string): Promise<MCPServerConfig | null> => ipcRenderer.invoke('mcp:get', name),
-  saveMCPServer: (name: string, config: MCPServerConfig): Promise<void> => ipcRenderer.invoke('mcp:save', name, config),
+  getMCPServerSources: (): Promise<Record<string, 'user' | 'project'>> => ipcRenderer.invoke('mcp:getSources'),
+  saveMCPServer: (name: string, config: MCPServerConfig, location?: 'user' | 'project'): Promise<void> => ipcRenderer.invoke('mcp:save', name, config, location),
   deleteMCPServer: (name: string): Promise<void> => ipcRenderer.invoke('mcp:delete', name),
   testMCPConnection: (name: string): Promise<{ success: boolean; message?: string }> => ipcRenderer.invoke('mcp:test', name),
 
@@ -209,7 +210,8 @@ declare global {
       // MCP
       getMCPServers: () => Promise<MCPServers>
       getMCPServer: (name: string) => Promise<MCPServerConfig | null>
-      saveMCPServer: (name: string, config: MCPServerConfig) => Promise<void>
+      getMCPServerSources: () => Promise<Record<string, 'user' | 'project'>>
+      saveMCPServer: (name: string, config: MCPServerConfig, location?: 'user' | 'project') => Promise<void>
       deleteMCPServer: (name: string) => Promise<void>
       testMCPConnection: (name: string) => Promise<{ success: boolean; message?: string }>
 

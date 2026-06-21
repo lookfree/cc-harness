@@ -12,16 +12,16 @@ export function registerMCPHandlers(ipcMain: IpcMain, fileManager: FileManager) 
     return servers[name] || null
   })
 
-  ipcMain.handle('mcp:save', async (_event, name: string, config: MCPServerConfig) => {
-    const servers = await fileManager.getMCPServers()
-    servers[name] = config
-    await fileManager.saveMCPServers(servers)
+  ipcMain.handle('mcp:getSources', async () => {
+    return await fileManager.getMCPServerSources()
+  })
+
+  ipcMain.handle('mcp:save', async (_event, name: string, config: MCPServerConfig, location?: 'user' | 'project') => {
+    await fileManager.saveMCPServer(name, config, location)
   })
 
   ipcMain.handle('mcp:delete', async (_event, name: string) => {
-    const servers = await fileManager.getMCPServers()
-    delete servers[name]
-    await fileManager.saveMCPServers(servers)
+    await fileManager.deleteMCPServer(name)
   })
 
   ipcMain.handle('mcp:test', async (_event, _name: string) => {
