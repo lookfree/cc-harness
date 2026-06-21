@@ -1,0 +1,44 @@
+{
+  "title": "Settings",
+  "description": "Layered settings.json overview (user / project / local) with key=value editing",
+  "levels": {
+    "user": "User",
+    "project": "Project",
+    "local": "Local"
+  },
+  "raw": {
+    "title": "Quick write (key=value)",
+    "placeholder": "model=claude-opus-4-8 or worktree.baseRef=main",
+    "hint": "Value is parsed as JSON when possible, otherwise stored as a string",
+    "write": "Write",
+    "invalid": "Enter key=value"
+  },
+  "table": {
+    "title": "Effective settings",
+    "key": "Key",
+    "value": "Value",
+    "source": "Source",
+    "overridden": "Also in",
+    "empty": "No settings found",
+    "actions": "Actions"
+  },
+  "edit": {
+    "title": "Edit setting",
+    "level": "Target layer",
+    "value": "Value (JSON)",
+    "valueHint": "e.g. \"claude-opus-4-8\", true, [\"a\",\"b\"], {\"k\":1}",
+    "save": "Save",
+    "unset": "Unset",
+    "cancel": "Cancel",
+    "parseError": "Value is not valid JSON"
+  },
+  "toggles": {
+    "title": "Safety switches",
+    "disableBundledSkills": "Disable bundled skills",
+    "disableBundledSkillsDesc": "Hide Claude Code's built-in skills (settings.json disableBundledSkills, 2.1.169). Written to the user layer.",
+    "safeMode": "--safe-mode",
+    "safeModeDesc": "A CLI launch flag that disables all customizations for troubleshooting. Not a settings field — run `claude --safe-mode`; the tool cannot toggle it.",
+    "cd": "/cd",
+    "cdDesc": "A CLI command that switches working directory without breaking the cache. Read-only note."
+  }
+}

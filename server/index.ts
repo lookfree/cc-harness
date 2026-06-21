@@ -146,6 +146,15 @@ app.post('/api/permissions/disallowed-tools', asyncHandler(async (req, res) => {
   res.json({ success: true })
 }))
 
+// ============ Settings API (read-only in web; writes are desktop-only) ============
+app.get('/api/settings/model', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getSettingsModel())
+}))
+
+app.get('/api/settings/toggles', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getSafetyToggles())
+}))
+
 app.delete('/api/hooks/:name', asyncHandler(async (req, res) => {
   await fileManager.deleteHook(req.params.name)
   res.json({ success: true })

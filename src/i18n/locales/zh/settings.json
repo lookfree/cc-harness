@@ -1,0 +1,44 @@
+{
+  "title": "设置",
+  "description": "三层 settings.json（user / project / local）总览与 key=value 编辑",
+  "levels": {
+    "user": "用户",
+    "project": "项目",
+    "local": "本地"
+  },
+  "raw": {
+    "title": "快速写入（key=value）",
+    "placeholder": "model=claude-opus-4-8 或 worktree.baseRef=main",
+    "hint": "值优先按 JSON 解析，失败则按字符串存",
+    "write": "写入",
+    "invalid": "请输入 key=value"
+  },
+  "table": {
+    "title": "有效设置",
+    "key": "键",
+    "value": "值",
+    "source": "来源层",
+    "overridden": "也存在于",
+    "empty": "没有找到设置",
+    "actions": "操作"
+  },
+  "edit": {
+    "title": "编辑设置",
+    "level": "目标层",
+    "value": "值（JSON）",
+    "valueHint": "如 \"claude-opus-4-8\"、true、[\"a\",\"b\"]、{\"k\":1}",
+    "save": "保存",
+    "unset": "删除",
+    "cancel": "取消",
+    "parseError": "值不是合法 JSON"
+  },
+  "toggles": {
+    "title": "安全开关",
+    "disableBundledSkills": "禁用内置 skill",
+    "disableBundledSkillsDesc": "隐藏 Claude Code 内置 skill（settings.json disableBundledSkills，2.1.169）。写入 user 层。",
+    "safeMode": "--safe-mode",
+    "safeModeDesc": "启动 flag，禁所有定制以排障。不是 settings 字段——需 `claude --safe-mode`，工具不可代启动。",
+    "cd": "/cd",
+    "cdDesc": "不破坏缓存切换工作目录的 CLI 命令。只读说明。"
+  }
+}

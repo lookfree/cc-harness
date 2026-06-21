@@ -96,7 +96,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   savePermissionRule: (level, effect, rule) => ipcRenderer.invoke('permissions:saveRule', level, effect, rule),
   deletePermissionRule: (level, effect, rule) => ipcRenderer.invoke('permissions:deleteRule', level, effect, rule),
   getDisallowedTools: (filePath) => ipcRenderer.invoke('permissions:getDisallowedTools', filePath),
-  setDisallowedTools: (filePath, tools) => ipcRenderer.invoke('permissions:setDisallowedTools', filePath, tools)
+  setDisallowedTools: (filePath, tools) => ipcRenderer.invoke('permissions:setDisallowedTools', filePath, tools),
+
+  // Settings (统一写入层 spec009)
+  getSettingsModel: () => ipcRenderer.invoke('settings:getModel'),
+  setSettingKey: (level, keyPath, value) => ipcRenderer.invoke('settings:setKey', level, keyPath, value),
+  getSafetyToggles: () => ipcRenderer.invoke('settings:getToggles')
 })
 
 console.log('[Preload] electronAPI exposed to window')

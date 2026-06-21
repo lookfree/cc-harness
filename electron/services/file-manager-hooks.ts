@@ -204,21 +204,14 @@ export class FileManagerHooks extends FileManagerAgents {
       if (!valid) throw new Error(`Invalid hook action: ${errors.join('; ')}`)
     }
 
-    // Read existing settings
-    let settings: Record<string, unknown> = {}
-    try {
-      const content = await fs.readFile(settingsPath, 'utf-8')
-      settings = JSON.parse(content)
-    } catch {
-      // File doesn't exist or is invalid, start with empty settings
-    }
-
-    // Initialize hooks object if it doesn't exist
-    if (!settings.hooks) {
-      settings.hooks = {}
-    }
-
-    const hooksObj = settings.hooks as Record<string, unknown[]>
+    // 读现有 hooks 子树（统一走 SettingsWriter；其余顶层 key 由 writeKeyAtPath 保留，spec009）
+    const snap = await this.settingsWriter.readAtPath(settingsPath, location)
+    if (snap.parseError) throw new Error(`settings.json 解析失败，未写入：${snap.parseError}`)
+    const rawHooks = snap.raw.hooks
+    const hooksObj: Record<string, unknown[]> =
+      rawHooks && typeof rawHooks === 'object' && !Array.isArray(rawHooks)
+        ? (rawHooks as Record<string, unknown[]>)
+        : {}
 
     // Initialize this hook type array if it doesn't exist
     if (!hooksObj[hookType]) {
@@ -250,12 +243,7 @@ export class FileManagerHooks extends FileManagerAgents {
       this.logger.info('Added new hook config')
     }
 
-    // Ensure directory exists
-    const dir = path.dirname(settingsPath)
-    await fs.mkdir(dir, { recursive: true })
-
-    // Write back settings
-    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8')
+    await this.settingsWriter.writeKeyAtPath(settingsPath, 'hooks', hooksObj)
     this.logger.info('Saved hook to settings:', settingsPath)
   }
 
@@ -272,17 +260,13 @@ export class FileManagerHooks extends FileManagerAgents {
 
     this.logger.info('Deleting hook from settings:', settingsPath, 'type:', hookType, 'index:', matcherIndex)
 
-    // Read existing settings
-    let settings: Record<string, unknown> = {}
-    try {
-      const content = await fs.readFile(settingsPath, 'utf-8')
-      settings = JSON.parse(content)
-    } catch {
+    // Read existing settings（统一走 SettingsWriter）
+    const snap = await this.settingsWriter.readAtPath(settingsPath, location)
+    if (!snap.exists) {
       this.logger.warn('Settings file not found:', settingsPath)
       return
     }
-
-    const hooksObj = settings.hooks as Record<string, Array<{
+    const hooksObj = snap.raw.hooks as Record<string, Array<{
       matcher?: string
       hooks?: Array<{
         type: string
@@ -328,13 +312,9 @@ export class FileManagerHooks extends FileManagerAgents {
       delete hooksObj[hookType]
     }
 
-    // Remove hooks object if empty
-    if (Object.keys(hooksObj).length === 0) {
-      delete settings.hooks
-    }
-
-    // Write back settings
-    await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf-8')
+    // hooks 子树空了就整 key unset，否则写回；其余顶层 key 由 writeKeyAtPath 保留
+    const emptied = Object.keys(hooksObj).length === 0
+    await this.settingsWriter.writeKeyAtPath(settingsPath, 'hooks', emptied ? undefined : hooksObj)
     this.logger.info('Deleted hook from settings:', settingsPath)
   }
 

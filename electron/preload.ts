@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -129,6 +129,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDisallowedTools: (filePath: string): Promise<string[]> => ipcRenderer.invoke('permissions:getDisallowedTools', filePath),
   setDisallowedTools: (filePath: string, tools: string[]): Promise<void> =>
     ipcRenderer.invoke('permissions:setDisallowedTools', filePath, tools),
+
+  // Settings (统一写入层 spec009)
+  getSettingsModel: (): Promise<SettingsModel> => ipcRenderer.invoke('settings:getModel'),
+  setSettingKey: (level: SettingsLevel, keyPath: string, value: unknown): Promise<void> =>
+    ipcRenderer.invoke('settings:setKey', level, keyPath, value),
+  getSafetyToggles: (): Promise<SafetyToggles> => ipcRenderer.invoke('settings:getToggles'),
 })
 
 console.log('[Preload] electronAPI exposed to window')
@@ -251,6 +257,9 @@ declare global {
       deletePermissionRule: (level: PermissionLevel, effect: PermissionEffect, rule: string) => Promise<void>
       getDisallowedTools: (filePath: string) => Promise<string[]>
       setDisallowedTools: (filePath: string, tools: string[]) => Promise<void>
+      getSettingsModel: () => Promise<SettingsModel>
+      setSettingKey: (level: SettingsLevel, keyPath: string, value: unknown) => Promise<void>
+      getSafetyToggles: () => Promise<SafetyToggles>
     }
   }
 }

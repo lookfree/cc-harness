@@ -15,6 +15,9 @@ import type {
   PermissionModel,
   PermissionLevel,
   PermissionEffect,
+  SettingsModel,
+  SettingsLevel,
+  SafetyToggles,
 } from '@shared/types'
 
 // Detect if running in Electron
@@ -633,6 +636,23 @@ export const api = {
     setDisallowedTools: async (filePath: string, tools: string[]): Promise<void> => {
       if (isElectron) return window.electronAPI.setDisallowedTools(filePath, tools)
       await httpPost('/api/permissions/disallowed-tools', { filePath, tools })
+    },
+  },
+
+  // Settings (统一写入层 spec009)
+  settings: {
+    getModel: async (): Promise<SettingsModel> => {
+      if (isElectron) return window.electronAPI.getSettingsModel()
+      return httpGet<SettingsModel>('/api/settings/model')
+    },
+    setKey: async (level: SettingsLevel, keyPath: string, value: unknown): Promise<void> => {
+      if (isElectron) return window.electronAPI.setSettingKey(level, keyPath, value)
+      // Web 模式保持只读浏览角色：写 settings 仅桌面端（演进路径约定）
+      throw new Error('Editing settings is only available in the desktop app')
+    },
+    getToggles: async (): Promise<SafetyToggles> => {
+      if (isElectron) return window.electronAPI.getSafetyToggles()
+      return httpGet<SafetyToggles>('/api/settings/toggles')
     },
   },
 

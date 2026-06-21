@@ -13,6 +13,7 @@ import hooksEn from './locales/en/hooks.json'
 import skillsEn from './locales/en/skills.json'
 import pluginsEn from './locales/en/plugins.json'
 import permissionsEn from './locales/en/permissions.json'
+import settingsEn from './locales/en/settings.json'
 
 import commonZh from './locales/zh/common.json'
 import layoutZh from './locales/zh/layout.json'
@@ -23,6 +24,7 @@ import hooksZh from './locales/zh/hooks.json'
 import skillsZh from './locales/zh/skills.json'
 import pluginsZh from './locales/zh/plugins.json'
 import permissionsZh from './locales/zh/permissions.json'
+import settingsZh from './locales/zh/settings.json'
 
 export const resources = {
   en: {
@@ -35,6 +37,7 @@ export const resources = {
     skills: skillsEn,
     plugins: pluginsEn,
     permissions: permissionsEn,
+    settings: settingsEn,
   },
   zh: {
     common: commonZh,
@@ -46,6 +49,7 @@ export const resources = {
     skills: skillsZh,
     plugins: pluginsZh,
     permissions: permissionsZh,
+    settings: settingsZh,
   },
 } as const
 

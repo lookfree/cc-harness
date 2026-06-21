@@ -2,14 +2,27 @@ import fs from 'fs/promises'
 import path from 'path'
 import { watch, FSWatcher } from 'chokidar'
 import os from 'os'
-import type { InstalledPluginEntry, ProjectContext, ConfigFile } from '../../shared/types'
+import type { InstalledPluginEntry, ProjectContext, ConfigFile, SettingsLevel } from '../../shared/types'
 import { isMissing } from './glob-scan'
+import { SettingsWriter } from './settings-writer'
 
 export abstract class FileManagerBase {
   protected projectPath: string = process.cwd()
   protected userConfigPath: string = path.join(os.homedir(), '.claude')
   protected watcher: FSWatcher | null = null
   protected changeCallbacks: Array<(files: ConfigFile[]) => void> = []
+
+  /** 三层 settings 文件路径（spec009 统一源）：user / project / local。local 正确标为独立一层。 */
+  protected settingsLayerPaths(): Record<SettingsLevel, string> {
+    return {
+      user: path.join(this.userConfigPath, 'settings.json'),
+      project: path.join(this.projectPath, '.claude', 'settings.json'),
+      local: path.join(this.projectPath, '.claude', 'settings.local.json'),
+    }
+  }
+
+  /** settings.json 统一写入层。所有改 settings 的路径都走它（不再各写各的）。 */
+  protected settingsWriter = new SettingsWriter((level) => this.settingsLayerPaths()[level])
 
   // Logger with levels - wrapped to handle EPIPE errors gracefully
   protected logger = {
@@ -125,6 +138,10 @@ export abstract class FileManagerBase {
     }
   }
 
+  /**
+   * 整文件覆盖写 JSON（providers.json 等独立配置）。
+   * ⚠️ 禁止用于 settings.json / settings.local.json——整覆盖会丢未知字段；settings 一律走 settingsWriter（spec009）。
+   */
   protected async writeJSONFile(filePath: string, data: unknown): Promise<void> {
     const dir = path.dirname(filePath)
     await fs.mkdir(dir, { recursive: true })

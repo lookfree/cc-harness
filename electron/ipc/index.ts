@@ -12,6 +12,7 @@ import { registerValidationHandlers } from './validation'
 import { registerProviderHandlers } from './providers'
 import { registerPluginHandlers } from './plugins'
 import { registerPermissionHandlers } from './permissions'
+import { registerSettingsHandlers } from './settings'
 
 export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) {
   registerSkillHandlers(ipcMain, fileManager)
@@ -26,4 +27,5 @@ export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   registerProviderHandlers()
   registerPluginHandlers(ipcMain, fileManager)
   registerPermissionHandlers(ipcMain, fileManager)
+  registerSettingsHandlers(ipcMain, fileManager)
 }
