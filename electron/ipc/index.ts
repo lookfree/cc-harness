@@ -10,6 +10,7 @@ import { registerProjectHandlers } from './project'
 import { registerDependencyHandlers } from './dependencies'
 import { registerValidationHandlers } from './validation'
 import { registerProviderHandlers } from './providers'
+import { registerPluginHandlers } from './plugins'
 
 export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) {
   registerSkillHandlers(ipcMain, fileManager)
@@ -22,4 +23,5 @@ export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   registerDependencyHandlers(ipcMain, fileManager)
   registerValidationHandlers(ipcMain)
   registerProviderHandlers()
+  registerPluginHandlers(ipcMain, fileManager)
 }

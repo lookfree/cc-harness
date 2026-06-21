@@ -79,7 +79,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateProvider: (id, updates) => ipcRenderer.invoke('providers:update', id, updates),
   deleteProvider: (id) => ipcRenderer.invoke('providers:delete', id),
   switchProvider: (id) => ipcRenderer.invoke('providers:switch', id),
-  readClaudeSettings: () => ipcRenderer.invoke('providers:readClaudeSettings')
+  readClaudeSettings: () => ipcRenderer.invoke('providers:readClaudeSettings'),
+
+  // Plugins / Marketplaces
+  pluginCliStatus: () => ipcRenderer.invoke('plugins:cliStatus'),
+  getMarketplaces: () => ipcRenderer.invoke('plugins:getMarketplaces'),
+  getPlugins: () => ipcRenderer.invoke('plugins:getAll'),
+  pluginDetails: (key) => ipcRenderer.invoke('plugins:details', key),
+  enablePlugin: (key) => ipcRenderer.invoke('plugins:enable', key),
+  disablePlugin: (key) => ipcRenderer.invoke('plugins:disable', key),
+  initPlugin: (name, cwd) => ipcRenderer.invoke('plugins:init', name, cwd)
 })
 
 console.log('[Preload] electronAPI exposed to window')

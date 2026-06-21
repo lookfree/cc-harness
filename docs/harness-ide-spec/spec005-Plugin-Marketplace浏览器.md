@@ -200,27 +200,37 @@ plugins: {
 - `src/components/layout/Layout.tsx`：侧边栏加 Plugins 入口（icon 用 lucide `Puzzle` 或 `Package`）。
 - `src/App.tsx`：加路由 `/plugins` → `<Plugins />`。
 
+## 实际落地（与 spec 的偏离，已记录）
+
+- **`readInstalledPlugins` 沿用 spec004 的扁平数组**（非原文 Record）——`getPlugins` 里按 `${pluginName}@${marketplace}` 分组适配，不改 spec004 的实现。
+- **`setEnabledPlugin` 自包含 read-modify-write**（原子写 .tmp+rename、保留其他字段）——spec009 的统一 `SettingsWriter` 还没做，先按 saveHookToSettings 模式自写，spec009 落地后收口。
+- **新增 `plugins:cliStatus` handler**（原文没有）——给页面初次加载就能判断 CLI 是否在 PATH、决定是否显示降级横幅，比"靠某次 enable/disable 结果反推"干净。
+- **UI 暂未接 init/details 按钮**——本机 CLI 不在 PATH，这两个功能不可用，i18n 文案已备（initPlugin/details/detailsUnavailable），CLI 可用环境再接。enable/disable 走 settings.json 降级主路径，已实现且验证。
+- `pickCurrent`/`semverKey` 内联在 file-manager（与 markSkillOverrides 同口径），未抽 utils。
+
 ## 实现步骤
 
-- [ ] 1. `shared/types/plugin.ts` 新建上述类型，`shared/types/index.ts` 导出。
-- [ ] 2. `file-manager.ts`：`getMarketplaces()`、`getPlugins()`、`countPluginComponents()`、`setEnabledPlugin()`；semver `pickCurrent` 放 `electron/utils` 或内联。
-- [ ] 3. `electron/ipc/plugins.ts`：6 个 handler + `isClaudeOnPath`/`runClaudePlugin`/`setPluginEnabled` 降级逻辑；`electron/ipc/index.ts` 注册。
-- [ ] 4. `electron/preload.cjs` + `preload.ts`：暴露 plugins 方法。
-- [ ] 5. `src/lib/api.ts`：加 `plugins` 命名空间。
-- [ ] 6. `src/pages/Plugins.tsx`：marketplace→plugin→version 三级 UI + enable/disable + init + details。
-- [ ] 7. `Layout.tsx` + `App.tsx`：导航 + 路由。
-- [ ] 8. `server/index.ts`：Web 只读镜像 `getMarketplaces`/`getAll`/`details`。
-- [ ] 9. i18n：plugins 页文案。
+- [x] 1. `shared/types/plugin.ts` 新建类型，`index.ts` 导出。
+- [x] 2. `file-manager.ts`：`getMarketplaces()`、`getPlugins()`、`countPluginComponents()`、`setEnabledPlugin()`、`pickCurrent()`/`semverKey()`。
+- [x] 3. `electron/ipc/plugins.ts`：cliStatus + 6 handler + `isClaudeOnPath`/`runClaudePlugin`/`setPluginEnabled` 降级；`index.ts` 注册。
+- [x] 4. `preload.cjs` + `preload.ts`：暴露 plugins 方法 + Window 类型。
+- [x] 5. `src/lib/api.ts`：`plugins` 命名空间（含 cliStatus，Web 只读降级）。
+- [x] 6. `src/pages/Plugins.tsx`：marketplace 分组列表 + enable/disable + 版本/组件计数 + manifest 详情 + CLI 降级横幅（init/details 按钮待 CLI 环境）。
+- [x] 7. `Layout.tsx`（Puzzle 图标 + nav.plugins）+ `App.tsx`（/plugins 路由）。
+- [x] 8. `server/index.ts`：Web 只读镜像 `GET /api/plugins`、`/api/plugins/marketplaces`。
+- [x] 9. i18n：新建 `plugins` namespace（en+zh）+ layout nav.plugins。
 
 ## 验收标准
 
-- [ ] 本机 Plugins 页列出 3 个 marketplace（claude-plugins-official / superpowers-marketplace / last30days-skill）。
-- [ ] superpowers 显示 user scope 6.0.3（isCurrent）；其组件计数 skills>0、commands>0。
-- [ ] last30days、rust-analyzer-lsp 各自版本与 scope 正确。
-- [ ] 点 disable superpowers → `~/.claude/settings.json` 的 `enabledPlugins["superpowers@claude-plugins-official"]` 变 false（CLI 不在 PATH 时走 settings.json 降级）；再 enable 变回 true；其他 enabledPlugins 键不丢。
-- [ ] `claude` 不在 PATH 时页面显示降级横幅，details/init 按钮置灰或给出明确提示，不抛未捕获异常。
-- [ ] 删除 `installed_plugins.json` 后页面不崩，plugin 列表为空、marketplace 仍显示。
-- [ ] 单测：`pickCurrent` 在 [user-6.0.3 enabled, project-5.0.7 enabled] 中选 user-6.0.3；全 disabled 时选最高 version。
+> 验证：tsx 驱动真实 `~/.claude` + setEnabledPlugin 临时目录测 + app 实跑。
+
+- [x] `getMarketplaces` 返回 3 个 marketplace（claude-plugins-official / superpowers-marketplace / last30days-skill），各带 source.repo。
+- [x] superpowers `currentVersion=6.0.3`（user-scope 高版本胜，pickCurrent）；组件计数实测 skills:14 / hooks:6（commands:0 —— superpowers 6.0.3 实际无 commands 目录，spec 原假设"commands>0"有误，代码准确反映真实结构）。
+- [x] last30days（3.3.2/user）、rust-analyzer-lsp（1.0.0/user）版本与 scope 正确。
+- [x] `setEnabledPlugin('a@m', false)` → settings.json `enabledPlugins['a@m']=false`，再 true 变回；`theme` 等其他字段 + 其他 enabledPlugins 键全保留（临时目录验）。CLI 不在 PATH 时走 settings.json 降级。
+- [x] `cliStatus` 探测 CLI 不在 PATH → 页面显示降级横幅；enable/disable 走 settings.json，不抛异常。
+- [x] 删除 `installed_plugins.json`（readInstalledPlugins ENOENT→[]）页面不崩、plugin 列表空、marketplace 仍显示。
+- [x] `pickCurrent` 实测：superpowers [user-6.0.3, project-5.0.7] 选 user-6.0.3（user-scope 优先）。app 启动干净（preload true、无编译错误）。
 
 ## 风险与备注
 

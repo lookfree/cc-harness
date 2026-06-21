@@ -28,6 +28,15 @@ app.get('/api/skills', asyncHandler(async (_req, res) => {
   res.json(skills)
 }))
 
+// Plugins / Marketplaces — Web 只读镜像（enable/disable/init/details 仅桌面端）
+app.get('/api/plugins', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getPlugins())
+}))
+
+app.get('/api/plugins/marketplaces', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getMarketplaces())
+}))
+
 app.get('/api/skills/:name', asyncHandler(async (req, res) => {
   const skill = await fileManager.getSkill(req.params.name)
   if (skill) {

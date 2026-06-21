@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Layout } from './components/layout/Layout'
 import Dashboard from './pages/Dashboard'
 import Skills from './pages/Skills'
+import Plugins from './pages/Plugins'
 import Agents from './pages/Agents'
 import Hooks from './pages/Hooks'
 import MCP from './pages/MCP'
@@ -23,6 +24,7 @@ function App() {
           <Route path="/agents" element={<Agents />} />
           <Route path="/mcp" element={<MCP />} />
           <Route path="/skills" element={<Skills />} />
+          <Route path="/plugins" element={<Plugins />} />
           <Route path="/hooks" element={<Hooks />} />
           <Route path="/models" element={<Models />} />
           <Route path="/graph" element={<Graph />} />

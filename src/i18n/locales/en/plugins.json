@@ -1,0 +1,27 @@
+{
+  "title": "Plugins",
+  "cliUnavailable": "claude CLI not detected — enable/disable writes settings.json directly; details/init unavailable",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "current": "Current",
+  "noPlugins": "No installed plugins",
+  "selectPlugin": "Select a plugin to view details",
+  "versions": "Versions",
+  "components": {
+    "skills": "Skills",
+    "commands": "Commands",
+    "agents": "Agents",
+    "hooks": "Hooks"
+  },
+  "scope": {
+    "user": "User",
+    "project": "Project"
+  },
+  "manifest": {
+    "author": "Author",
+    "license": "License",
+    "homepage": "Homepage",
+    "repository": "Repository",
+    "keywords": "Keywords"
+  }
+}

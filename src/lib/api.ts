@@ -8,6 +8,9 @@ import type {
   ProjectContext,
   Provider,
   HookExecutionLog,
+  Marketplace,
+  Plugin,
+  PluginCliResult,
 } from '@shared/types'
 
 // Detect if running in Electron
@@ -542,6 +545,59 @@ export const api = {
         const result = await httpGet<{ content: string | null }>('/api/providers/claude-settings')
         return result.content
       }
+    },
+  },
+
+  // Plugins / Marketplaces (spec005)
+  plugins: {
+    cliStatus: async (): Promise<boolean> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.pluginCliStatus()
+      }
+      return false
+    },
+    getMarketplaces: async (): Promise<Marketplace[]> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.getMarketplaces()
+      }
+      return httpGet<Marketplace[]>('/api/plugins/marketplaces')
+    },
+    getAll: async (): Promise<Plugin[]> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.getPlugins()
+      }
+      return httpGet<Plugin[]>('/api/plugins')
+    },
+    details: async (key: string): Promise<PluginCliResult> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.pluginDetails(key)
+      }
+      return { ok: false, cliAvailable: false, message: 'details 仅桌面端可用' }
+    },
+    enable: async (key: string): Promise<PluginCliResult> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.enablePlugin(key)
+      }
+      return { ok: false, cliAvailable: false, message: 'enable 仅桌面端可用（Web 只读）' }
+    },
+    disable: async (key: string): Promise<PluginCliResult> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.disablePlugin(key)
+      }
+      return { ok: false, cliAvailable: false, message: 'disable 仅桌面端可用（Web 只读）' }
+    },
+    init: async (name: string, cwd?: string): Promise<PluginCliResult> => {
+      if (isElectron) {
+        if (!window.electronAPI) throw new Error('Electron API not available')
+        return await window.electronAPI.initPlugin(name, cwd)
+      }
+      return { ok: false, cliAvailable: false, message: 'init 仅桌面端可用' }
     },
   },
 

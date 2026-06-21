@@ -9,6 +9,7 @@
     "agents": "Subagents",
     "mcp": "MCP Servers",
     "skills": "Skills",
+    "plugins": "Plugins",
     "hooks": "Hooks",
     "models": "AI Models",
     "graph": "Dependency Graph",

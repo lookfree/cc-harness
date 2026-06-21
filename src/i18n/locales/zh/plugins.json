@@ -1,0 +1,27 @@
+{
+  "title": "插件",
+  "cliUnavailable": "未检测到 claude CLI —— 启用/禁用将直接写 settings.json；details/init 不可用",
+  "enabled": "已启用",
+  "disabled": "已禁用",
+  "current": "当前",
+  "noPlugins": "没有已安装的插件",
+  "selectPlugin": "选择一个插件查看详情",
+  "versions": "版本",
+  "components": {
+    "skills": "技能",
+    "commands": "命令",
+    "agents": "子代理",
+    "hooks": "钩子"
+  },
+  "scope": {
+    "user": "用户",
+    "project": "项目"
+  },
+  "manifest": {
+    "author": "作者",
+    "license": "许可证",
+    "homepage": "主页",
+    "repository": "仓库",
+    "keywords": "关键词"
+  }
+}

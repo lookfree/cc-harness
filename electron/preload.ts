@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog } from '../shared/types'
+import type { Skill, Agent, Hook, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -109,6 +109,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProvider: (id: string): Promise<void> => ipcRenderer.invoke('providers:delete', id),
   switchProvider: (id: string): Promise<Provider> => ipcRenderer.invoke('providers:switch', id),
   readClaudeSettings: (): Promise<string | null> => ipcRenderer.invoke('providers:readClaudeSettings'),
+
+  // Plugins / Marketplaces
+  pluginCliStatus: (): Promise<boolean> => ipcRenderer.invoke('plugins:cliStatus'),
+  getMarketplaces: (): Promise<Marketplace[]> => ipcRenderer.invoke('plugins:getMarketplaces'),
+  getPlugins: (): Promise<Plugin[]> => ipcRenderer.invoke('plugins:getAll'),
+  pluginDetails: (key: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:details', key),
+  enablePlugin: (key: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:enable', key),
+  disablePlugin: (key: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:disable', key),
+  initPlugin: (name: string, cwd?: string): Promise<PluginCliResult> => ipcRenderer.invoke('plugins:init', name, cwd),
 })
 
 console.log('[Preload] electronAPI exposed to window')
@@ -216,6 +225,15 @@ declare global {
       deleteProvider: (id: string) => Promise<void>
       switchProvider: (id: string) => Promise<Provider>
       readClaudeSettings: () => Promise<string | null>
+
+      // Plugins / Marketplaces
+      pluginCliStatus: () => Promise<boolean>
+      getMarketplaces: () => Promise<Marketplace[]>
+      getPlugins: () => Promise<Plugin[]>
+      pluginDetails: (key: string) => Promise<PluginCliResult>
+      enablePlugin: (key: string) => Promise<PluginCliResult>
+      disablePlugin: (key: string) => Promise<PluginCliResult>
+      initPlugin: (name: string, cwd?: string) => Promise<PluginCliResult>
     }
   }
 }
