@@ -5,6 +5,19 @@
 - 前置依赖：spec009（统一 settings 写入层 `SettingsWriter`）
 - 工作量估计：M
 
+## 实际实现（与下文规划的偏差，2026-06）
+
+按用户要求改为 **CC Switch 粒度的"每 provider 角色映射"**，而非下文规划的 settings.json 顶层治理字段：
+
+- 现有 `Models.tsx` 那几家 provider（Claude/Kimi/智谱GLM/DeepSeek/OpenAI）每家从单个 `model` 字符串升级为 **角色→模型映射**（opus/sonnet/haiku/fable → 各家具体模型 id）+ `supports1m` + `apiFormat`（anthropic/openai）。预设填各家最新模型（Opus 4.8/Sonnet 4.6/Haiku 4.5/Fable 5、Kimi K2.6、GLM-5.2、DeepSeek V4、GPT-5.5）。
+- `provider-manager.syncToClaudeSettings`：激活某 provider 时除 `ANTHROPIC_BASE_URL`/`AUTH_TOKEN` 外，一并写 `ANTHROPIC_MODEL` 与 `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL` env（未配置的角色清掉，避免残留上一家映射）。这是 CC Switch 的真实机制。
+- `shared/types/provider.ts`：加 `ProviderModelMap`/`ProviderApiFormat`，`Provider.models/supports1m/apiFormat`，`ClaudeConfig.env` 补 5 个模型 env key。
+- `Models.tsx`：表单加 4 角色映射输入 + apiFormat Select + supports1m Switch；卡片显示角色映射 + 1M/OpenAI Badge。Models.tsx 改用 `@shared/types` 的 `Provider`（删掉本地影子接口）。
+- 下文规划的 settings.json 顶层治理字段（`modelOverrides`/`fallbackModel`/`availableModels`/版本约束，MODEL-04/05、PERM-05/06）**本次未做**，留待需要时再按下文规划补（已验证可基于 spec009 `getSettingsModel`/`setSettingKey` 实现）。
+- 注：OpenAI（`apiFormat:'openai'`）的 baseUrl 是 OpenAI 格式，Claude Code 需网关代理转 Anthropic 才能用，UI 标 OpenAI Badge 提示。provider-manager 仍自管 read-modify-write（保留未知字段），是 spec009-4b 登记的跟进项。
+
+---
+
 ## 目标
 
 在 Models/Settings 页加一块**模型治理视图**，把 Claude Code 2.1.x 落在 settings.json 里的模型相关治理字段一网打尽并可视化读写：

@@ -87,7 +87,7 @@
 | spec007 | Hooks 类型系统补全 | P1 | HOOK-01..11 | ✅ 完成 |
 | spec008 | 权限编辑器 | P1 | PERM-01/03/04 | ✅ 完成 |
 | spec009 | 配置写入与 settings 分层 | P1 | PERM-02/07 | ✅ 完成 |
-| spec010 | 模型治理面板 | P1 | MODEL-01..05、PERM-05/06 | 就绪 |
+| spec010 | 模型治理面板 | P1 | MODEL-01..05、PERM-05/06 | ✅ 完成（按 CC Switch 粒度，见 spec 内"实际实现"） |
 | spec011 | Worktree 配置面板 | P1 | MISC-03 | 就绪 |
 | spec012 | Agents 页真正实现 | P1 | ORCH-07 | 就绪 |
 | spec013 | MCP 配置升级 | P1 | MISC-04/05/06 | 就绪 |

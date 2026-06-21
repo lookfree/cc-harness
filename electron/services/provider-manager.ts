@@ -257,6 +257,19 @@ export class ProviderManager {
         }
       }
 
+      // 角色 → 模型映射（CC Switch 粒度）：写/清 ANTHROPIC_MODEL 与 ANTHROPIC_DEFAULT_*_MODEL，
+      // 两种模式都管（模型选择与 auth 正交）。未配置的角色清掉，避免残留上一个 provider 的映射。
+      const env = claudeConfig.env
+      const setEnv = (key: keyof NonNullable<ClaudeConfig['env']>, val?: string) => {
+        if (val) env[key] = val
+        else delete env[key]
+      }
+      setEnv('ANTHROPIC_MODEL', provider.model)
+      setEnv('ANTHROPIC_DEFAULT_OPUS_MODEL', provider.models?.opus)
+      setEnv('ANTHROPIC_DEFAULT_SONNET_MODEL', provider.models?.sonnet)
+      setEnv('ANTHROPIC_DEFAULT_HAIKU_MODEL', provider.models?.haiku)
+      setEnv('ANTHROPIC_DEFAULT_FABLE_MODEL', provider.models?.fable)
+
       // Ensure directory exists
       const dir = path.dirname(this.claudeSettingsPath)
       await fs.mkdir(dir, { recursive: true })

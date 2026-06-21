@@ -5,23 +5,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Check, Settings, Zap, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Provider, ProviderModelMap, ProviderApiFormat } from '@shared/types'
 
-interface Provider {
-  id: string
-  name: string
-  displayName: string
-  mode: 'api' | 'subscription'
-  apiKey?: string
-  baseUrl?: string
-  model?: string
-  enabled: boolean
-  isActive: boolean
-  icon?: string
-  description?: string
-  createdAt?: string
-  updatedAt?: string
+/** 角色映射的四个角色（CC Switch 粒度）。 */
+const MODEL_ROLES: Array<keyof ProviderModelMap> = ['opus', 'sonnet', 'haiku', 'fable']
+
+// 各家最新模型（2026-06，CC Switch 角色映射粒度；模型 id / 端点可在表单里改）
+const CLAUDE_MODELS: ProviderModelMap = {
+  opus: 'claude-opus-4-8',
+  sonnet: 'claude-sonnet-4-6',
+  haiku: 'claude-haiku-4-5-20251001',
+  fable: 'claude-fable-5',
 }
 
 const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>[] = [
@@ -29,7 +27,10 @@ const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>
     name: 'claude-subscription',
     displayName: 'Claude Pro/Max',
     mode: 'subscription',
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-4-6',
+    models: CLAUDE_MODELS,
+    supports1m: true,
+    apiFormat: 'anthropic',
     icon: '👤',
     description: '使用 Claude 订阅账号（需通过 claude login 登录）'
   },
@@ -37,8 +38,11 @@ const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>
     name: 'claude-api',
     displayName: 'Claude API',
     mode: 'api',
-    baseUrl: 'https://api.anthropic.com/v1',
-    model: 'claude-sonnet-4-5-20250929',
+    baseUrl: 'https://api.anthropic.com',
+    model: 'claude-sonnet-4-6',
+    models: CLAUDE_MODELS,
+    supports1m: true,
+    apiFormat: 'anthropic',
     icon: '🔑',
     description: '使用 Anthropic API Key（按量付费）'
   },
@@ -46,37 +50,49 @@ const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>
     name: 'kimi',
     displayName: 'Kimi (月之暗面)',
     mode: 'api',
-    baseUrl: 'https://api.moonshot.cn/v1',
-    model: 'moonshot-v1-8k',
+    baseUrl: 'https://api.moonshot.cn/anthropic',
+    model: 'kimi-k2.6',
+    models: { opus: 'kimi-k2.6', sonnet: 'kimi-k2.6', haiku: 'kimi-k2.6' },
+    supports1m: false,
+    apiFormat: 'anthropic',
     icon: '🌙',
-    description: '支持超长上下文，擅长中文理解'
+    description: 'Kimi K2.6，Anthropic 兼容端点，擅长中文理解'
   },
   {
     name: 'zhipu',
     displayName: '智谱 AI (GLM)',
     mode: 'api',
-    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    model: 'glm-4',
+    baseUrl: 'https://open.bigmodel.cn/api/anthropic',
+    model: 'glm-5.2',
+    models: { opus: 'glm-5.2', sonnet: 'glm-5.2', haiku: 'glm-4.5-air' },
+    supports1m: true,
+    apiFormat: 'anthropic',
     icon: '💡',
-    description: '国产大模型，支持多模态能力'
+    description: 'GLM-5.2（1M 上下文），Anthropic 兼容端点'
   },
   {
     name: 'deepseek',
     displayName: 'DeepSeek',
     mode: 'api',
-    baseUrl: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
+    baseUrl: 'https://api.deepseek.com/anthropic',
+    model: 'deepseek-v4-flash',
+    models: { opus: 'deepseek-v4-pro', sonnet: 'deepseek-v4-flash', haiku: 'deepseek-v4-flash' },
+    supports1m: true,
+    apiFormat: 'anthropic',
     icon: '🔍',
-    description: '专注代码生成，性价比高'
+    description: 'DeepSeek V4（1M 上下文），专注代码、性价比高'
   },
   {
     name: 'openai',
     displayName: 'OpenAI',
     mode: 'api',
     baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-5.5',
+    models: { opus: 'gpt-5.5', sonnet: 'gpt-5.5', haiku: 'gpt-5.5-mini' },
+    supports1m: false,
+    apiFormat: 'openai',
     icon: '⚡',
-    description: '通用 AI 模型，功能全面'
+    description: 'GPT-5.5（OpenAI 格式，需网关代理转 Anthropic 才能给 Claude Code 用）'
   }
 ]
 
@@ -91,7 +107,10 @@ export default function Models() {
     mode: 'api' as 'api' | 'subscription',
     apiKey: '',
     baseUrl: '',
-    model: ''
+    model: '',
+    models: {} as ProviderModelMap,
+    supports1m: false,
+    apiFormat: 'anthropic' as ProviderApiFormat
   })
 
   useEffect(() => {
@@ -117,7 +136,10 @@ export default function Models() {
       mode: template.name.includes('claude') ? template.mode : 'api',
       apiKey: '',
       baseUrl: template.baseUrl || '',
-      model: template.model || ''
+      model: template.model || '',
+      models: { ...(template.models || {}) },
+      supports1m: template.supports1m || false,
+      apiFormat: template.apiFormat || 'anthropic'
     })
     setEditingProvider(null)
     setDialogOpen(true)
@@ -131,7 +153,10 @@ export default function Models() {
       mode: provider.name.includes('claude') ? provider.mode : 'api',
       apiKey: provider.apiKey || '',
       baseUrl: provider.baseUrl || '',
-      model: provider.model || ''
+      model: provider.model || '',
+      models: { ...(provider.models || {}) },
+      supports1m: provider.supports1m || false,
+      apiFormat: provider.apiFormat || 'anthropic'
     })
     setEditingProvider(provider)
     setDialogOpen(true)
@@ -141,13 +166,21 @@ export default function Models() {
     try {
       const { api } = await import('@/lib/api')
 
+      // 去掉空的角色映射，避免写入空模型 id
+      const cleanModels: ProviderModelMap = {}
+      for (const role of MODEL_ROLES) {
+        const v = formData.models[role]?.trim()
+        if (v) cleanModels[role] = v
+      }
+      const payload = { ...formData, models: cleanModels }
+
       if (editingProvider) {
         // Update existing
-        await api.providers.update(editingProvider.id, formData)
+        await api.providers.update(editingProvider.id, payload)
       } else {
         // Add new
         await api.providers.add({
-          ...formData,
+          ...payload,
           enabled: true,
           isActive: false
         })
@@ -342,6 +375,12 @@ export default function Models() {
                                 Disabled
                               </Badge>
                             )}
+                            {provider.supports1m && (
+                              <Badge variant="outline" className="text-xs">1M</Badge>
+                            )}
+                            {provider.apiFormat === 'openai' && (
+                              <Badge variant="outline" className="text-xs text-amber-600 dark:text-amber-400 border-amber-500/30">OpenAI</Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             {provider.mode === 'subscription' ? (
@@ -349,18 +388,27 @@ export default function Models() {
                                 👤 订阅模式（使用 Claude 登录）
                               </span>
                             ) : (
-                              <>
-                                <span className="flex items-center gap-1">
-                                  <Globe className="w-3 h-3" />
-                                  {provider.baseUrl || 'Default'}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Zap className="w-3 h-3" />
-                                  {provider.model}
-                                </span>
-                              </>
+                              <span className="flex items-center gap-1">
+                                <Globe className="w-3 h-3" />
+                                {provider.baseUrl || 'Default'}
+                              </span>
+                            )}
+                            {provider.model && (
+                              <span className="flex items-center gap-1">
+                                <Zap className="w-3 h-3" />
+                                {provider.model}
+                              </span>
                             )}
                           </div>
+                          {provider.models && Object.keys(provider.models).length > 0 && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-muted-foreground font-mono">
+                              {MODEL_ROLES.filter((r) => provider.models?.[r]).map((r) => (
+                                <span key={r}>
+                                  <span className="opacity-60">{r}:</span> {provider.models?.[r]}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -469,6 +517,52 @@ export default function Models() {
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 placeholder={t('dialog.modelPlaceholder')}
               />
+              <p className="text-xs text-muted-foreground">{t('dialog.modelDesc')}</p>
+            </div>
+
+            {/* 角色 → 模型映射（CC Switch 粒度，写 ANTHROPIC_DEFAULT_*_MODEL） */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t('dialog.roleMapping')}</label>
+              <div className="grid grid-cols-2 gap-2">
+                {MODEL_ROLES.map((role) => (
+                  <div key={role} className="space-y-1">
+                    <span className="text-xs text-muted-foreground capitalize">{role}</span>
+                    <Input
+                      className="font-mono text-xs"
+                      value={formData.models[role] || ''}
+                      onChange={(e) => setFormData({ ...formData, models: { ...formData.models, [role]: e.target.value } })}
+                      placeholder={role}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">{t('dialog.roleMappingDesc')}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('dialog.apiFormat')}</label>
+                <Select
+                  value={formData.apiFormat}
+                  onValueChange={(v: ProviderApiFormat) => setFormData({ ...formData, apiFormat: v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="anthropic">Anthropic</SelectItem>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('dialog.supports1m')}</label>
+                <div className="flex items-center gap-2 h-9">
+                  <Switch
+                    checked={formData.supports1m}
+                    onCheckedChange={(v) => setFormData({ ...formData, supports1m: v })}
+                  />
+                  <span className="text-xs text-muted-foreground">1M context</span>
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-2">
