@@ -50,11 +50,6 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className="w-64 border-r border-border bg-card flex flex-col">
-        {/* Header */}
-        <div className="h-14 border-b border-border flex items-center px-6">
-          <h1 className="text-lg font-bold text-foreground">{t('appTitle')}</h1>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
           {navigationKeys.map((item) => {
