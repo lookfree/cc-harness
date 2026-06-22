@@ -45,7 +45,7 @@ const WorkflowNode = memo(({ data }: NodeProps<TopoNodeData>) => {
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground mt-1">
         <span>{t('topo.agentsOfDeclared', { actual: data.actualAgents, declared: wf.agentCount })}</span>
         {wf.durationMs != null && <span>{formatDuration(wf.durationMs)}</span>}
-        {wf.totalTokens != null && <span>{compactNum(wf.totalTokens)} tok</span>}
+        {wf.totalTokens != null && <span>{t('tokens', { n: compactNum(wf.totalTokens) })}</span>}
         {wf.totalToolCalls != null && <span>{wf.totalToolCalls} {t('topo.tools')}</span>}
       </div>
       {wf.phases.length > 0 && (
@@ -72,11 +72,11 @@ const AgentNodeCard = memo(({ data }: NodeProps<TopoNodeData>) => {
       <Handle type="target" position={Position.Top} className="!bg-border" />
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs font-medium truncate">{a.label}</span>
-        {a.depth > 0 && <span className="text-[9px] text-muted-foreground shrink-0">L{a.depth}</span>}
+        {a.depth > 0 && <span className="text-[9px] text-muted-foreground shrink-0">{t('topo.depth', { n: a.depth })}</span>}
       </div>
       <div className="flex flex-wrap gap-x-2 text-[10px] text-muted-foreground mt-0.5">
         {a.durationMs != null && <span>{formatDuration(a.durationMs)}</span>}
-        {a.tokens && <span>{compactNum(a.tokens.totalTokens)} tok</span>}
+        {a.tokens && <span>{t('tokens', { n: compactNum(a.tokens.totalTokens) })}</span>}
         {a.toolCalls != null && <span>{a.toolCalls} {t('topo.tools')}</span>}
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-border" />

@@ -52,14 +52,16 @@ export function buildFlow(topology: AgentTopology, mode: TopoMode): { nodes: Nod
       const row = Math.floor(i / COLS)
       // tree 模式按 depth 再下沉一层；workflow 模式用网格
       const depthOffset = mode === 'tree' ? a.depth * (NODE_H + GAP_Y) : 0
+      // 节点 id 以 runId 命名空间化：避免与别的 workflow / 主会话 Task 树的 agentId 撞 id（reactflow 会静默丢节点）
+      const nodeId = `agent:${wf.runId}:${a.agentId}`
       nodes.push({
-        id: `agent:${a.agentId}`,
+        id: nodeId,
         type: 'agent',
         position: { x: col * (NODE_W + GAP_X), y: agentsTop + row * (NODE_H + GAP_Y) + depthOffset },
         data: { kind: 'agent', agent: a },
         draggable: true,
       })
-      edges.push({ id: `e:${wfId}:${a.agentId}`, source: wfId, target: `agent:${a.agentId}`, animated: a.status === 'running' })
+      edges.push({ id: `e:${wfId}:${a.agentId}`, source: wfId, target: nodeId, animated: a.status === 'running' })
     })
 
     cursorY = agentsTop + rows * (NODE_H + GAP_Y) + 60
@@ -83,15 +85,16 @@ function layoutTaskTree(tree: AgentNode[], topY: number, nodes: Node<TopoNodeDat
   }
   for (const [depth, arr] of [...byDepth.entries()].sort((a, b) => a[0] - b[0])) {
     arr.forEach((a, i) => {
+      // 主会话 Task 树用 'task:' 命名空间，与 workflow agent 节点隔离
       nodes.push({
-        id: `agent:${a.agentId}`,
+        id: `task:${a.agentId}`,
         type: 'agent',
         position: { x: i * (NODE_W + GAP_X), y: topY + depth * (NODE_H + GAP_Y) },
         data: { kind: 'agent', agent: a },
         draggable: true,
       })
       if (a.parentAgentId) {
-        edges.push({ id: `e:${a.parentAgentId}:${a.agentId}`, source: `agent:${a.parentAgentId}`, target: `agent:${a.agentId}` })
+        edges.push({ id: `e:task:${a.parentAgentId}:${a.agentId}`, source: `task:${a.parentAgentId}`, target: `task:${a.agentId}` })
       }
     })
   }

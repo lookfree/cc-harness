@@ -27,6 +27,7 @@
   "topo": {
     "empty": "No subagents or workflows for this session",
     "tools": "tools",
+    "depth": "L{{n}}",
     "agentsOfDeclared": "{{actual}}/{{declared}} agents",
     "mode": {
       "workflow": "Workflow",

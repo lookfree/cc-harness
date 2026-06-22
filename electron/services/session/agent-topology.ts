@@ -113,8 +113,10 @@ async function buildAgentNode(dir: string, fileName: string, runId: string): Pro
   }
   const { events } = parseChunk(text, 0)
   const sum = summarizeEvents(events, { sessionId: agentId, filePath: fp, cwd: '', hasSubagents: false, mtimeMs: 0, nowMs: 0 })
-  const durationMs =
-    sum.startedAt && sum.lastActivityAt ? Math.max(0, Date.parse(sum.lastActivityAt) - Date.parse(sum.startedAt)) : undefined
+  // 时间戳异常 → Date.parse 得 NaN，存 undefined 而非 NaN（别污染 IPC payload）
+  const start = sum.startedAt ? Date.parse(sum.startedAt) : NaN
+  const end = sum.lastActivityAt ? Date.parse(sum.lastActivityAt) : NaN
+  const durationMs = Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : undefined
   return {
     agentId,
     agentType,

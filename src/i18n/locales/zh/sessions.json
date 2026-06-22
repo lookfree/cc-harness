@@ -27,6 +27,7 @@
   "topo": {
     "empty": "该会话没有 subagent 或 workflow",
     "tools": "工具",
+    "depth": "L{{n}}",
     "agentsOfDeclared": "{{actual}}/{{declared}} 个 agent",
     "mode": {
       "workflow": "Workflow 编排",
