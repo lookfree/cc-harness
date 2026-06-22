@@ -5,6 +5,7 @@ import type { Hook, HookExecutionLog, HookAction, HookSettingsMatcher } from '@s
 import { makeEmptyAction } from './hooks/HookActionForm'
 import type { HookActionItem } from './hooks/HookActionForm'
 import { HooksLogsTab } from './hooks/HooksLogsTab'
+import { HookSandbox } from './hooks/HookSandbox'
 import { HookEditDialog } from './hooks/HookEditDialog'
 import type { EditFormState } from './hooks/hookEditTypes'
 import { HOOK_TYPES } from './hooks/hookTypes'
@@ -693,6 +694,7 @@ export default function Hooks() {
                   <TabsTrigger value="details">{t('tabs.details')}</TabsTrigger>
                   <TabsTrigger value="actions">{t('tabs.actions')}</TabsTrigger>
                   <TabsTrigger value="config">{t('tabs.config')}</TabsTrigger>
+                  <TabsTrigger value="sandbox">{t('tabs.sandbox')}</TabsTrigger>
                   <TabsTrigger value="logs">{t('tabs.logs')}</TabsTrigger>
                 </TabsList>
 
@@ -900,6 +902,10 @@ export default function Hooks() {
                       </li>
                     </ol>
                   </div>
+                </TabsContent>
+
+                <TabsContent value="sandbox" className="space-y-4 mt-4">
+                  <HookSandbox hook={selectedHook} />
                 </TabsContent>
 
                 <TabsContent value="logs" className="space-y-4 mt-4">

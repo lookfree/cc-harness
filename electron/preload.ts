@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -67,6 +67,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     projectPath?: string,
     timeout?: number
   ): Promise<HookExecutionLog> => ipcRenderer.invoke('hooks:test', hookName, command, hookType, location, projectPath, timeout),
+  dryRunHook: (hook: Hook, actionIndex: number, input: HookSimInput): Promise<HookDryRunResult> =>
+    ipcRenderer.invoke('hooks:dryRun', hook, actionIndex, input),
 
   // MCP
   getMCPServers: (): Promise<MCPServers> => ipcRenderer.invoke('mcp:getAll'),
@@ -229,6 +231,7 @@ declare global {
         projectPath?: string,
         timeout?: number
       ) => Promise<HookExecutionLog>
+      dryRunHook: (hook: Hook, actionIndex: number, input: HookSimInput) => Promise<HookDryRunResult>
 
       // MCP
       getMCPServers: () => Promise<MCPServers>

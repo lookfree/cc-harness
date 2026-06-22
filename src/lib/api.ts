@@ -9,6 +9,8 @@ import type {
   ProjectContext,
   Provider,
   HookExecutionLog,
+  HookSimInput,
+  HookDryRunResult,
   Marketplace,
   Plugin,
   PluginCliResult,
@@ -343,6 +345,12 @@ export const api = {
       } else {
         return httpPost<HookExecutionLog>('/api/hooks/test', { hookName, command, hookType, location, projectPath, timeout })
       }
+    },
+    dryRun: async (hook: Hook, actionIndex: number, input: HookSimInput): Promise<HookDryRunResult> => {
+      if (isElectron) {
+        return window.electronAPI.dryRunHook(hook, actionIndex, input)
+      }
+      throw new Error('sandbox_desktop_only')
     },
   },
 

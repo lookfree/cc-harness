@@ -1,7 +1,8 @@
 import type { IpcMain } from 'electron'
 import type { FileManager } from '../services/file-manager'
-import type { Hook, HookExecutionLog, HookSettingsMatcher } from '../../shared/types'
+import type { Hook, HookExecutionLog, HookSettingsMatcher, HookSimInput } from '../../shared/types'
 import { validateHook } from '../services/hook-validation'
+import { dryRunHook } from '../services/hook-sandbox'
 import { spawn } from 'child_process'
 import path from 'path'
 import os from 'os'
@@ -698,5 +699,13 @@ export function registerHookHandlers(ipcMain: IpcMain, fileManager: FileManager)
         resolve(log)
       })
     })
+  })
+
+  // Sandbox dry-run (spec018): 不启真 session，只执行单个 action 并回报结果
+  ipcMain.handle('hooks:dryRun', async (_e, hook: Hook, actionIndex: number, input: HookSimInput) => {
+    const action = hook.actions?.[actionIndex]
+    if (!action) throw new Error(`No action at index ${actionIndex}`)
+    console.log('[Hooks IPC] dryRun', hook.name, 'action', actionIndex, 'type', action.type)
+    return dryRunHook(hook, action, input)
   })
 }

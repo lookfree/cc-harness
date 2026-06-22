@@ -126,6 +126,49 @@ export interface HookActionExecution {
   duration?: number
 }
 
+/** dry-run 时构造的模拟 hook 输入（按 HookType 不同字段不同）。 */
+export interface HookSimInput {
+  hookType: HookType
+  sessionId?: string
+  cwd?: string
+  /** PreToolUse/PostToolUse */
+  toolName?: string
+  toolInput?: Record<string, unknown>
+  toolOutput?: unknown
+  /** UserPromptSubmit */
+  prompt?: string
+  /** MessageDisplay */
+  message?: string
+  /** 超时（ms），最大 30000 */
+  timeoutMs?: number
+  /** http hook 才放行；command 类默认不出网 */
+  allowNetwork?: boolean
+  /** 高级模式：直接补充任意字段 */
+  extra?: Record<string, unknown>
+}
+
+/** dry-run 执行结果。 */
+export interface HookDryRunResult {
+  hookName: string
+  hookType: HookType
+  actionType: HookActionType
+  exitCode: number | null
+  stdout: string
+  stderr: string
+  /** 解析 hook 输出/退出码后的语义决策 */
+  decision: 'allow' | 'block' | 'transform' | 'none'
+  blockReason?: string
+  /** transform：替换/注入内容 */
+  transformedOutput?: unknown
+  durationMs: number
+  timedOut: boolean
+  /** http hook */
+  httpStatus?: number
+  httpResponseBody?: string
+  /** 执行或网络错误消息 */
+  error?: string
+}
+
 // Hook execution log entry for debugging
 export interface HookExecutionLog {
   id: string

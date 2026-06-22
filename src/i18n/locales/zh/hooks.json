@@ -106,7 +106,8 @@
     "details": "详情",
     "actions": "动作",
     "logs": "执行记录",
-    "config": "配置"
+    "config": "配置",
+    "sandbox": "沙箱测试"
   },
   "details": {
     "type": "类型",
@@ -301,6 +302,44 @@
       "error": "错误",
       "timeout": "超时",
       "blocked": "阻止"
+    }
+  },
+  "sandbox": {
+    "runBtn": "运行沙箱",
+    "running": "运行中...",
+    "cancel": "取消",
+    "selectAction": "选择动作",
+    "promptPreview": "Prompt 模板（不执行）",
+    "cmdWarningBanner": "⚠ 将在你的机器上实际执行该命令。使用临时目录隔离，但命令本身的副作用（读写文件等）仍会发生。",
+    "cmdConfirmTitle": "确认执行 Hook 命令？",
+    "cmdConfirmDesc": "命令将在临时目录中以受限环境运行，但仍可能读写文件或调用外部进程。确认继续？",
+    "networkDisabledHint": "请勾选「允许出网」后再测试 HTTP Hook。",
+    "webDisabled": "沙箱测试仅在桌面端可用。",
+    "fields": {
+      "toolName": "工具名",
+      "toolInput": "工具输入（JSON）",
+      "toolOutput": "工具响应（JSON，仅 PostToolUse）",
+      "prompt": "模拟 Prompt",
+      "message": "模拟消息",
+      "sessionId": "Session ID",
+      "timeout": "超时（ms）",
+      "allowNetwork": "允许出网（HTTP Hook）"
+    },
+    "decision": {
+      "allow": "允许",
+      "block": "阻止",
+      "transform": "转换",
+      "none": "无决策"
+    },
+    "result": {
+      "decision": "决策",
+      "exitCode": "退出码",
+      "timedOut": "已超时",
+      "blockReason": "阻止原因",
+      "error": "错误",
+      "transform": "转换后内容",
+      "stdout": "标准输出",
+      "stderr": "标准错误"
     }
   }
 }

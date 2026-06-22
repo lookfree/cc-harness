@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchDebugSession: (hookType, projectPath) =>
     ipcRenderer.invoke('hooks:launchDebugSession', hookType, projectPath),
   stopDebugSession: (pid) => ipcRenderer.invoke('hooks:stopDebugSession', pid),
+  dryRunHook: (hook, actionIndex, input) => ipcRenderer.invoke('hooks:dryRun', hook, actionIndex, input),
 
   // MCP
   getMCPServers: () => ipcRenderer.invoke('mcp:getAll'),

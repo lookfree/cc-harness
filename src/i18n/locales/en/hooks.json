@@ -106,7 +106,8 @@
     "details": "Details",
     "actions": "Actions",
     "logs": "Execution Logs",
-    "config": "Configuration"
+    "config": "Configuration",
+    "sandbox": "Sandbox"
   },
   "details": {
     "type": "Type",
@@ -301,6 +302,44 @@
       "error": "Error",
       "timeout": "Timeout",
       "blocked": "Blocked"
+    }
+  },
+  "sandbox": {
+    "runBtn": "Run Sandbox",
+    "running": "Running...",
+    "cancel": "Cancel",
+    "selectAction": "Select Action",
+    "promptPreview": "Prompt Template (no execution)",
+    "cmdWarningBanner": "⚠ This will execute the command on your machine. A temporary working directory is used, but the command may still have side effects.",
+    "cmdConfirmTitle": "Execute Hook Command?",
+    "cmdConfirmDesc": "The command will run in a temporary directory with a restricted environment. It may still read/write files or call external processes. Continue?",
+    "networkDisabledHint": "Enable 'Allow Network' to test HTTP hooks.",
+    "webDisabled": "Sandbox test is only available in desktop mode.",
+    "fields": {
+      "toolName": "Tool Name",
+      "toolInput": "Tool Input (JSON)",
+      "toolOutput": "Tool Response (JSON, PostToolUse only)",
+      "prompt": "Simulated Prompt",
+      "message": "Simulated Message",
+      "sessionId": "Session ID",
+      "timeout": "Timeout (ms)",
+      "allowNetwork": "Allow outbound network (HTTP hooks)"
+    },
+    "decision": {
+      "allow": "Allow",
+      "block": "Block",
+      "transform": "Transform",
+      "none": "No decision"
+    },
+    "result": {
+      "decision": "Decision",
+      "exitCode": "Exit",
+      "timedOut": "Timed out",
+      "blockReason": "Block reason",
+      "error": "Error",
+      "transform": "Transformed output",
+      "stdout": "Stdout",
+      "stderr": "Stderr"
     }
   }
 }
