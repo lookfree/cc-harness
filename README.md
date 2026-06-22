@@ -1,5 +1,7 @@
 # CC Harness
 
+![cc-harness-back](/Users/Administrator/Documents/04-Learning/06-projects/moore/skills-ui/claude-code-debugger/images/cc-harness-back.png)
+
 Claude Code 的桌面工作台——配置 / 调试 / 观测 / 编排五件事合一。支持 **桌面（Electron）** 和 **Web** 两种运行模式。
 
 ## 功能概览
