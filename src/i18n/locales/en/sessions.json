@@ -23,6 +23,11 @@
     "replay": "Replay",
     "timeline": "Timeline"
   },
+  "timeline": {
+    "empty": "No timestamped events",
+    "span": "span {{d}}",
+    "toolSpan": "tool duration"
+  },
   "replay": {
     "count": "{{count}} events",
     "loadEarlier": "Load {{count}} earlier",

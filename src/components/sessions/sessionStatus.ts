@@ -40,6 +40,24 @@ export function relativeTime(iso: string | undefined, nowMs: number): string {
   return `${Math.floor(h / 24)}d`
 }
 
+/** ms 时间戳 → 本地时钟（HH:MM:SS），时间轴端点用。 */
+export function formatClock(ms: number): string {
+  if (!Number.isFinite(ms)) return ''
+  return new Date(ms).toLocaleTimeString()
+}
+
+/** 时长（ms）→ 紧凑跨度（45s / 12m 30s / 2h 13m / 1d 3h）。 */
+export function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return ''
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ${s % 60}s`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ${m % 60}m`
+  return `${Math.floor(h / 24)}d ${h % 24}h`
+}
+
 /** token 数 → 紧凑展示（1.2k / 3.4M）。 */
 export function compactNum(n: number): string {
   if (n < 1000) return String(n)

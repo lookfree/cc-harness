@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useSessionStore, MAX_COMPARE } from '@/stores/sessionStore'
 import { SessionList } from '@/components/sessions/SessionList'
 import { ConversationReplay } from '@/components/sessions/ConversationReplay'
-import { SessionTimeline, sharedDomain } from '@/components/sessions/SessionTimeline'
+import { SessionTimeline, TimelineLegend, sharedDomain } from '@/components/sessions/SessionTimeline'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
@@ -100,7 +100,9 @@ export default function Sessions() {
             {selectedIds.length === 0 ? (
               <div className="text-sm text-muted-foreground">{t('compareEmpty')}</div>
             ) : (
-              selectedIds.map((id) => {
+              <>
+              <TimelineLegend />
+              {selectedIds.map((id) => {
                 const s = summaries.find((x) => x.sessionId === id)
                 return (
                   <div key={id} className="border border-border rounded px-3">
@@ -111,7 +113,8 @@ export default function Sessions() {
                     />
                   </div>
                 )
-              })
+              })}
+              </>
             )}
             <p className="text-xs text-muted-foreground">{t('compareHint', { max: MAX_COMPARE })}</p>
           </div>
@@ -127,6 +130,7 @@ export default function Sessions() {
               <ConversationReplay events={primaryEvents} scrollToSeq={seekSeq} live={isLive} />
             </TabsContent>
             <TabsContent value="timeline" className="flex-1 overflow-y-auto px-4 mt-2">
+              <TimelineLegend />
               <SessionTimeline events={primaryEvents} onSeek={onSeek} />
             </TabsContent>
           </Tabs>
