@@ -1,227 +1,147 @@
-# Claude Code Debugger & Manager
+# CC Harness
 
-A powerful application for debugging and managing Claude Code skills, agents, hooks, MCP servers, and slash commands. Supports both **Desktop (Electron)** and **Web** modes.
+Claude Code 的桌面工作台——配置 / 调试 / 观测 / 编排五件事合一。支持 **桌面（Electron）** 和 **Web** 两种运行模式。
 
-## Features
+## 功能概览
 
-- **Skills Browser**: Browse, search, and analyze Claude Code skills with detailed information including triggers, scripts, and references
-- **Agents Manager**: Manage and debug Claude Code subagents
-- **Hooks Manager**: Configure, test, and debug hook execution chains with real-time execution logs
-  - Support for all hook types: SessionStart, SessionEnd, PreToolUse, PostToolUse, etc.
-  - Launch debug sessions in external terminal
-  - View execution logs with detailed output
-- **MCP Server Manager**: Manage Model Context Protocol servers and test connections
-- **Commands Manager**: Create and edit custom slash commands with syntax highlighting
-- **CLAUDE.md Manager**: Browse and edit CLAUDE.md files across multiple projects
-- **Dependency Graph**: Visualize component dependencies and relationships
-- **Visual Editors**: Edit configurations through intuitive UI with Monaco Editor
-- **Multi-language Support**: Full i18n support for English and Chinese
+### 配置层
+- **Skills**：浏览、搜索 Claude Code 技能，支持 user / project / plugin 三层来源与覆盖检测
+- **Commands**：查看和编辑自定义斜杠命令，支持三层来源
+- **Agents**：管理子代理配置（`.md` + YAML frontmatter）
+- **Hooks**：配置 PreToolUse / PostToolUse / SessionStart 等各类 hook，支持沙箱执行与实时日志
+- **Permissions**：可视化编辑 allow / deny / ask 权限规则，分 user / project / local 三层
+- **MCP Servers**：管理 Model Context Protocol 服务器，支持连接探活与健康面板
+- **AI Models**：模型治理面板，管理 Claude Code 模型切换开关
+- **Plugins**：Plugin Marketplace 浏览器，查看已安装插件与市场可用插件
+- **CLAUDE.md**：浏览和编辑多项目的 CLAUDE.md 文件
 
-## Running Modes
+### 观测层
+- **Sessions**：实时会话监视器，流式解析 session jsonl，展示工具调用 / token 用量 / 状态
+- **Subagent 拓扑**：可视化 Workflow 编排中的 subagent 调用树（基于 reactflow）
+- **Token Usage**：Token 用量面板，按会话 / 模型 / 时段统计
+- **Loop Wakeups**：`/loop` 定时唤醒任务面板，展示 pending / fired / expired 状态
 
-The application supports two running modes:
+### 其他
+- **Memory**：Auto Memory 记忆文件浏览与管理
+- **Dependency Graph**：组件依赖关系可视化
+- **Settings**：应用设置
 
-| Mode | Command | Description |
-|------|---------|-------------|
-| **Desktop (Electron)** | `npm run electron:dev` | Full-featured desktop application |
-| **Web** | `npm run web:dev` | Browser-based access with Express API backend |
+## 运行模式
 
-### Web Mode Limitations
+| 模式 | 命令 | 说明 |
+|------|------|------|
+| **桌面（Electron）** | `npm run electron:dev` | 完整功能，含实时推流、hook 执行、MCP 测试 |
+| **Web** | `npm run web:dev` | 浏览器访问，Express API 后端，部分功能只读 |
 
-Some features are only available in Desktop mode:
-- Launch debug sessions (requires local terminal)
-- Hook testing (security reasons)
-- MCP connection testing
-- File watching
-- Project path selection dialog
+## 技术栈
 
-## Technology Stack
+- **桌面**：Electron
+- **后端（Web）**：Express.js
+- **前端**：React 18 + TypeScript
+- **UI**：shadcn/ui + Tailwind CSS + Radix UI
+- **可视化**：React Flow
+- **编辑器**：Monaco Editor
+- **i18n**：i18next（中文 / 英文）
+- **构建**：Vite
 
-- **Desktop**: Electron
-- **Backend (Web)**: Express.js
-- **Frontend**: React 18 + TypeScript
-- **UI**: shadcn/ui + Tailwind CSS + Radix UI
-- **State**: Zustand
-- **Visualization**: React Flow
-- **Editor**: Monaco Editor
-- **i18n**: i18next
-- **Build**: Vite
-
-## Project Structure
-
-```
-claude-code-debugger/
-├── electron/              # Electron main process
-│   ├── main.ts           # Main entry point
-│   ├── preload.cjs       # Preload script (CommonJS)
-│   ├── ipc/              # IPC handlers (modular)
-│   │   ├── index.ts      # Main IPC registry
-│   │   ├── skills.ts     # Skills IPC handlers
-│   │   ├── hooks.ts      # Hooks IPC handlers
-│   │   ├── mcp.ts        # MCP IPC handlers
-│   │   ├── commands.ts   # Commands IPC handlers
-│   │   ├── agents.ts     # Agents IPC handlers
-│   │   ├── claudemd.ts   # CLAUDE.md IPC handlers
-│   │   └── providers.ts  # AI Provider IPC handlers
-│   └── services/         # Backend services
-│       └── file-manager.ts  # File system operations
-├── server/               # Express API server (Web mode)
-│   └── index.ts          # API routes
-├── src/                  # React frontend
-│   ├── App.tsx          # Main app component
-│   ├── main.tsx         # Entry point
-│   ├── i18n/            # Internationalization
-│   │   ├── index.ts     # i18n configuration
-│   │   └── locales/     # Translation files
-│   ├── pages/           # Page components
-│   │   ├── Dashboard.tsx
-│   │   ├── Skills.tsx
-│   │   ├── Agents.tsx
-│   │   ├── Hooks.tsx
-│   │   ├── MCP.tsx
-│   │   ├── Commands.tsx
-│   │   ├── ClaudeMd.tsx
-│   │   ├── Graph.tsx
-│   │   ├── Models.tsx
-│   │   └── Settings.tsx
-│   ├── components/      # Reusable UI components
-│   │   ├── layout/
-│   │   └── ui/          # shadcn/ui components
-│   ├── stores/          # State management
-│   └── lib/             # Utilities and API client
-│       ├── api.ts       # Unified API (Electron IPC / HTTP)
-│       └── utils.ts
-├── shared/              # Shared TypeScript types
-│   └── types/
-├── vite.config.ts       # Vite config (Electron mode)
-├── vite.config.web.ts   # Vite config (Web mode)
-└── package.json
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
+## 快速开始
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/lookfree/cc-harness.git
 cd cc-harness
 
-# Install dependencies
+# 安装依赖
 npm install
-```
 
-### Development
-
-```bash
-# Desktop mode (Electron + Vite hot reload)
+# 桌面模式（主模式）
 npm run electron:dev
 
-# Web mode (Express API + Vite)
+# Web 模式
 npm run web:dev
 ```
 
-### Building
-
-```bash
-# Build Desktop app for production
-npm run electron:build
-
-# Build Web app for production
-npm run web:build
-```
-
-## npm Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start Vite dev server only |
-| `npm run electron:dev` | Start Electron desktop app with hot reload |
-| `npm run electron:build` | Build Electron app for distribution |
-| `npm run web:dev` | Start Web mode (Express API + Vite frontend) |
-| `npm run web:build` | Build Web frontend for production |
-| `npm run server` | Start Express API server only |
-| `npm run build` | Build for production |
-| `npm run lint` | Run ESLint |
-
-## Configuration
-
-The app reads configuration from:
-- **Project**: `.claude/` directory in your project
-- **Global**: `~/.claude/` in your home directory
-
-Supported configuration files:
-- `settings.json` - Claude Code settings including hooks
-- `skills/*.json` or `SKILL.md` - Skill definitions
-- `agents/*.json` - Agent configurations
-- `hooks/*.json` - Hook definitions (legacy format)
-- `commands/<name>/<name>.md` - Slash command definitions
-- `claude_mcp_config.json` - MCP server configurations
-- `CLAUDE.md` - Project documentation
-
-## API Endpoints (Web Mode)
-
-The Express API server provides RESTful endpoints:
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/health` | Health check |
-| `GET /api/skills` | List all skills |
-| `GET /api/hooks` | List all hooks |
-| `GET /api/commands` | List all commands |
-| `GET /api/mcp` | List MCP servers |
-| `GET /api/claudemd/all` | List all CLAUDE.md files |
-| `GET /api/project/context` | Get project context |
-
-## Architecture
-
-### Electron Mode
+## 目录结构
 
 ```
-Frontend (React)
-    ↓ window.electronAPI.getSkills()
-Preload Script (contextBridge)
-    ↓ ipcRenderer.invoke('skills:getAll')
-Main Process (IPC Handlers)
-    ↓ FileManager.getSkills()
-File System (~/.claude/)
+cc-harness/
+├── electron/
+│   ├── main.ts                  # Electron 主进程入口
+│   ├── preload.cjs              # contextBridge（必须 .cjs）
+│   ├── ipc/                     # IPC handlers（每域一个文件）
+│   └── services/                # 后端服务
+│       ├── file-manager*.ts     # 配置读写（继承链，domain 拆分）
+│       ├── settings-writer.ts   # read-modify-write 原子写
+│       ├── session/             # session 解析 / 监视 / 拓扑
+│       ├── loop/                # loop 定时唤醒发现
+│       ├── memory/              # Auto Memory 读写
+│       ├── mcp/                 # MCP 探活
+│       └── hook-sandbox.ts      # hook 沙箱执行
+├── server/
+│   └── index.ts                 # Web 模式 Express API
+├── src/
+│   ├── pages/                   # 各功能页面
+│   ├── components/
+│   │   ├── layout/              # Layout + LanguageSwitcher
+│   │   └── ui/                  # shadcn/ui 组件
+│   ├── lib/api.ts               # 统一 API（自动探测 Electron / Web）
+│   ├── i18n/                    # 国际化（en + zh）
+│   └── stores/                  # Zustand 状态
+├── shared/
+│   └── types/                   # 主 / 渲染进程共享类型
+├── docs/
+│   ├── cc-harness演进路径.md    # 产品方向与 Phase 划分
+│   └── harness-ide-spec/        # 23 个可执行实现 spec
+└── package.json
 ```
 
-### Web Mode
+## npm 脚本
+
+| 脚本 | 说明 |
+|------|------|
+| `npm run electron:dev` | 启动桌面应用（热重载） |
+| `npm run electron:build` | 打包桌面应用 |
+| `npm run web:dev` | 启动 Web 模式（Express :3001 + Vite :5173） |
+| `npm run web:build` | 构建 Web 前端 |
+| `npm run lint` | ESLint |
+
+## 配置文件读取位置
+
+| 文件 | 说明 |
+|------|------|
+| `~/.claude/settings.json` | 全局设置（hooks / permissions / model） |
+| `~/.claude/plugins/installed_plugins.json` | 已安装 plugin 列表 |
+| `~/.claude/projects/<encoded-cwd>/<session>.jsonl` | 会话运行记录 |
+| `~/.claude/projects/<encoded-cwd>/memory/` | Auto Memory |
+| `<cwd>/.claude/settings.json` | 项目级设置 |
+| `<cwd>/.claude/settings.local.json` | 本地覆盖（不入 git） |
+
+## Web 模式 API 端点（只读）
+
+| 端点 | 说明 |
+|------|------|
+| `GET /api/health` | 健康检查 |
+| `GET /api/skills` | 技能列表 |
+| `GET /api/hooks` | hook 列表 |
+| `GET /api/commands` | 命令列表 |
+| `GET /api/mcp` | MCP 服务器列表 |
+| `GET /api/sessions` | 会话列表 |
+| `GET /api/loops` | loop 唤醒任务列表 |
+| `GET /api/claudemd/all` | CLAUDE.md 文件列表 |
+
+## 架构说明
 
 ```
-Frontend (React)
-    ↓ fetch('/api/skills')
-Express API Server
-    ↓ FileManager.getSkills()
-File System (~/.claude/)
+渲染进程 api.xxx()
+  └─ window.electronAPI (contextBridge preload.cjs)
+       └─ ipcRenderer.invoke('domain:action')
+            └─ 主进程 IPC handler (electron/ipc/*.ts)
+                 └─ FileManager / 专项 service
+                      └─ 文件系统 (~/.claude / <cwd>/.claude)
+
+Web 模式：渲染进程 fetch('/api/xxx') → Express → 同一套 service
 ```
-
-### Unified API Client
-
-The `src/lib/api.ts` automatically detects the running environment and uses the appropriate backend:
-
-```typescript
-import { api } from '@/lib/api'
-
-// Works in both Electron and Web modes
-const skills = await api.skills.getAll()
-const hooks = await api.hooks.getAll()
-```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
 MIT
-
-## Author
-
-Built with Claude Code for the Claude Code community
