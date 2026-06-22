@@ -81,6 +81,7 @@
   "build": {
     "appId": "com.cc.harness",
     "productName": "CC Harness",
+    "icon": "build/icon.icns",
     "directories": {
       "output": "release"
     },
