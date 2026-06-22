@@ -10,6 +10,7 @@ export * from './permission'
 export * from './settings'
 export * from './worktree'
 export * from './session'
+export * from './agent-tree'
 
 export interface ConfigFile {
   path: string

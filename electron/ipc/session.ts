@@ -16,4 +16,15 @@ export function registerSessionHandlers(ipcMain: IpcMain, monitor: SessionMonito
     monitor.unsubscribe(id)
     return true
   })
+
+  // spec016 agent 拓扑（subagent 树 + workflow 编排）
+  ipcMain.handle('session:topology', (_e, filePath: string) => monitor.topology(filePath))
+  ipcMain.handle('session:topology:subscribe', (_e, id: string, filePath: string) => {
+    monitor.subscribeTopology(id, filePath)
+    return true
+  })
+  ipcMain.handle('session:topology:unsubscribe', (_e, id: string) => {
+    monitor.unsubscribeTopology(id)
+    return true
+  })
 }

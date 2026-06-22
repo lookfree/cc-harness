@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush } from '../shared/types'
 
 console.log('[Preload] Script is loading...')
 
@@ -108,6 +108,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_event: unknown, payload: SessionEventsPush) => callback(payload)
     ipcRenderer.on('session:events', handler)
     return () => ipcRenderer.removeListener('session:events', handler)
+  },
+  getAgentTopology: (filePath: string): Promise<AgentTopology> => ipcRenderer.invoke('session:topology', filePath),
+  subscribeTopology: (id: string, filePath: string): Promise<boolean> =>
+    ipcRenderer.invoke('session:topology:subscribe', id, filePath),
+  unsubscribeTopology: (id: string): Promise<boolean> => ipcRenderer.invoke('session:topology:unsubscribe', id),
+  onSessionTopology: (callback: (payload: AgentTopologyPush) => void): (() => void) => {
+    const handler = (_event: unknown, payload: AgentTopologyPush) => callback(payload)
+    ipcRenderer.on('session:topology', handler)
+    return () => ipcRenderer.removeListener('session:topology', handler)
   },
 
   // Dependencies
@@ -253,6 +262,10 @@ declare global {
       subscribeSession: (id: string, filePath: string) => Promise<boolean>
       unsubscribeSession: (id: string) => Promise<boolean>
       onSessionEvents: (callback: (payload: SessionEventsPush) => void) => () => void
+      getAgentTopology: (filePath: string) => Promise<AgentTopology>
+      subscribeTopology: (id: string, filePath: string) => Promise<boolean>
+      unsubscribeTopology: (id: string) => Promise<boolean>
+      onSessionTopology: (callback: (payload: AgentTopologyPush) => void) => () => void
 
       // Dependencies
       getDependencyGraph: () => Promise<{ nodes: unknown[]; edges: unknown[] }>

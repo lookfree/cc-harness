@@ -21,7 +21,17 @@
   },
   "tab": {
     "replay": "Replay",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "topology": "Agents"
+  },
+  "topo": {
+    "empty": "No subagents or workflows for this session",
+    "tools": "tools",
+    "agentsOfDeclared": "{{actual}}/{{declared}} agents",
+    "mode": {
+      "workflow": "Workflow",
+      "tree": "Subagent tree"
+    }
   },
   "timeline": {
     "empty": "No timestamped events",

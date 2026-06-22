@@ -1,10 +1,13 @@
 import { promises as fs } from 'fs'
+import path from 'path'
+import { watch, type FSWatcher } from 'chokidar'
 import type { BrowserWindow } from 'electron'
 import { listSessions } from './session-index'
 import { parseChunk } from './session-parser'
 import { SessionTailer } from './session-tailer'
+import { buildAgentTopology } from './agent-topology'
 import { summarizeEvents } from '../../../shared/session-summary'
-import type { SessionEvent, SessionSummary, SessionEventsPush } from '../../../shared/types'
+import type { SessionEvent, SessionSummary, SessionEventsPush, AgentTopology } from '../../../shared/types'
 
 /**
  * 封装 spec014 的 listSessions + SessionTailer，对外是"订阅式"接口：
@@ -16,8 +19,55 @@ import type { SessionEvent, SessionSummary, SessionEventsPush } from '../../../s
 export class SessionMonitor {
   /** sessionId → 该会话的 tailer（subscribe 时建，unsubscribe 时 close 防句柄泄漏） */
   private tailers = new Map<string, SessionTailer>()
+  /** sessionId → workflow/subagents 目录 watcher（spec016 拓扑实时长出） */
+  private topoWatchers = new Map<string, FSWatcher>()
+  /** sessionId → 拓扑重建去抖定时器 */
+  private topoTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
   constructor(private getWin: () => BrowserWindow | null) {}
+
+  /** 一次性构建某 session 的 agent 拓扑（spec016）。 */
+  topology(sessionFilePath: string): Promise<AgentTopology> {
+    return buildAgentTopology(sessionFilePath)
+  }
+
+  /** 订阅拓扑：监听 `<sessionId>/workflows` 与 `subagents` 目录，文件变化去抖重建并 push。 */
+  subscribeTopology(sessionId: string, sessionFilePath: string): void {
+    if (this.topoWatchers.has(sessionId)) return
+    const subdir = path.join(path.dirname(sessionFilePath), path.basename(sessionFilePath, '.jsonl'))
+    void this.pushTopology(sessionId, sessionFilePath) // 首屏全量
+    // 目标在 .claude 段下，不能套 dotfile 忽略正则（与 SessionTailer 同款坑）
+    const w = watch([path.join(subdir, 'workflows'), path.join(subdir, 'subagents')], {
+      persistent: true,
+      ignoreInitial: true,
+      awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+    })
+    const onChange = () => {
+      clearTimeout(this.topoTimers.get(sessionId))
+      this.topoTimers.set(
+        sessionId,
+        setTimeout(() => void this.pushTopology(sessionId, sessionFilePath), 300)
+      )
+    }
+    w.on('add', onChange).on('change', onChange).on('unlink', onChange).on('addDir', onChange)
+    this.topoWatchers.set(sessionId, w)
+  }
+
+  unsubscribeTopology(sessionId: string): void {
+    this.topoWatchers.get(sessionId)?.close()
+    this.topoWatchers.delete(sessionId)
+    clearTimeout(this.topoTimers.get(sessionId))
+    this.topoTimers.delete(sessionId)
+  }
+
+  private async pushTopology(sessionId: string, sessionFilePath: string): Promise<void> {
+    try {
+      const topology = await buildAgentTopology(sessionFilePath)
+      this.getWin()?.webContents.send('session:topology', { sessionId, topology })
+    } catch {
+      /* 构建失败不影响其它 push */
+    }
+  }
 
   /** 列出所有 session 概要（全量解析每个文件 → 状态/计数/token 小计）。 */
   async list(): Promise<SessionSummary[]> {
@@ -76,6 +126,7 @@ export class SessionMonitor {
   /** 应用退出/窗口关闭时全部退订，防句柄泄漏。 */
   unsubscribeAll(): void {
     for (const id of [...this.tailers.keys()]) this.unsubscribe(id)
+    for (const id of [...this.topoWatchers.keys()]) this.unsubscribeTopology(id)
   }
 
   private push(payload: SessionEventsPush): void {

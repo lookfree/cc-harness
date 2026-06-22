@@ -78,6 +78,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('session:events', handler)
     return () => ipcRenderer.removeListener('session:events', handler)
   },
+  getAgentTopology: (filePath) => ipcRenderer.invoke('session:topology', filePath),
+  subscribeTopology: (id, filePath) => ipcRenderer.invoke('session:topology:subscribe', id, filePath),
+  unsubscribeTopology: (id) => ipcRenderer.invoke('session:topology:unsubscribe', id),
+  onSessionTopology: (callback) => {
+    const handler = (_event, payload) => callback(payload)
+    ipcRenderer.on('session:topology', handler)
+    return () => ipcRenderer.removeListener('session:topology', handler)
+  },
 
   // Dependencies
   getDependencyGraph: () => ipcRenderer.invoke('dependencies:getGraph'),

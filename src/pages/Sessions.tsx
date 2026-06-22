@@ -4,6 +4,7 @@ import { useSessionStore, MAX_COMPARE } from '@/stores/sessionStore'
 import { SessionList } from '@/components/sessions/SessionList'
 import { ConversationReplay } from '@/components/sessions/ConversationReplay'
 import { SessionTimeline, TimelineLegend, sharedDomain } from '@/components/sessions/SessionTimeline'
+import { AgentTopologyView } from '@/components/sessions/AgentTopologyView'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
@@ -125,6 +126,7 @@ export default function Sessions() {
             <TabsList className="mx-4 mt-2 self-start">
               <TabsTrigger value="replay">{t('tab.replay')}</TabsTrigger>
               <TabsTrigger value="timeline">{t('tab.timeline')}</TabsTrigger>
+              <TabsTrigger value="topology">{t('tab.topology')}</TabsTrigger>
             </TabsList>
             <TabsContent value="replay" className="flex-1 min-h-0 mt-2">
               <ConversationReplay events={primaryEvents} scrollToSeq={seekSeq} live={isLive} />
@@ -132,6 +134,11 @@ export default function Sessions() {
             <TabsContent value="timeline" className="flex-1 overflow-y-auto px-4 mt-2">
               <TimelineLegend />
               <SessionTimeline events={primaryEvents} onSeek={onSeek} />
+            </TabsContent>
+            <TabsContent value="topology" className="flex-1 min-h-0 mt-2">
+              {primarySummary && tab === 'topology' && (
+                <AgentTopologyView sessionId={primaryId} sessionFilePath={primarySummary.filePath} />
+              )}
             </TabsContent>
           </Tabs>
         )}

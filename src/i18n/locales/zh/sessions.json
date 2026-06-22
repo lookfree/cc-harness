@@ -21,7 +21,17 @@
   },
   "tab": {
     "replay": "对话回放",
-    "timeline": "时间线"
+    "timeline": "时间线",
+    "topology": "Agent 拓扑"
+  },
+  "topo": {
+    "empty": "该会话没有 subagent 或 workflow",
+    "tools": "工具",
+    "agentsOfDeclared": "{{actual}}/{{declared}} 个 agent",
+    "mode": {
+      "workflow": "Workflow 编排",
+      "tree": "Subagent 树"
+    }
   },
   "timeline": {
     "empty": "无带时间戳的事件",

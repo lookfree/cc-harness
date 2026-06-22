@@ -114,13 +114,21 @@ preload 暴露 `getAgentTopology(sessionId, dir)` + `onTopology(cb)`。`src/lib/
 
 ## 实现步骤
 
-- [ ] 1. `shared/types/agent-tree.ts`：`AgentNode` / `WorkflowRun` / `AgentTopology`。
-- [ ] 2. `electron/services/session/agent-topology.ts`：`buildAgentTopology`（扫 workflows/ + subagents/ + 主 jsonl Task，汇总 token/用时，组装嵌套）。
-- [ ] 3. `electron/ipc/session.ts`：`session:topology` handler + 文件变化推流。
-- [ ] 4. preload + `src/lib/api.ts`：`getAgentTopology` / `onTopology`。
-- [ ] 5. `src/pages/AgentTree.tsx`（或 Sessions Tab）：reactflow 双模式视图、phase 泳道、聚合折叠、节点抽屉。
-- [ ] 6. 节点点击复用 spec015 回放组件渲染 agent transcript。
-- [ ] 7. i18n + 路由 + 侧栏入口。
+- [x] 1. `shared/types/agent-tree.ts`：`AgentNode` / `WorkflowRun` / `AgentTopology` / `AgentTopologyPush`。
+- [x] 2. `electron/services/session/agent-topology.ts`：`buildAgentTopology`（扫 workflows/*.json + subagents/workflows/wf_*/agent-*.jsonl + 主 jsonl Task；每 agent 由其 jsonl 复用 `summarizeEvents` 汇总 token/用时/工具数；script 正则提 meta 不 eval）。
+- [x] 3. `electron/ipc/session.ts`：`session:topology`（一次性）+ `session:topology:subscribe/unsubscribe`；`SessionMonitor` chokidar 监听 `<sessionId>/{workflows,subagents}` 去抖 300ms 重建并 `webContents.send('session:topology')`。
+- [x] 4. preload + `src/lib/api.ts`：`getAgentTopology` / `subscribeTopology` / `onTopology`；`server/index.ts` 加 `GET /api/sessions/:id/topology`（Web 只读）。
+- [x] 5. `src/components/sessions/`：`agentTopologyLayout.ts`（纯函数 topology→nodes/edges）+ `AgentNodes.tsx`（workflow/agent 自定义节点）+ `AgentTopologyView.tsx`（reactflow 首次接入，双模式、onlyRenderVisibleElements）。接 Sessions 第三 Tab。
+- [x] 6. 节点点击 → 右侧抽屉，`snapshot(agentId, agentFilePath)` 取 agent jsonl 复用 `ConversationReplay` 渲染。
+- [x] 7. i18n（sessions namespace tab.topology / topo.*，en/zh 对齐）。入口走 Sessions Tab，不另起侧栏页。
+
+### 实际实现（与方案偏差，已落地）
+
+- **phase 泳道未做（盘上无可靠归属信号）**：agent jsonl 无 phase 字段、`.meta.json` 仅 `{agentType}`、`workflowProgress` 无时间戳 → 无法把 agent 可靠归到 Audit/Verify/Report。故 `workflowPhase` 留空，phases 作进度标签条展示、agents 在 workflow 头节点下 fan-out 网格，不硬塞泳道。
+- **嵌套（ORCH-06 五层）按设计实现但无真实样本**：本机 workflow 是扁平 fan-out（parentAgentId 全 null、depth 0）。tree 模式分层布局已写，待真实五层样本验证。
+- **入口是 Sessions 第三 Tab** 而非独立页/侧栏（topology 本就 per-session）。
+- **抽屉 transcript 为桌面端能力**（直读 agent jsonl 绝对路径；Web 的 id→filePath 反查不含 agent 文件，Web 下抽屉空，与"只读"一致）。
+- **几百节点聚合折叠未做**：实测落盘最多 52 节点，reactflow + `onlyRenderVisibleElements` 流畅；真上几百再补。
 
 ## 验收标准
 

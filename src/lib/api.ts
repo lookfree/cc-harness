@@ -22,6 +22,8 @@ import type {
   SessionSummary,
   SessionEvent,
   SessionEventsPush,
+  AgentTopology,
+  AgentTopologyPush,
 } from '@shared/types'
 
 // Detect if running in Electron
@@ -698,6 +700,26 @@ export const api = {
     onEvents: (cb: (payload: SessionEventsPush) => void): (() => void) => {
       if (isElectron) return window.electronAPI.onSessionEvents(cb)
       console.warn('[API] Live session events are desktop-only')
+      return () => {}
+    },
+    // spec016 agent 拓扑（subagent 树 + workflow 编排）
+    topology: async (id: string, filePath: string): Promise<AgentTopology> => {
+      if (isElectron) return window.electronAPI.getAgentTopology(filePath)
+      return httpGet<AgentTopology>(`/api/sessions/${encodeURIComponent(id)}/topology`)
+    },
+    subscribeTopology: async (id: string, filePath: string): Promise<void> => {
+      if (isElectron) {
+        await window.electronAPI.subscribeTopology(id, filePath)
+        return
+      }
+      console.warn('[API] Live topology is desktop-only')
+    },
+    unsubscribeTopology: async (id: string): Promise<void> => {
+      if (isElectron) await window.electronAPI.unsubscribeTopology(id)
+    },
+    onTopology: (cb: (payload: AgentTopologyPush) => void): (() => void) => {
+      if (isElectron) return window.electronAPI.onSessionTopology(cb)
+      console.warn('[API] Live topology is desktop-only')
       return () => {}
     },
   },

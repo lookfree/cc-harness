@@ -50,6 +50,17 @@ app.get('/api/sessions/:id', asyncHandler(async (req, res) => {
   res.json(await sessionMonitor.snapshot(meta.sessionId, meta.filePath))
 }))
 
+app.get('/api/sessions/:id/topology', asyncHandler(async (req, res) => {
+  // Web 只读：一次性拓扑，无推流
+  const metas = await listSessions()
+  const meta = metas.find((m) => m.sessionId === req.params.id)
+  if (!meta) {
+    res.status(404).json({ error: 'Session not found' })
+    return
+  }
+  res.json(await sessionMonitor.topology(meta.filePath))
+}))
+
 // Plugins / Marketplaces — Web 只读镜像（enable/disable/init/details 仅桌面端）
 app.get('/api/plugins', asyncHandler(async (_req, res) => {
   res.json(await fileManager.getPlugins())
