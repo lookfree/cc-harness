@@ -10,6 +10,8 @@ import { SessionMonitor } from './services/session'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+app.setName('CC Harness')
+
 // Handle EPIPE errors gracefully (when stdout/stderr is closed)
 process.stdout?.on('error', (err) => {
   if (err.code === 'EPIPE') {
