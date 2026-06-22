@@ -51,67 +51,66 @@ export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className={cn(
-        'border-r border-border bg-card flex flex-col flex-shrink-0 transition-all duration-200 overflow-hidden',
-        sidebarOpen ? 'w-64' : 'w-0 border-r-0',
-      )}>
-        {/* Header — 占位 + 折叠按钮 */}
-        <div className="h-14 border-b border-border flex items-center justify-end px-3 shrink-0">
+    <div className="flex flex-col h-screen bg-background">
+      {/* 全宽 titlebar — drag 区域，pl-20 避开 macOS traffic lights */}
+      <div
+        className="h-14 border-b border-border bg-card flex items-center px-3 shrink-0"
+        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      >
+        <div
+          className="pl-20 flex items-center"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
           <button
-            onClick={() => setSidebarOpen(false)}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            <PanelLeftClose className="w-4 h-4" />
+            {sidebarOpen
+              ? <PanelLeftClose className="w-4 h-4" />
+              : <PanelLeftOpen className="w-4 h-4" />
+            }
           </button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navigationKeys.map((item) => {
-            const isActive = location.pathname === item.href
-            return (
-              <Link
-                key={item.key}
-                to={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                {t(`nav.${item.key}`)}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Footer */}
-        <div className="border-t border-border p-4 space-y-3 shrink-0">
-          <LanguageSwitcher />
-          <div className="text-xs text-muted-foreground">
-            <p>{t('appName')}</p>
-            <p className="mt-1">{t('version', { version: '0.1.0' })}</p>
-          </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 收起时左上角展开按钮 */}
-        {!sidebarOpen && (
-          <div className="h-14 border-b border-border flex items-center px-3 shrink-0">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <PanelLeftOpen className="w-4 h-4" />
-            </button>
+      {/* 内容区 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 侧栏 */}
+        <div className={cn(
+          'border-r border-border bg-card flex flex-col flex-shrink-0 transition-all duration-200 overflow-hidden',
+          sidebarOpen ? 'w-64' : 'w-0 border-r-0',
+        )}>
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {navigationKeys.map((item) => {
+              const isActive = location.pathname === item.href
+              return (
+                <Link
+                  key={item.key}
+                  to={item.href}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {t(`nav.${item.key}`)}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <div className="border-t border-border p-4 space-y-3 shrink-0">
+            <LanguageSwitcher />
+            <div className="text-xs text-muted-foreground">
+              <p>{t('appName')}</p>
+              <p className="mt-1">{t('version', { version: '0.1.0' })}</p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* 主内容 */}
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>
