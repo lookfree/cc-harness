@@ -19,11 +19,24 @@ interface Props {
   label?: string
 }
 
-interface Placed {
-  event: SessionEvent
-  ms: number
-  /** 0..100 百分比横坐标 */
-  x: number
+/** 直方图分桶数（固定，使比对模式各 session 在同一时间域下桶对齐）。 */
+const BUCKETS = 60
+
+/** 参与堆叠统计的事件类型（按从底到顶的堆叠顺序）；meta/system 视为噪声不计。 */
+const STACK_KINDS: Array<'user_turn' | 'assistant_turn' | 'tool_use' | 'tool_result'> = [
+  'user_turn',
+  'assistant_turn',
+  'tool_use',
+  'tool_result',
+]
+
+interface Bucket {
+  counts: Record<string, number>
+  total: number
+  /** 桶内最早事件 seq，点击跳回放用 */
+  firstSeq?: number
+  startMs: number
+  endMs: number
 }
 
 /** 给每个事件赋"有效时间"：自身 timestamp，缺失则沿用上一个已知时间（meta 行常无 ts，spec014 已知）。 */
@@ -43,19 +56,32 @@ function effectiveTimes(events: SessionEvent[]): Array<{ event: SessionEvent; ms
 
 export function SessionTimeline({ events, domain, onSeek, label }: Props) {
   const { t } = useTranslation('sessions')
-  const { placed, resultX, min, max } = useMemo(() => {
+  const { buckets, maxCount, min, max, eventCount } = useMemo(() => {
     const timed = effectiveTimes(events)
     const min = domain?.minMs ?? (timed.length ? Math.min(...timed.map((o) => o.ms)) : 0)
     const max = domain?.maxMs ?? (timed.length ? Math.max(...timed.map((o) => o.ms)) : 1)
     const span = max - min || 1
-    const placed: Placed[] = timed.map(({ event, ms }) => ({ event, ms, x: ((ms - min) / span) * 100 }))
-    // tool_result 的 x，按 toolUseId 索引，给 tool_use 连线用
-    const resultX = new Map<string, number>()
-    for (const p of placed) if (p.event.kind === 'tool_result') resultX.set(p.event.toolUseId, p.x)
-    return { placed, resultX, min, max }
+    const buckets: Bucket[] = Array.from({ length: BUCKETS }, (_, i) => ({
+      counts: {},
+      total: 0,
+      startMs: min + (span * i) / BUCKETS,
+      endMs: min + (span * (i + 1)) / BUCKETS,
+    }))
+    let eventCount = 0
+    for (const { event, ms } of timed) {
+      if (!STACK_KINDS.includes(event.kind as (typeof STACK_KINDS)[number])) continue
+      const i = Math.min(BUCKETS - 1, Math.max(0, Math.floor(((ms - min) / span) * BUCKETS)))
+      const b = buckets[i]
+      b.counts[event.kind] = (b.counts[event.kind] ?? 0) + 1
+      b.total++
+      eventCount++
+      if (b.firstSeq === undefined) b.firstSeq = event.seq
+    }
+    const maxCount = Math.max(1, ...buckets.map((b) => b.total))
+    return { buckets, maxCount, min, max, eventCount }
   }, [events, domain])
 
-  if (placed.length === 0) {
+  if (eventCount === 0) {
     return (
       <div className="py-2 text-xs text-muted-foreground">
         {label ? `${label} · ` : ''}
@@ -67,37 +93,25 @@ export function SessionTimeline({ events, domain, onSeek, label }: Props) {
   return (
     <div className="py-2">
       {label && <div className="text-xs font-medium mb-1 truncate">{label}</div>}
-      <div className="relative h-10 bg-muted/30 rounded border border-border/50">
-        {/* tool_use → tool_result 连线（表"用了多久"） */}
-        {placed.map((p) => {
-          if (p.event.kind !== 'tool_use') return null
-          const rx = resultX.get(p.event.toolUseId)
-          if (rx == null) return null
-          const left = Math.min(p.x, rx)
-          const width = Math.abs(rx - p.x)
-          return (
-            <div
-              key={`line-${p.event.toolUseId}`}
-              className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-amber-400/70"
-              style={{ left: `${left}%`, width: `${width}%` }}
-            />
-          )
-        })}
-        {/* 事件刻度（竖条，比小点更醒目，点击跳回放） */}
-        {placed.map((p) => (
+      {/* 密度直方图：按时间分桶，柱高=该桶事件数，按类型堆叠；空桶留白=活动间隙 */}
+      <div className="flex items-end gap-px h-24 bg-muted/30 rounded border border-border/50 p-1">
+        {buckets.map((b, i) => (
           <button
-            key={`tick-${p.event.uuid}`}
-            onClick={() => onSeek?.(p.event.seq)}
-            title={tickTitle(p.event, t)}
-            className={cn(
-              'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-6 rounded-full hover:h-8 hover:w-1.5 transition-all',
-              KIND_COLOR[p.event.kind]
+            key={i}
+            disabled={b.total === 0}
+            onClick={() => b.firstSeq !== undefined && onSeek?.(b.firstSeq)}
+            title={bucketTitle(b, t)}
+            className="flex-1 h-full flex flex-col-reverse hover:opacity-70 disabled:pointer-events-none"
+          >
+            {STACK_KINDS.map((k) =>
+              b.counts[k] ? (
+                <div key={k} className={KIND_COLOR[k]} style={{ height: `${(b.counts[k] / maxCount) * 100}%` }} />
+              ) : null
             )}
-            style={{ left: `${p.x}%` }}
-          />
+          </button>
         ))}
       </div>
-      {/* 时间轴：起止时刻 + 时长 */}
+      {/* 时间轴：起止时刻 + 跨度 */}
       <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
         <span>{formatClock(min)}</span>
         <span>{t('timeline.span', { d: formatDuration(max - min) })}</span>
@@ -107,10 +121,26 @@ export function SessionTimeline({ events, domain, onSeek, label }: Props) {
   )
 }
 
-/** 图例：颜色 ↔ 事件类型 + 连线含义。Sessions 页在时间线上方渲染一次。 */
+/** STACK_KINDS → sessions namespace 下 card.* 标签 key。 */
+const CARD_KEY: Record<(typeof STACK_KINDS)[number], string> = {
+  user_turn: 'user',
+  assistant_turn: 'assistant',
+  tool_use: 'toolUse',
+  tool_result: 'toolResult',
+}
+
+/** 桶 tooltip：时间区间 + 各类型计数。 */
+function bucketTitle(b: Bucket, t: TFn): string {
+  const range = `${formatClock(b.startMs)}–${formatClock(b.endMs)}`
+  if (b.total === 0) return range
+  const parts = STACK_KINDS.filter((k) => b.counts[k]).map((k) => `${t(`card.${CARD_KEY[k]}`)} ${b.counts[k]}`)
+  return `${range} · ${parts.join(', ')}`
+}
+
+/** 图例：颜色 ↔ 事件类型。Sessions 页在直方图上方渲染一次。 */
 export function TimelineLegend() {
   const { t } = useTranslation('sessions')
-  const items: Array<[SessionEvent['kind'], string]> = [
+  const items: Array<[(typeof STACK_KINDS)[number], string]> = [
     ['user_turn', t('card.user')],
     ['assistant_turn', t('card.assistant')],
     ['tool_use', t('card.toolUse')],
@@ -120,31 +150,12 @@ export function TimelineLegend() {
     <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap mb-2">
       {items.map(([k, lbl]) => (
         <span key={k} className="flex items-center gap-1">
-          <span className={cn('w-1 h-3 rounded-full', KIND_COLOR[k])} />
+          <span className={cn('w-2.5 h-2.5 rounded-sm', KIND_COLOR[k])} />
           {lbl}
         </span>
       ))}
-      <span className="flex items-center gap-1">
-        <span className="w-4 h-0.5 bg-amber-400/70" />
-        {t('timeline.toolSpan')}
-      </span>
     </div>
   )
-}
-
-function tickTitle(e: SessionEvent, t: TFn): string {
-  switch (e.kind) {
-    case 'tool_use':
-      return `${t('card.toolUse')}: ${e.toolName}`
-    case 'tool_result':
-      return t(e.isError ? 'card.toolError' : 'card.toolResult')
-    case 'assistant_turn':
-      return `${t('card.assistant')}${e.model ? ` · ${e.model}` : ''}`
-    case 'user_turn':
-      return t('card.user')
-    default:
-      return e.kind
-  }
 }
 
 /** 跨多个 session 算共享时间域（比对模式用）。 */

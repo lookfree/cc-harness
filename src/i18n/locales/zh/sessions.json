@@ -25,8 +25,7 @@
   },
   "timeline": {
     "empty": "无带时间戳的事件",
-    "span": "跨度 {{d}}",
-    "toolSpan": "工具耗时"
+    "span": "跨度 {{d}}"
   },
   "replay": {
     "count": "{{count}} 条事件",
