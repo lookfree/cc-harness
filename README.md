@@ -31,6 +31,7 @@ Claude Code 已经从"单会话配置工具"长成了多会话编排 + 自动循
 - [CC Harness 是什么](#cc-harness-是什么)
 - [你在用 Claude Code 做这些事时，CC Harness 能帮上什么](#你在用-claude-code-做这些事时cc-harness-能帮上什么)
 - [五根支柱](#五根支柱)
+- [几个值得单独说的功能](#几个值得单独说的功能)
 - [适合谁](#适合谁)
 - [不太适合谁](#不太适合谁)
 - [快速开始](#快速开始)
@@ -93,6 +94,18 @@ CC Harness 的 Token Usage 面板把 skills / subagents / MCP / plugins / base s
 
 CC Harness 的配置层把 Skills / Commands / Agents / Hooks 的三层来源（user / project / plugin）都列出来，标注覆盖关系，让任何人打开都能看懂当前项目的 harness 全貌。
 
+### 6. 你写了十几个 skill，但不知道哪句 prompt 会命中哪个
+
+skill 多了之后，"这个 skill 什么时候会被调用"变得越来越模糊。你不确定哪些关键词会触发它，也不清楚它的结构是什么。
+
+CC Harness 的 Skills 页内置 Trigger 分析器，自动从 skill 内容提取触发关键词并按 action / technology / format / topic 分类，还能生成"什么样的 prompt 会激活这个 skill"的示例。同一个 skill 还有 Mermaid 结构图（可缩放、可切换 TD/LR 布局），蓝色是 skill 节点、绿色是引用、橙色是脚本、紫色是触发器，一图看清结构。
+
+### 7. Skills、Hooks、MCP 之间的依赖关系你说不清楚
+
+项目大了之后，哪个 skill 依赖哪个 MCP server、哪个 hook 会初始化哪个 MCP、哪个 command 会调用哪个 skill——这些关系散在各个配置文件里，没人能一眼说清楚。
+
+CC Harness 的 Dependency Graph 自动从名称和内容里提取关键词，识别 Skills → MCP（uses）/ Hooks → MCP（initializes）/ Skills ↔ Hooks（configures）/ Commands → Skills（invokes）/ Commands → MCP（triggers）五种关系，并把有关联的节点组成带编号步骤的工作流叙事——整个 harness 的依赖拓扑一张图呈现。
+
 ---
 
 ## 五根支柱
@@ -106,6 +119,38 @@ CC Harness 的配置层把 Skills / Commands / Agents / Hooks 的三层来源（
 **四、编排（Compose）** 把 CLAUDE.md + skills + hooks + commands 打包成可复用的业务 harness 模板，存、复用、导出成 plugin 格式；`/goal`、`/loop`、subagent 编排的 UI 具象化（路线图中）。
 
 **五、教学（Teach）** 给全新项目目录，工具陪你走一遍：写 CLAUDE.md → 选 plugin → 配 hook → 设 `/goal`。文章 + 工具页面 + 实际配置三件套同步完成（路线图中）。
+
+---
+
+## 几个值得单独说的功能
+
+### Dependency Graph — 不只是关系图，是工作流叙事
+
+从 Skills / Hooks / MCP / Commands 的名称和内容里自动提取关键词，识别五类依赖关系，把有关联的节点聚合成带编号步骤的工作流链：
+
+```
+① Hook 触发 → ② MCP Server 启动 → ③ Skill 激活 → ④ MCP Tool 调用
+```
+
+CLI 看不到这张图。这是 CC Harness 里最接近"编排可视化"的功能。
+
+### Skills Mermaid 图 + Trigger 分析
+
+每个 skill 内置四个分析视图：**Overview**（引用/脚本/触发器统计）→ **Triggers**（关键词提取 + 命中示例 + 置信度分类）→ **Diagram**（Mermaid 结构图，可缩放，TD/LR 布局切换）→ **References**（关联资源）。
+
+写了二十个 skill 还搞不清楚哪个会被触发——打开 Trigger 分析器，一秒看清。
+
+### Session 时间线直方图
+
+大 session 的事件流压缩进 60 个直方图桶，按 user\_turn / assistant\_turn / tool\_use / tool\_result 分层叠加显示，点击任意桶跳转到对应 turn。长时间运行的 Workflow session 里，这张图是快速定位"在哪一段出了问题"的第一入口。
+
+### Memory Dream Diff
+
+Auto Memory 每次固化（dream）前后，CC Harness 做快照对比：哪些记忆被合并、哪些过期项被删除、哪些矛盾被解决、浮现了哪些新模式——用 diff viewer 呈现，颜色标注 added / deleted / modified / merged / conflict-resolved 五种变化类型。dream 是黑盒——这是目前唯一能把它照亮的工具。
+
+### Hook 沙箱的安全设计
+
+干 run 时环境完全隔离：只暴露 `PATH / HOME / TMPDIR` 三个环境变量，不传 API token，不传任何用户凭证。输出解析支持 JSON block / exit code（2=block）/ stdout 三种决策格式，超时 30s 自动 SIGKILL，输出上限 1MB。测过再用，不用担心 dry-run 出副作用。
 
 ---
 
