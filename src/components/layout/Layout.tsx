@@ -58,7 +58,7 @@ export function Layout({ children }: LayoutProps) {
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div
-          className="pl-20 flex items-center"
+          className="pl-24 flex items-center"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <button
