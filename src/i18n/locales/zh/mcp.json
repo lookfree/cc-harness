@@ -30,6 +30,40 @@
     "save": "保存",
     "cancel": "取消"
   },
+  "tabs": {
+    "servers": "服务器",
+    "health": "健康"
+  },
+  "health": {
+    "desc": "已配置 MCP 服务器的实时连接状态与调用统计。",
+    "refresh": "刷新",
+    "probeDesktopOnly": "实时探测（重探按钮）仅桌面端可用，调用统计在两种模式下均可查看。",
+    "needsAuth": "需要授权",
+    "tools": "个工具",
+    "toolList": "握手获取的工具列表",
+    "byTool": "各工具调用统计",
+    "noDetail": "无详情——服务器尚未探测或无调用记录。",
+    "state": {
+      "connected": "已连接",
+      "failed": "连接失败",
+      "needsAuth": "需要身份验证",
+      "unknown": "未知"
+    },
+    "stats": {
+      "calls": "调用数",
+      "ok": "成功率",
+      "p50": "p50",
+      "p95": "p95",
+      "last": "最近"
+    },
+    "probeError": "探测失败：{{error}}",
+    "cols": {
+      "tool": "工具",
+      "calls": "调用",
+      "failed": "失败",
+      "avgMs": "均耗(ms)"
+    }
+  },
   "dialog": {
     "addTitle": "添加 MCP 服务器",
     "editTitle": "编辑 MCP 服务器",

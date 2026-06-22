@@ -12,7 +12,9 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { KeyValueRows } from '@/components/KeyValueRows'
+import { MCPHealthTab } from '@/pages/mcp/MCPHealthTab'
 import { Server, Globe, Plus, Pencil, Trash2, Save, X, Zap, Info, MessageCircleQuestion } from 'lucide-react'
 
 type Transport = 'stdio' | 'http' | 'sse'
@@ -135,35 +137,49 @@ export default function MCP() {
             <p className="text-xs text-muted-foreground">{t('description')}</p>
           </div>
         </div>
-        <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> {t('actions.add')}</Button>
       </div>
 
-      <div className="p-6 space-y-4">
-        {/* Notes */}
-        <div className="rounded-md border border-border bg-muted/40 px-3 py-2 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-start gap-1.5"><Info className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {t('parallelNote')}</p>
-          <p className="text-xs text-muted-foreground flex items-start gap-1.5"><Info className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {t('healthNote')}</p>
+      <Tabs defaultValue="servers" className="flex-1 flex flex-col min-h-0">
+        <div className="px-6 pt-4 flex items-center justify-between gap-2">
+          <TabsList>
+            <TabsTrigger value="servers">{t('tabs.servers')}</TabsTrigger>
+            <TabsTrigger value="health">{t('tabs.health')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="servers" className="mt-0 contents">
+            <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> {t('actions.add')}</Button>
+          </TabsContent>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
-        ) : Object.keys(servers).length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">{t('empty')}</div>
-        ) : (
-          <>
-            {local.length > 0 && (
-              <Group title={t('groups.local')} icon={<Server className="w-4 h-4" />}>
-                {local.map(([name, c]) => <ServerCard key={name} name={name} config={c} t={t} onEdit={() => openEdit(name, c)} onDelete={() => remove(name)} />)}
-              </Group>
-            )}
-            {remote.length > 0 && (
-              <Group title={t('groups.remote')} icon={<Globe className="w-4 h-4" />}>
-                {remote.map(([name, c]) => <ServerCard key={name} name={name} config={c} t={t} onEdit={() => openEdit(name, c)} onDelete={() => remove(name)} />)}
-              </Group>
-            )}
-          </>
-        )}
-      </div>
+        <TabsContent value="servers" className="flex-1 p-6 pt-4 space-y-4 overflow-auto">
+          {/* Notes */}
+          <div className="rounded-md border border-border bg-muted/40 px-3 py-2 space-y-1">
+            <p className="text-xs text-muted-foreground flex items-start gap-1.5"><Info className="w-3.5 h-3.5 mt-0.5 shrink-0" /> {t('parallelNote')}</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
+          ) : Object.keys(servers).length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">{t('empty')}</div>
+          ) : (
+            <>
+              {local.length > 0 && (
+                <Group title={t('groups.local')} icon={<Server className="w-4 h-4" />}>
+                  {local.map(([name, c]) => <ServerCard key={name} name={name} config={c} t={t} onEdit={() => openEdit(name, c)} onDelete={() => remove(name)} />)}
+                </Group>
+              )}
+              {remote.length > 0 && (
+                <Group title={t('groups.remote')} icon={<Globe className="w-4 h-4" />}>
+                  {remote.map(([name, c]) => <ServerCard key={name} name={name} config={c} t={t} onEdit={() => openEdit(name, c)} onDelete={() => remove(name)} />)}
+                </Group>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="health" className="flex-1 p-6 pt-4 overflow-auto">
+          <MCPHealthTab />
+        </TabsContent>
+      </Tabs>
 
       <McpDialog open={dialogOpen} onOpenChange={setDialogOpen} form={form} setForm={setForm} editingName={editingName} onSave={save} t={t} />
     </div>

@@ -30,6 +30,40 @@
     "save": "Save",
     "cancel": "Cancel"
   },
+  "tabs": {
+    "servers": "Servers",
+    "health": "Health"
+  },
+  "health": {
+    "desc": "Live connection state and call statistics for configured MCP servers.",
+    "refresh": "Refresh",
+    "probeDesktopOnly": "Live probing (Re-probe button) is only available in desktop mode. Call stats are available in both modes.",
+    "needsAuth": "Needs auth",
+    "tools": "tools",
+    "toolList": "Tools from handshake",
+    "byTool": "Per-tool call stats",
+    "noDetail": "No detail available — server not yet probed or no calls recorded.",
+    "state": {
+      "connected": "Connected",
+      "failed": "Failed",
+      "needsAuth": "Needs authentication",
+      "unknown": "Unknown"
+    },
+    "stats": {
+      "calls": "Calls",
+      "ok": "OK%",
+      "p50": "p50",
+      "p95": "p95",
+      "last": "Last"
+    },
+    "probeError": "Probe failed: {{error}}",
+    "cols": {
+      "tool": "Tool",
+      "calls": "Calls",
+      "failed": "Failed",
+      "avgMs": "Avg ms"
+    }
+  },
   "dialog": {
     "addTitle": "Add MCP server",
     "editTitle": "Edit MCP server",
