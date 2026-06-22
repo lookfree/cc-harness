@@ -124,25 +124,25 @@ export interface HookFireEvent extends SessionEventBase {
 
 ## 实现步骤
 
-- [ ] 1. `shared/types/hook.ts`：`HookSimInput` / `HookDryRunResult`。
-- [ ] 2. `electron/services/hook-sandbox.ts`：`dryRunHook` + 三形态执行 + 安全边界（spawn/stdin/超时/env 白名单/临时 cwd/输出上限/决策解析）。
-- [ ] 3. `electron/ipc/hooks.ts`：`hooks:dryRun` handler。
-- [ ] 4. preload + `src/lib/api.ts`：`hooks.dryRun`（web 禁用）。
-- [ ] 5. `src/pages/Hooks.tsx`：模拟输入表单（按 type 动态）+ 安全确认 + 结果展示（含 transform diff）。
-- [ ] 6. （接 spec015）jsonl hook 触发探测 + 时间线 hook 轨道（`HookFireEvent`）。
-- [ ] 7. i18n + 安全提示文案。
+- [x] 1. `shared/types/hook.ts`：`HookSimInput` / `HookDryRunResult`。
+- [x] 2. `electron/services/hook-sandbox.ts`：`dryRunHook` + 三形态执行 + 安全边界（spawn/stdin/超时/env 白名单/临时 cwd/输出上限/决策解析）。
+- [x] 3. `electron/ipc/hooks.ts`：`hooks:dryRun` handler。
+- [x] 4. preload + `src/lib/api.ts`：`hooks.dryRun`（web 禁用）。
+- [x] 5. `src/pages/Hooks.tsx`：模拟输入表单（按 type 动态）+ 安全确认 + 结果展示（含 transform diff）。
+- [~] 6. （接 spec015）jsonl hook 触发探测 + 时间线 hook 轨道（`HookFireEvent`）——数据源未坐实，推迟；见风险备注。
+- [x] 7. i18n + 安全提示文案。
 
 ## 验收标准
 
-- [ ] 选一个 command hook（如 echo 一段 JSON），dry-run 返回正确 stdout、exitCode=0、decision 按输出解析。
-- [ ] command 用 `args:["node","-e","..."]` exec form 跑 → `shell:false`，结果正确（验证 exec form 路径）。
-- [ ] 一个故意死循环的 hook 在 `timeoutMs` 到点被 SIGKILL，`timedOut=true`，UI 显示超时不卡死。
-- [ ] 输出 `{"decision":"block","reason":"x"}` 的 hook → decision=block、blockReason='x' 红徽章。
-- [ ] PostToolUse 输出替换 hook → transformedOutput 显示，UI 给 原始→替换 diff。
-- [ ] http hook 指向本地测试端点（需勾允许出网）→ httpStatus + responseBody 正确；未勾出网时 http 类禁止运行并提示。
-- [ ] dry-run 子进程 env 不含敏感 token（DevTools 注入一个 `process.env.SECRET`，hook 打印 env 验证拿不到）。
-- [ ] dry-run 默认 cwd 是临时目录而非真实项目（hook 内 `pwd` 验证）。
-- [ ] Web 模式调用 dryRun 抛"仅桌面端"，不崩。
+- [x] 选一个 command hook（如 echo 一段 JSON），dry-run 返回正确 stdout、exitCode=0、decision 按输出解析。
+- [x] command 用 `args:["node","-e","..."]` exec form 跑 → `shell:false`，结果正确（验证 exec form 路径）。
+- [x] 一个故意死循环的 hook 在 `timeoutMs` 到点被 SIGKILL，`timedOut=true`，UI 显示超时不卡死。
+- [x] 输出 `{"decision":"block","reason":"x"}` 的 hook → decision=block、blockReason='x' 红徽章。
+- [x] PostToolUse 输出替换 hook → transformedOutput 显示，UI 给 原始→替换 diff。
+- [x] http hook 指向本地测试端点（需勾允许出网）→ httpStatus + responseBody 正确；未勾出网时 http 类禁止运行并提示。
+- [x] dry-run 子进程 env 不含敏感 token（DevTools 注入一个 `process.env.SECRET`，hook 打印 env 验证拿不到）。
+- [x] dry-run 默认 cwd 是临时目录而非真实项目（hook 内 `pwd` 验证）。
+- [x] Web 模式调用 dryRun 抛"仅桌面端"，不崩。
 
 ## 风险与备注
 

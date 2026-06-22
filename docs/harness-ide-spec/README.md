@@ -100,10 +100,10 @@
 | spec015 | Session 监视器 | P2 | ORCH-01/02/04/05、OBS-06 | ✅ 完成 |
 | spec016 | Subagent 调用树与 Workflow 编排视图 | P2 | ORCH-06/09 | ✅ 完成 |
 | spec017 | Token-Usage 面板 | P2 | OBS-02/03/05 | ✅ 完成 |
-| spec018 | Hook 沙箱执行器 | P2 | HOOK 可执行化 | 就绪 |
+| spec018 | Hook 沙箱执行器 | P2 | HOOK 可执行化 | ✅ 完成（步骤6 timeline 推迟，数据源未坐实） |
 | spec019 | loop 定时任务面板 | P2 | ORCH-08 | 就绪 |
-| spec020 | MCP 健康面板 | P2 | MISC-06 | 就绪 |
-| spec021 | 记忆面板与 dream 可视化 | P2 | ORCH-10、MISC-07/08 | 就绪 |
+| spec020 | MCP 健康面板 | P2 | MISC-06 | ✅ 完成 |
+| spec021 | 记忆面板与 dream 可视化 | P2 | ORCH-10、MISC-07/08 | ✅ 完成（dream B-path 推迟） |
 
 ### 暂不做（对照表标了 Phase 但有意不排 spec）
 
