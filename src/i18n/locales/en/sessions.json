@@ -39,6 +39,11 @@
     "spendTitle": "Cumulative spend",
     "modelTable": "By model",
     "model": "Model",
+    "col": {
+      "in": "in",
+      "out": "out",
+      "cacheRead": "cache R"
+    },
     "adviceTitle": "Tuning suggestions",
     "bucket": {
       "base": "base",

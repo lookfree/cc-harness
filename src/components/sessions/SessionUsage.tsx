@@ -135,9 +135,9 @@ export function SessionUsage({ sessionId, sessionFilePath }: Props) {
           <thead className="text-muted-foreground">
             <tr className="text-left">
               <th className="py-1">{t('usage.model')}</th>
-              <th>in</th>
-              <th>out</th>
-              <th>cacheR</th>
+              <th>{t('usage.col.in')}</th>
+              <th>{t('usage.col.out')}</th>
+              <th>{t('usage.col.cacheRead')}</th>
               <th>{t('usage.cost')}</th>
             </tr>
           </thead>

@@ -39,6 +39,11 @@
     "spendTitle": "累计花费",
     "modelTable": "按模型",
     "model": "模型",
+    "col": {
+      "in": "输入",
+      "out": "输出",
+      "cacheRead": "缓存读"
+    },
     "adviceTitle": "调优建议",
     "bucket": {
       "base": "基础",
