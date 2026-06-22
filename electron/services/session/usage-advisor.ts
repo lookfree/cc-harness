@@ -33,12 +33,13 @@ export function adviseUsage(b: UsageBreakdown): UsageAdvice[] {
     const toolTotal = Object.values(b.toolCounts).reduce((a, c) => a + c, 0)
     const readHeavy = toolTotal > 0 && reads / toolTotal > 0.5
     if (saving > 0) {
+      const savingPct = total.estimatedCostUsd ? pct1(saving / total.estimatedCostUsd) : 0
       out.push({
         id: 'switch-sonnet',
         severity: 'suggest',
-        params: { pct: total.estimatedCostUsd ? pct1(saving / total.estimatedCostUsd) : 0, usd: usd2(saving), readHeavy: readHeavy ? 1 : 0 },
+        params: { pct: savingPct, usd: usd2(saving), readHeavy: readHeavy ? 1 : 0 },
         estimatedSavingUsd: usd2(saving),
-        estimatedSavingPct: total.estimatedCostUsd ? pct1(saving / total.estimatedCostUsd) : undefined,
+        estimatedSavingPct: savingPct || undefined,
       })
     }
   }

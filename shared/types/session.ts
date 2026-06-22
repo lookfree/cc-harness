@@ -112,9 +112,12 @@ export interface TokenUsageRollup {
   cacheReadInputTokens: number
   /** 全部相加，UI 小计直接用 */
   totalTokens: number
-  /** 估算成本（USD），按 model 单价表算，标注"估算"（spec017）；summarizeEvents 不填 */
+  /**
+   * 估算成本（USD）。⚠ 仅 spec017 的 computeUsageBreakdown 填充；
+   * spec015 的 summarizeEvents（session 列表/agent 节点）不填 → undefined。
+   */
   estimatedCostUsd?: number
-  /** 原始 model 串（如 'claude-opus-4-8[1m]'）→ 累计用量（spec017） */
+  /** 原始 model 串（如 'claude-opus-4-8[1m]'）→ 累计用量。同上：仅 spec017 填。 */
   byModel?: Record<string, TokenUsage>
 }
 

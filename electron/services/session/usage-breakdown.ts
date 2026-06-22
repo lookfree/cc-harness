@@ -44,6 +44,17 @@ function addUsage(roll: TokenUsageRollup, u: TokenUsage, model: string): void {
   }
 }
 
+function seriesPoint(ts: string, bucket: UsageBucket, model: string, u: TokenUsage): UsageBreakdown['series'][number] {
+  return {
+    ts,
+    bucket,
+    model,
+    output: u.outputTokens,
+    inputBillable: u.inputTokens + u.cacheCreationInputTokens + u.cacheReadInputTokens,
+    costUsd: estimateCostUsd(u, model) ?? 0,
+  }
+}
+
 /** 把一个 assistant turn 按其 tool_use 归类（启发式，见 spec017）。plugins 需外部 tool 名单。 */
 function classifyTurn(tools: ToolUseEvent[], pluginToolNames?: Set<string>): UsageBucket {
   if (pluginToolNames && tools.some((t) => pluginToolNames.has(t.toolName))) return 'plugins'
@@ -92,14 +103,7 @@ export function computeUsageBreakdown(
     const model = e.model ?? ''
     addUsage(byBucket[bucket], e.usage, model)
     addUsage(total, e.usage, model)
-    series.push({
-      ts: e.timestamp ?? '',
-      bucket,
-      model,
-      output: e.usage.outputTokens,
-      inputBillable: e.usage.inputTokens + e.usage.cacheCreationInputTokens + e.usage.cacheReadInputTokens,
-      costUsd: estimateCostUsd(e.usage, model) ?? 0,
-    })
+    series.push(seriesPoint(e.timestamp ?? '', bucket, model, e.usage))
   }
 
   // subagents：从拓扑取每个 agent 的 token（归到 workflow 的 defaultModel）
@@ -116,16 +120,7 @@ export function computeUsageBreakdown(
       }
       addUsage(byBucket.subagents, u, model)
       addUsage(total, u, model)
-      if (a.startedAt) {
-        series.push({
-          ts: a.startedAt,
-          bucket: 'subagents',
-          model,
-          output: u.outputTokens,
-          inputBillable: u.inputTokens + u.cacheCreationInputTokens + u.cacheReadInputTokens,
-          costUsd: estimateCostUsd(u, model) ?? 0,
-        })
-      }
+      if (a.startedAt) series.push(seriesPoint(a.startedAt, 'subagents', model, u))
     }
   }
 

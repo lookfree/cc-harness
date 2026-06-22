@@ -34,10 +34,9 @@ export class SessionMonitor {
 
   /** 一次性算某 session 的 token 分项 + ECC 建议（spec017）。 */
   async usage(sessionId: string, sessionFilePath: string): Promise<UsageReport> {
-    const [events, topology] = await Promise.all([
-      this.snapshot(sessionId, sessionFilePath),
-      buildAgentTopology(sessionFilePath),
-    ])
+    // 先解析主 jsonl，再把事件喂给拓扑构建器——免它二次读+解析主 jsonl
+    const events = await this.snapshot(sessionId, sessionFilePath)
+    const topology = await buildAgentTopology(sessionFilePath, events)
     const breakdown = computeUsageBreakdown(events, topology)
     return { breakdown, advice: adviseUsage(breakdown), pricingUpdated: PRICING_UPDATED }
   }

@@ -2,7 +2,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { parseChunk } from './session-parser'
 import { summarizeEvents } from '../../../shared/session-summary'
-import type { AgentTopology, AgentNode, WorkflowRun } from '../../../shared/types'
+import type { AgentTopology, AgentNode, WorkflowRun, SessionEvent } from '../../../shared/types'
 
 const AGENT_RE = /^agent-(.+)\.jsonl$/
 
@@ -15,7 +15,7 @@ const numOpt = (v: unknown): number | undefined => (typeof v === 'number' ? v : 
  * 入参是 session 主 jsonl 路径（SessionFileMeta.filePath）；子目录在 `<projDir>/<sessionId>/`。
  * 任一来源缺失/损坏都不抛错，退化为可得部分（验收：wf 缺失时退化为只读主会话 Task 树）。
  */
-export async function buildAgentTopology(sessionFilePath: string): Promise<AgentTopology> {
+export async function buildAgentTopology(sessionFilePath: string, mainEvents?: SessionEvent[]): Promise<AgentTopology> {
   const projDir = path.dirname(sessionFilePath)
   const sessionId = path.basename(sessionFilePath, '.jsonl')
   const subdir = path.join(projDir, sessionId)
@@ -23,7 +23,8 @@ export async function buildAgentTopology(sessionFilePath: string): Promise<Agent
   const workflows = await readWorkflows(subdir, sessionId)
   const agentLists = await Promise.all(workflows.map((wf) => scanWorkflowAgents(subdir, wf.runId)))
   const agents = agentLists.flat()
-  const taskTree = await readMainTaskTree(sessionFilePath)
+  // mainEvents 已解析时直接用（spec017 usage() 已 snapshot 过，免二次读+解析主 jsonl）
+  const taskTree = mainEvents ? taskTreeFromEvents(mainEvents) : await readMainTaskTree(sessionFilePath)
 
   return { sessionId, workflows, agents, taskTree }
 }
@@ -133,7 +134,7 @@ async function buildAgentNode(dir: string, fileName: string, runId: string): Pro
   }
 }
 
-/** 主 jsonl 里的普通 Task 调用（非 workflow）→ AgentNode（depth 0）。 */
+/** 读主 jsonl + 解析 → 普通 Task 子树（无预解析事件时走这条）。 */
 async function readMainTaskTree(sessionFilePath: string): Promise<AgentNode[]> {
   let text: string
   try {
@@ -141,7 +142,11 @@ async function readMainTaskTree(sessionFilePath: string): Promise<AgentNode[]> {
   } catch {
     return []
   }
-  const { events } = parseChunk(text, 0)
+  return taskTreeFromEvents(parseChunk(text, 0).events)
+}
+
+/** 从已解析的主会话事件抽普通 Task 调用（非 workflow）→ AgentNode（depth 0）。 */
+function taskTreeFromEvents(events: SessionEvent[]): AgentNode[] {
   const done = new Set<string>()
   const errored = new Set<string>()
   for (const e of events) {
