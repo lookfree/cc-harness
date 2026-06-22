@@ -40,9 +40,15 @@ const createWindow = () => {
   console.log('[Main] preload exists:', fs.existsSync(preloadPath))
 
   // Create the browser window
+  const iconPath = path.join(__dirname, '../build/icon.png')
+  if (process.platform === 'darwin' && app.dock && fs.existsSync(iconPath)) {
+    app.dock.setIcon(iconPath)
+  }
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: preloadPath,
       nodeIntegration: false,
