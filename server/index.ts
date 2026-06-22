@@ -351,6 +351,12 @@ app.get('/api/memory/:encodedCwd', asyncHandler(async (req, res) => {
   else res.status(404).json({ error: 'not_found' })
 }))
 
+// ============ Loop wakeups API (read-only, web mode) ============
+app.get('/api/loops', asyncHandler(async (_req, res) => {
+  const { discoverLoops } = await import('../electron/services/loop/loop-discovery')
+  res.json(await discoverLoops())
+}))
+
 // ============ Commands API ============
 app.get('/api/commands', asyncHandler(async (_req, res) => {
   console.log('[API] GET /api/commands')

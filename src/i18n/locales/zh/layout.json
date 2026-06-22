@@ -15,6 +15,7 @@
     "permissions": "权限",
     "models": "AI 模型",
     "memory": "记忆",
+    "loops": "Loop 唤醒",
     "graph": "依赖关系图",
     "settings": "设置"
   }

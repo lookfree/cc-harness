@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Activity,
   Brain,
+  Timer,
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
@@ -36,6 +37,7 @@ const navigationKeys = [
   { key: 'hooks', href: '/hooks', icon: Webhook },
   { key: 'permissions', href: '/permissions', icon: ShieldCheck },
   { key: 'memory', href: '/memory', icon: Brain },
+  { key: 'loops', href: '/loops', icon: Timer },
   { key: 'graph', href: '/graph', icon: GitBranch },
   { key: 'settings', href: '/settings', icon: Settings },
 ] as const

@@ -109,8 +109,8 @@ claude-code-debugger/
 
 ```bash
 # Clone the repository
-git clone https://github.com/lookfree/claude-code-debugger.git
-cd claude-code-debugger
+git clone https://github.com/lookfree/cc-harness.git
+cd cc-harness
 
 # Install dependencies
 npm install

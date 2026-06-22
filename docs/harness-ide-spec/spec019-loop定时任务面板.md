@@ -89,13 +89,13 @@ preload + `src/lib/api.ts` 加 `loop` 命名空间。Web 模式：`GET /api/loop
 
 ## 实现步骤
 
-- [ ] 0. **先探测**：在有活跃 loop 的环境（手动 `/loop` 建一个）diff `~/.claude.json` 与对应 session jsonl，坐实真相源与字段名，回填到本 spec 的"数据源"。
-- [ ] 1. `shared/types/loop.ts`：`LoopTask`。
-- [ ] 2. `electron/services/loop/loop-discovery.ts`：`discoverLoops`（三路径合并）+ `cancelLoop`（依坐实源）。
-- [ ] 3. `electron/ipc/loop.ts`：`loop:list` / `loop:cancel`；`index.ts` 注册。
-- [ ] 4. preload + `src/lib/api.ts`：`loop` 命名空间；`server/index.ts` 加 `GET /api/loops`。
-- [ ] 5. `src/pages/Loops.tsx`：任务表 + 过滤 + 取消 + 空态/数据源说明。
-- [ ] 6. i18n + 路由 + 侧栏。
+- [x] 0. **先探测**：实测结论见"风险与备注"末尾追加。真相源 = session jsonl 中 `ScheduleWakeup` tool_use；无专用文件。
+- [x] 1. `shared/types/loop.ts`：`LoopTask`。
+- [x] 2. `electron/services/loop/loop-discovery.ts`：`discoverLoops`（扫所有 session jsonl）。取消只读不实现（数据来源只读）。
+- [x] 3. `electron/ipc/loop.ts`：`loop:list`；`index.ts` 注册。
+- [x] 4. preload + `src/lib/api.ts`：`loop` 命名空间；`server/index.ts` 加 `GET /api/loops`。
+- [x] 5. `src/pages/Loops.tsx`：任务表 + 过滤 + 只读说明 + 空态。
+- [x] 6. i18n + 路由 + 侧栏（Timer 图标，nav.loops key）。
 
 ## 验收标准
 
@@ -115,3 +115,10 @@ preload + `src/lib/api.ts` 加 `loop` 命名空间。Web 模式：`GET /api/loop
 - **取消的写入风险**：直接改 `~/.claude.json` 有破坏全局配置的风险——必须先备份、原子写、schema 校验。若拿不准，宁可只读不提供取消，引导用户去会话内 `/loop` 取消。
 - **不并发 + session 级**：loop 绑 session，session 没了 loop 也没了。面板要处理"loop 指向的 session 已消失"的情况（标 orphan）。
 - CLI 一旦入 PATH 且有 loop 列举命令，应优先用 CLI 作权威源（更准），jsonl/claude.json 作离线兜底。
+
+**步骤 0 实测结论（2026-06-22）**：
+- `~/.claude/` 无独立 loop/cron/schedule 文件；`~/.claude.json` 顶层及各 `projects.<path>` 子键均无 loop 相关字段。
+- `CronCreate`/`CronDelete`/`CronList` 以 `deferred_tools_delta` 形式出现在所有 session 的 attachment 中，但本机从未实际调用（无 tool_use 事件），疑为预留能力。
+- **真实机制**：`/loop` 动态模式使用 `ScheduleWakeup` 工具（`input: {delaySeconds, reason, prompt}`），写进 assistant turn 的 tool_use block。触发时产生 `queue-operation:enqueue` + `system:scheduled_task_fire` 两条记录，`scheduled_task_fire.content = "Claude resuming /loop wakeup (...)"`。
+- 状态推断：`scheduledAt + delaySeconds > now` 且无对应 `scheduled_task_fire` → pending；反之 → fired；`fireAt < now` 且无 fire → expired。
+- 取消：无可写路径（pending wakeup 存于 CLI 进程内部），UI 只读说明，引导用户在会话内取消。

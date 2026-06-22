@@ -58,6 +58,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteMemorySnapshot: (id) => ipcRenderer.invoke('memory:deleteSnapshot', id),
   diffMemorySnapshots: (beforeId, afterId) => ipcRenderer.invoke('memory:diff', beforeId, afterId),
 
+  // Loop wakeups
+  listLoops: () => ipcRenderer.invoke('loop:list'),
+
   // Commands
   getCommands: () => ipcRenderer.invoke('commands:getAll'),
   getCommand: (name) => ipcRenderer.invoke('commands:get', name),

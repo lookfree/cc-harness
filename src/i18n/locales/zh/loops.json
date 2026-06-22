@@ -1,0 +1,35 @@
+{
+  "title": "Loop 唤醒",
+  "description": "所有会话中发现的 /loop 定时唤醒记录",
+  "refresh": "刷新",
+  "loading": "加载中…",
+  "empty": "未发现 /loop 唤醒",
+  "emptyHint": "当 Claude 在 /loop 中使用 ScheduleWakeup 时，记录会出现在此处。数据来源：会话 jsonl 文件（只读）。",
+  "filter": {
+    "all": "全部",
+    "pending": "待触发",
+    "fired": "已触发",
+    "expired": "已过期"
+  },
+  "cols": {
+    "description": "描述",
+    "session": "会话",
+    "delay": "延迟",
+    "scheduledAt": "创建时间",
+    "fireAt": "触发时间",
+    "status": "状态"
+  },
+  "status": {
+    "pending": "待触发",
+    "fired": "已触发",
+    "expired": "已过期"
+  },
+  "firedAt": "已于 {{time}} 触发",
+  "fireIn": "{{time}} 后触发",
+  "fireAgo": "{{time}} 前",
+  "delayValue": "{{seconds}}s",
+  "readOnlyNote": "取消不可用——数据来源为只读（jsonl）。请在原会话中执行 /loop cancel 来取消。",
+  "sessionLink": "打开会话",
+  "prompt": "提示词",
+  "reason": "原因"
+}

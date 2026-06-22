@@ -1,0 +1,35 @@
+{
+  "title": "Loop Wakeups",
+  "description": "Scheduled /loop wakeups found across all sessions",
+  "refresh": "Refresh",
+  "loading": "Loading wakeups…",
+  "empty": "No /loop wakeups found",
+  "emptyHint": "Wakeups appear when Claude uses ScheduleWakeup during a /loop. Data source: session jsonl files (read-only).",
+  "filter": {
+    "all": "All",
+    "pending": "Pending",
+    "fired": "Fired",
+    "expired": "Expired"
+  },
+  "cols": {
+    "description": "Description",
+    "session": "Session",
+    "delay": "Delay",
+    "scheduledAt": "Scheduled",
+    "fireAt": "Fire At",
+    "status": "Status"
+  },
+  "status": {
+    "pending": "Pending",
+    "fired": "Fired",
+    "expired": "Expired"
+  },
+  "firedAt": "Fired at {{time}}",
+  "fireIn": "in {{time}}",
+  "fireAgo": "{{time}} ago",
+  "delayValue": "{{seconds}}s",
+  "readOnlyNote": "Cancel not available — data source is read-only (jsonl). To cancel, run /loop cancel in the originating session.",
+  "sessionLink": "Open session",
+  "prompt": "Prompt",
+  "reason": "Reason"
+}

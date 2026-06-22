@@ -14,6 +14,7 @@ import Models from './pages/Models'
 import Settings from './pages/Settings'
 import Sessions from './pages/Sessions'
 import Memory from './pages/Memory'
+import Loops from './pages/Loops'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/graph" element={<Graph />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/memory" element={<Memory />} />
+          <Route path="/loops" element={<Loops />} />
         </Routes>
       </Layout>
     </Router>

@@ -15,6 +15,7 @@
     "permissions": "Permissions",
     "models": "AI Models",
     "memory": "Memory",
+    "loops": "Loop Wakeups",
     "graph": "Dependency Graph",
     "settings": "Settings"
   }

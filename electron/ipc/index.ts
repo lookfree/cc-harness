@@ -14,6 +14,7 @@ import { registerPluginHandlers } from './plugins'
 import { registerPermissionHandlers } from './permissions'
 import { registerSettingsHandlers } from './settings'
 import { registerMemoryHandlers } from './memory'
+import { registerLoopHandlers } from './loop'
 
 export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) {
   registerSkillHandlers(ipcMain, fileManager)
@@ -30,4 +31,5 @@ export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   registerPermissionHandlers(ipcMain, fileManager)
   registerSettingsHandlers(ipcMain, fileManager)
   registerMemoryHandlers(ipcMain)
+  registerLoopHandlers(ipcMain)
 }

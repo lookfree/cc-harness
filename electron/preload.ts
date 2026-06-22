@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport } from '../shared/types'
 import type { MCPHealth } from '../shared/types/mcp-health'
 import type { MemoryStore, MemorySnapshot, DreamChange } from '../shared/types/memory'
+import type { LoopTask } from '../shared/types/loop'
 
 console.log('[Preload] Script is loading...')
 
@@ -89,6 +90,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listMemorySnapshots: (encodedCwd: string): Promise<MemorySnapshot[]> => ipcRenderer.invoke('memory:listSnapshots', encodedCwd),
   deleteMemorySnapshot: (id: string): Promise<void> => ipcRenderer.invoke('memory:deleteSnapshot', id),
   diffMemorySnapshots: (beforeId: string, afterId: string): Promise<DreamChange[]> => ipcRenderer.invoke('memory:diff', beforeId, afterId),
+
+  // Loop wakeups
+  listLoops: (): Promise<LoopTask[]> => ipcRenderer.invoke('loop:list'),
 
   // Commands
   getCommands: (): Promise<SlashCommand[]> => ipcRenderer.invoke('commands:getAll'),
@@ -262,6 +266,9 @@ declare global {
       listMemorySnapshots: (encodedCwd: string) => Promise<MemorySnapshot[]>
       deleteMemorySnapshot: (id: string) => Promise<void>
       diffMemorySnapshots: (beforeId: string, afterId: string) => Promise<DreamChange[]>
+
+      // Loop wakeups
+      listLoops: () => Promise<LoopTask[]>
 
       // Commands
       getCommands: () => Promise<SlashCommand[]>

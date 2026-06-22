@@ -30,6 +30,7 @@ import type {
 } from '@shared/types'
 import type { MCPHealth } from '@shared/types/mcp-health'
 import type { MemoryStore, MemorySnapshot, DreamChange } from '@shared/types/memory'
+import type { LoopTask } from '@shared/types/loop'
 
 // Detect if running in Electron
 const isElectron = typeof window !== 'undefined' && typeof window.electronAPI !== 'undefined'
@@ -772,6 +773,14 @@ export const api = {
     diff: async (beforeId: string, afterId: string): Promise<DreamChange[]> => {
       if (isElectron) return window.electronAPI.diffMemorySnapshots(beforeId, afterId)
       throw new Error('memory_diff_desktop_only')
+    },
+  },
+
+  // spec019 loop wakeup panel
+  loop: {
+    list: async (): Promise<LoopTask[]> => {
+      if (isElectron) return window.electronAPI.listLoops()
+      return httpGet<LoopTask[]>('/api/loops')
     },
   },
 
