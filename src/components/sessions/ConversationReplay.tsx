@@ -31,10 +31,10 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
   const hidden = Math.max(0, cards.length - limit)
   const visible = hidden > 0 ? cards.slice(hidden) : cards
 
-  // 新事件到达自动滚到底（除非锁定）。新事件总在尾部、落在窗口内，故跟随有效。
+  // 倒序展示（最新在最上）：新事件到达回到顶部跟随（除非锁定）
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      scrollRef.current.scrollTop = 0
     }
   }, [cards.length, autoScroll])
 
@@ -67,6 +67,11 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
         </button>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
+        {/* 倒序：最新事件在最上 */}
+        {[...visible].reverse().map((e) => (
+          <EventCard key={`${e.uuid}-${e.seq}`} event={e} t={t} />
+        ))}
+        {/* 更早事件在下方，懒加载按钮置底 */}
         {hidden > 0 && (
           <button
             onClick={() => setLimit((l) => l + PAGE)}
@@ -75,9 +80,6 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
             {t('replay.loadEarlier', { count: hidden })}
           </button>
         )}
-        {visible.map((e) => (
-          <EventCard key={`${e.uuid}-${e.seq}`} event={e} t={t} />
-        ))}
       </div>
     </div>
   )
