@@ -22,6 +22,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { Tooltip } from '@/components/ui/tooltip'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -98,11 +99,10 @@ export function Layout({ children }: LayoutProps) {
         >
           {navigationKeys.map((item) => {
             const isActive = location.pathname === item.href
-            return (
+            const link = (
               <Link
                 key={item.key}
                 to={item.href}
-                title={sidebarOpen ? undefined : t(`nav.${item.key}`)}
                 className={cn(
                   'flex items-center rounded-lg text-sm font-medium transition-colors',
                   sidebarOpen ? 'gap-3 px-3 py-2' : 'justify-center p-2',
@@ -114,6 +114,11 @@ export function Layout({ children }: LayoutProps) {
                 <item.icon className="w-5 h-5 shrink-0" />
                 {sidebarOpen && t(`nav.${item.key}`)}
               </Link>
+            )
+            return sidebarOpen ? link : (
+              <Tooltip key={item.key} content={t(`nav.${item.key}`)}>
+                {link}
+              </Tooltip>
             )
           })}
         </nav>
