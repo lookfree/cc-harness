@@ -25,6 +25,7 @@
   },
   "replay": {
     "count": "{{count}} 条事件",
+    "loadEarlier": "加载更早 {{count}} 条",
     "following": "跟随",
     "paused": "已暂停",
     "locked": "自动滚动开",

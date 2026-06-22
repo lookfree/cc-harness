@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SessionEvent } from '@shared/types'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,9 @@ interface Props {
   live?: boolean
 }
 
+/** 一次渲染的卡片窗口大小：大会话上千事件一次性渲染会卡，只渲染最近 N 张 + 顶部懒加载更早。 */
+const PAGE = 200
+
 function inputSummary(input: Record<string, unknown>): string {
   const s = JSON.stringify(input)
   return s.length > 220 ? s.slice(0, 220) + '…' : s
@@ -21,23 +24,33 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
   const { t } = useTranslation('sessions')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
+  const [limit, setLimit] = useState(PAGE)
 
-  // 新事件到达自动滚到底（除非锁定）
+  // 回放只展示对话卡片，跳过 meta（ai-title/mode 等噪声）
+  const cards = useMemo(() => events.filter((e) => e.kind !== 'meta'), [events])
+  const hidden = Math.max(0, cards.length - limit)
+  const visible = hidden > 0 ? cards.slice(hidden) : cards
+
+  // 新事件到达自动滚到底（除非锁定）。新事件总在尾部、落在窗口内，故跟随有效。
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [events.length, autoScroll])
+  }, [cards.length, autoScroll])
 
-  // 时间线跳转：滚到对应卡片
+  // 时间线跳转：目标若在窗口外，先撑大窗口（本 effect 因 limit 变化重跑），再滚到对应卡片
   useEffect(() => {
     if (scrollToSeq == null) return
-    const el = scrollRef.current?.querySelector(`[data-seq="${scrollToSeq}"]`)
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [scrollToSeq])
-
-  // 回放只展示对话卡片，跳过 meta（ai-title/mode 等噪声）
-  const cards = events.filter((e) => e.kind !== 'meta')
+    const idx = cards.findIndex((c) => c.seq === scrollToSeq)
+    if (idx >= 0 && cards.length - idx > limit) {
+      setLimit(cards.length - idx)
+      return
+    }
+    scrollRef.current
+      ?.querySelector(`[data-seq="${scrollToSeq}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToSeq, limit])
 
   return (
     <div className="flex flex-col h-full">
@@ -54,7 +67,15 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
         </button>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
-        {cards.map((e) => (
+        {hidden > 0 && (
+          <button
+            onClick={() => setLimit((l) => l + PAGE)}
+            className="w-full py-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded"
+          >
+            {t('replay.loadEarlier', { count: hidden })}
+          </button>
+        )}
+        {visible.map((e) => (
           <EventCard key={`${e.uuid}-${e.seq}`} event={e} t={t} />
         ))}
       </div>

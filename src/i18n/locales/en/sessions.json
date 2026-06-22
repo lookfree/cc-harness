@@ -25,6 +25,7 @@
   },
   "replay": {
     "count": "{{count}} events",
+    "loadEarlier": "Load {{count}} earlier",
     "following": "Following",
     "paused": "Paused",
     "locked": "Auto-scroll on",
