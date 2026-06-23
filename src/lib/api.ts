@@ -747,6 +747,10 @@ export const api = {
       if (isElectron) return window.electronAPI.getSessionUsage(id, filePath)
       return httpGet<UsageReport>(`/api/sessions/${encodeURIComponent(id)}/usage`)
     },
+    delete: async (id: string, filePath: string): Promise<void> => {
+      if (isElectron) return window.electronAPI.deleteSession(id, filePath)
+      console.warn('[API] Session delete is desktop-only')
+    },
   },
 
   // spec021 memory

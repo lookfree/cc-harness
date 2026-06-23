@@ -30,4 +30,6 @@ export function registerSessionHandlers(ipcMain: IpcMain, monitor: SessionMonito
 
   // spec017 token/usage 分项 + ECC 建议
   ipcMain.handle('session:usage', (_e, id: string, filePath: string) => monitor.usage(id, filePath))
+
+  ipcMain.handle('session:delete', (_e, id: string, filePath: string) => monitor.deleteSession(id, filePath))
 }

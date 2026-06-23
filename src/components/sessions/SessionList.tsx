@@ -4,7 +4,7 @@ import type { SessionSummary, SessionLiveStatus } from '@shared/types'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { Search, Network, Check } from 'lucide-react'
+import { Search, Network, Check, Trash2 } from 'lucide-react'
 import { STATUS_META, shortCwd, relativeTime, compactNum } from './sessionStatus'
 
 interface Props {
@@ -13,14 +13,16 @@ interface Props {
   compareMode: boolean
   onSelect: (id: string) => void
   onToggleCompare: (id: string) => void
+  onDelete?: (id: string, filePath: string) => Promise<void>
 }
 
 const STATUS_FILTERS: Array<'all' | SessionLiveStatus> = ['all', 'active', 'waiting', 'idle']
 
-export function SessionList({ summaries, selectedIds, compareMode, onSelect, onToggleCompare }: Props) {
+export function SessionList({ summaries, selectedIds, compareMode, onSelect, onToggleCompare, onDelete }: Props) {
   const { t } = useTranslation('sessions')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | SessionLiveStatus>('all')
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const nowMs = Date.now()
 
   const filtered = useMemo(() => {
@@ -30,9 +32,13 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
       .filter((s) =>
         !q ? true : (s.title ?? '').toLowerCase().includes(q) || s.cwd.toLowerCase().includes(q)
       )
-      // pinned 置顶（暂无数据源，留作未来）；其次最近活跃
       .sort((a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false))
   }, [summaries, search, statusFilter])
+
+  async function handleConfirmDelete(s: SessionSummary) {
+    setConfirmId(null)
+    await onDelete?.(s.sessionId, s.filePath)
+  }
 
   return (
     <div className="flex flex-col h-full border-r border-border">
@@ -68,14 +74,18 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
         )}
         {filtered.map((s) => {
           const selected = selectedIds.includes(s.sessionId)
+          const isConfirming = confirmId === s.sessionId
           return (
-            <button
+            <div
               key={s.sessionId}
-              onClick={() => (compareMode ? onToggleCompare(s.sessionId) : onSelect(s.sessionId))}
               className={cn(
-                'w-full text-left px-3 py-2 border-b border-border/50 hover:bg-muted/50 transition-colors',
+                'group relative w-full text-left px-3 py-2 border-b border-border/50 hover:bg-muted/50 transition-colors cursor-pointer',
                 selected && 'bg-muted'
               )}
+              onClick={() => {
+                if (isConfirming) return
+                compareMode ? onToggleCompare(s.sessionId) : onSelect(s.sessionId)
+              }}
             >
               <div className="flex items-center gap-2">
                 {compareMode && (
@@ -95,6 +105,31 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
                 <span className="text-xs text-muted-foreground shrink-0">
                   {relativeTime(s.lastActivityAt, nowMs)}
                 </span>
+                {onDelete && (
+                  isConfirming ? (
+                    <span className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="text-xs text-destructive hover:text-destructive/80 px-1.5 py-0.5 rounded border border-destructive/30 hover:border-destructive/60"
+                        onClick={() => handleConfirmDelete(s)}
+                      >
+                        {t('deleteConfirm')}
+                      </button>
+                      <button
+                        className="text-xs text-muted-foreground hover:text-foreground px-1 py-0.5"
+                        onClick={() => setConfirmId(null)}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      className="invisible group-hover:visible shrink-0 p-0.5 rounded text-muted-foreground hover:text-destructive"
+                      onClick={(e) => { e.stopPropagation(); setConfirmId(s.sessionId) }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )
+                )}
               </div>
               <div className="flex items-center gap-2 mt-1 pl-4 text-xs text-muted-foreground">
                 <span className="truncate flex-1">{shortCwd(s.cwd)}</span>
@@ -106,7 +141,7 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
                 <span>{t('tokens', { n: compactNum(s.totalTokens.totalTokens) })}</span>
                 {s.hasSubagents && <Network className="w-3 h-3" />}
               </div>
-            </button>
+            </div>
           )
         })}
       </div>

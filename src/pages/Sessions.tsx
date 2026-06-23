@@ -53,6 +53,12 @@ export default function Sessions() {
     setTab('replay')
   }
 
+  async function handleDelete(id: string, filePath: string) {
+    await api.session.delete(id, filePath)
+    if (selectedIds.includes(id)) selectSession('')
+    await loadSessions()
+  }
+
   const empty = (
     <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
       {t('selectPrompt')}
@@ -68,6 +74,7 @@ export default function Sessions() {
           compareMode={compareMode}
           onSelect={selectSession}
           onToggleCompare={toggleCompare}
+          onDelete={api.isElectron() ? handleDelete : undefined}
         />
       </div>
 

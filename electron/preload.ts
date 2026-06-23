@@ -297,6 +297,7 @@ declare global {
       onSessionEvents: (callback: (payload: SessionEventsPush) => void) => () => void
       getAgentTopology: (filePath: string) => Promise<AgentTopology>
       getSessionUsage: (id: string, filePath: string) => Promise<UsageReport>
+      deleteSession: (id: string, filePath: string) => Promise<void>
       subscribeTopology: (id: string, filePath: string) => Promise<boolean>
       unsubscribeTopology: (id: string) => Promise<boolean>
       onSessionTopology: (callback: (payload: AgentTopologyPush) => void) => () => void

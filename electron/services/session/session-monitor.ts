@@ -136,6 +136,13 @@ export class SessionMonitor {
     this.tailers.delete(sessionId)
   }
 
+  /** 删除 session jsonl 文件，先退订再删除。 */
+  async deleteSession(sessionId: string, filePath: string): Promise<void> {
+    this.unsubscribe(sessionId)
+    this.unsubscribeTopology(sessionId)
+    await fs.unlink(filePath)
+  }
+
   /** 应用退出/窗口关闭时全部退订，防句柄泄漏。 */
   unsubscribeAll(): void {
     for (const id of [...this.tailers.keys()]) this.unsubscribe(id)

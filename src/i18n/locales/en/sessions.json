@@ -9,6 +9,7 @@
   "compareHint": "Multi-select up to {{max}} sessions; timelines share one aligned time axis",
   "waitingFor": "waiting: {{tool}}",
   "tokens": "{{n}} tok",
+  "deleteConfirm": "Delete?",
   "filter": {
     "all": "All"
   },
