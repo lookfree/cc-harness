@@ -106,7 +106,20 @@ export class SessionMonitor {
         }
       })
     )
-    return summaries.filter((s): s is SessionSummary => s !== null)
+    const valid = summaries.filter((s): s is SessionSummary => s !== null)
+
+    // 同一 cwd 下只有最新的 session 可能还活着，其余标 completed
+    const latestMtimeByCwd = new Map<string, number>()
+    for (const m of metas) {
+      const cur = latestMtimeByCwd.get(m.cwd) ?? 0
+      if (m.mtimeMs > cur) latestMtimeByCwd.set(m.cwd, m.mtimeMs)
+    }
+    const nonLatest = new Set(
+      metas.filter((m) => m.mtimeMs < (latestMtimeByCwd.get(m.cwd) ?? 0)).map((m) => m.sessionId)
+    )
+    return valid.map((s) =>
+      nonLatest.has(s.sessionId) ? { ...s, status: 'completed' as const } : s
+    )
   }
 
   /** 取一个 session 的全量已解析事件（首屏快照，Web 模式唯一路径）。 */
