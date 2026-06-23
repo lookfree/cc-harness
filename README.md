@@ -30,7 +30,6 @@ Claude Code 已经从"单会话配置工具"长成了多会话编排 + 自动循
 - [CC Harness 是什么](#cc-harness-是什么)
 - [你在用 Claude Code 做这些事时，CC Harness 能帮上什么](#你在用-claude-code-做这些事时cc-harness-能帮上什么)
 - [五根支柱](#五根支柱)
-- [Memory Dream Diff](#memory-dream-diff)
 - [适合谁](#适合谁)
 - [快速开始](#快速开始)
 - [当前实现状态](#当前实现状态)
@@ -120,6 +119,14 @@ CC Harness 的 Dependency Graph 自动识别五类关系（Skills → MCP / Hook
 
 ![依赖关系](./images/依赖关系.png)
 
+### 8. Auto Memory 固化了什么，你完全不知道
+
+Claude Code 的 dream 机制会在后台把对话记忆压缩固化进 MEMORY.md。但它合并了什么、删了哪些旧记录、解决了哪些矛盾——整个过程是黑盒，你只能看到结果，看不到变化。
+
+CC Harness 在每次 dream 前后做快照，用 diff viewer 呈现 added / deleted / modified / merged / conflict-resolved 五种变化类型，让记忆固化过程第一次变得可见。
+
+![memorry](./images/memorry.png)
+
 ---
 
 ## 五根支柱
@@ -133,14 +140,6 @@ CC Harness 的 Dependency Graph 自动识别五类关系（Skills → MCP / Hook
 **四、编排（Compose）** 把 CLAUDE.md + skills + hooks + commands 打包成可复用的业务 harness 模板，存、复用、导出成 plugin 格式（路线图中）。
 
 **五、教学（Teach）** 给全新项目目录，工具陪你走一遍：写 CLAUDE.md → 选 plugin → 配 hook → 设 `/goal`（路线图中）。
-
----
-
-## Memory Dream Diff
-
-Auto Memory 每次固化（dream）前后，CC Harness 做快照对比：哪些记忆被合并、哪些过期项被删除、哪些矛盾被解决、浮现了哪些新模式——用 diff viewer 呈现，颜色标注 added / deleted / modified / merged / conflict-resolved 五种变化类型。dream 是黑盒——这是目前唯一能把它照亮的工具。
-
-![memorry](./images/memorry.png)
 
 ---
 
