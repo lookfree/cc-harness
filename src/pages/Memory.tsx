@@ -9,18 +9,20 @@ import { Brain, Camera, ChevronDown, ChevronRight, Trash2 } from 'lucide-react'
 
 // ── Topic card ──────────────────────────────────────────────────────────────
 
-function TopicCard({ topic }: { topic: MemoryTopic }) {
+function TopicCard({ topic, dir }: { topic: MemoryTopic; dir: string }) {
   const { t } = useTranslation('memory')
   const [open, setOpen] = useState(false)
+  const fullPath = `${dir}/${topic.file}`
   return (
     <div className="border rounded-lg overflow-hidden">
       <button
         className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setOpen(!open)}
+        title={fullPath}
       >
         {open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
         <span className="font-medium text-sm flex-1 truncate">{topic.title ?? topic.file}</span>
-        <span className="text-xs font-mono text-muted-foreground ml-2 shrink-0">{topic.file}</span>
+        <span className="text-xs font-mono text-muted-foreground ml-2 shrink-0" title={fullPath}>{topic.file}</span>
         {!topic.referenced && (
           <Badge variant="secondary" className="text-xs ml-1 shrink-0" title={t('orphanDesc')}>{t('orphanBadge')}</Badge>
         )}
@@ -272,6 +274,7 @@ export default function Memory() {
             <button
               key={s.encodedCwd}
               onClick={() => setSelected(s)}
+              title={s.cwd}
               className={cn(
                 'w-full text-left px-2 py-2 rounded-md text-sm transition-colors',
                 selected?.encodedCwd === s.encodedCwd
@@ -306,7 +309,7 @@ export default function Memory() {
                       >
                         <span className="font-medium text-primary">{entry.title}</span>
                         {entry.summary && <span className="text-muted-foreground text-xs">— {entry.summary}</span>}
-                        <span className="ml-auto font-mono text-[10px] text-muted-foreground shrink-0">{entry.file}</span>
+                        <span className="ml-auto font-mono text-[10px] text-muted-foreground shrink-0" title={`${selected.dir}/${entry.file}`}>{entry.file}</span>
                       </div>
                     ))}
                   </div>
@@ -317,8 +320,8 @@ export default function Memory() {
               <section>
                 <h2 className="text-sm font-semibold mb-3">{t('topicsSection')}</h2>
                 <div className="space-y-2">
-                  {indexedTopics.map((tp) => <TopicCard key={tp.file} topic={tp} />)}
-                  {orphans.map((tp) => <TopicCard key={tp.file} topic={tp} />)}
+                  {indexedTopics.map((tp) => <TopicCard key={tp.file} topic={tp} dir={selected.dir} />)}
+                  {orphans.map((tp) => <TopicCard key={tp.file} topic={tp} dir={selected.dir} />)}
                 </div>
               </section>
 
