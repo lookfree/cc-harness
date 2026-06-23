@@ -10,6 +10,7 @@
   "waitingFor": "在等：{{tool}}",
   "tokens": "{{n}} tok",
   "deleteConfirm": "确认删除？",
+  "cancel": "✕",
   "filter": {
     "all": "全部"
   },

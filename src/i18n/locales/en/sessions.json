@@ -10,6 +10,7 @@
   "waitingFor": "waiting: {{tool}}",
   "tokens": "{{n}} tok",
   "deleteConfirm": "Delete?",
+  "cancel": "✕",
   "filter": {
     "all": "All"
   },

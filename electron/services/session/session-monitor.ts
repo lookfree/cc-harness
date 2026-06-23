@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs'
 import path from 'path'
+import os from 'os'
 import { watch, type FSWatcher } from 'chokidar'
 import type { BrowserWindow } from 'electron'
 import { listSessions } from './session-index'
@@ -20,6 +21,7 @@ import type { SessionEvent, SessionSummary, SessionEventsPush, AgentTopology, Us
  * 建立"主进程主动持续推流"范式（项目原先只有 invoke 请求/响应）。
  */
 export class SessionMonitor {
+  private readonly sessionsRoot = path.join(os.homedir(), '.claude', 'projects')
   /** sessionId → 该会话的 tailer（subscribe 时建，unsubscribe 时 close 防句柄泄漏） */
   private tailers = new Map<string, SessionTailer>()
   /** sessionId → workflow/subagents 目录 watcher + 去抖定时器（spec016 拓扑实时长出） */
@@ -138,9 +140,13 @@ export class SessionMonitor {
 
   /** 删除 session jsonl 文件，先退订再删除。 */
   async deleteSession(sessionId: string, filePath: string): Promise<void> {
+    const resolved = path.resolve(filePath)
+    if (!resolved.startsWith(this.sessionsRoot + path.sep)) {
+      throw new Error(`Refusing to delete file outside sessions directory: ${resolved}`)
+    }
     this.unsubscribe(sessionId)
     this.unsubscribeTopology(sessionId)
-    await fs.unlink(filePath)
+    await fs.unlink(resolved)
   }
 
   /** 应用退出/窗口关闭时全部退订，防句柄泄漏。 */

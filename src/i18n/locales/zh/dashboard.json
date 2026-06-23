@@ -15,6 +15,7 @@
     "hooks": "Hooks",
     "configuredHooks": "已配置 hook 数"
   },
+  "tokens": "{{n}} tok",
   "activeSessions": {
     "title": "活跃 Sessions",
     "viewAll": "查看全部",
@@ -36,6 +37,7 @@
     "active": "已启用",
     "notCreated": "未创建",
     "projectConfigs": "项目配置",
-    "more": "更多"
+    "more": "更多",
+    "lines": "{{n}} 行"
   }
 }

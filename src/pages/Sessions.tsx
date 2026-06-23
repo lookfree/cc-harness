@@ -22,6 +22,7 @@ export default function Sessions() {
     loading,
     loadSessions,
     selectSession,
+    clearSelection,
     toggleCompare,
     setCompareMode,
     startListening,
@@ -55,7 +56,7 @@ export default function Sessions() {
 
   async function handleDelete(id: string, filePath: string) {
     await api.session.delete(id, filePath)
-    if (selectedIds.includes(id)) selectSession('')
+    if (selectedIds.includes(id)) clearSelection()
     await loadSessions()
   }
 

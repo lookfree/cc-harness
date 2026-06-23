@@ -15,6 +15,7 @@
     "hooks": "Hooks",
     "configuredHooks": "Configured hooks"
   },
+  "tokens": "{{n}} tok",
   "activeSessions": {
     "title": "Active Sessions",
     "viewAll": "View all",
@@ -36,6 +37,7 @@
     "active": "Active",
     "notCreated": "Not Created",
     "projectConfigs": "Project Configurations",
-    "more": "more"
+    "more": "more",
+    "lines": "{{n}} lines"
   }
 }

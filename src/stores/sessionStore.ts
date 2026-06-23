@@ -22,6 +22,7 @@ interface SessionState {
   loadSessions: () => Promise<void>
   /** 单选某 session：替换选中并确保已加载/订阅 */
   selectSession: (id: string) => Promise<void>
+  clearSelection: () => void
   /** 比对模式下增删选中（≤MAX_COMPARE） */
   toggleCompare: (id: string) => Promise<void>
   setCompareMode: (on: boolean) => void
@@ -63,6 +64,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ selectedIds: [id] })
     await ensureLoaded(id, get, set)
   },
+
+  clearSelection: () => set({ selectedIds: [] }),
 
   toggleCompare: async (id) => {
     const { selectedIds } = get()

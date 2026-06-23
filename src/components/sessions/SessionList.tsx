@@ -37,7 +37,12 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
 
   async function handleConfirmDelete(s: SessionSummary) {
     setConfirmId(null)
-    await onDelete?.(s.sessionId, s.filePath)
+    try {
+      await onDelete?.(s.sessionId, s.filePath)
+    } catch (err) {
+      console.error('[SessionList] delete failed:', err)
+      setConfirmId(s.sessionId)
+    }
   }
 
   return (
@@ -75,16 +80,22 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
         {filtered.map((s) => {
           const selected = selectedIds.includes(s.sessionId)
           const isConfirming = confirmId === s.sessionId
+          const handleActivate = () => {
+            if (isConfirming) return
+            compareMode ? onToggleCompare(s.sessionId) : onSelect(s.sessionId)
+          }
           return (
             <div
               key={s.sessionId}
+              role="button"
+              tabIndex={0}
               className={cn(
                 'group relative w-full text-left px-3 py-2 border-b border-border/50 hover:bg-muted/50 transition-colors cursor-pointer',
                 selected && 'bg-muted'
               )}
-              onClick={() => {
-                if (isConfirming) return
-                compareMode ? onToggleCompare(s.sessionId) : onSelect(s.sessionId)
+              onClick={handleActivate}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleActivate() }
               }}
             >
               <div className="flex items-center gap-2">
@@ -118,7 +129,7 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
                         className="text-xs text-muted-foreground hover:text-foreground px-1 py-0.5"
                         onClick={() => setConfirmId(null)}
                       >
-                        ✕
+                        {t('cancel')}
                       </button>
                     </span>
                   ) : (

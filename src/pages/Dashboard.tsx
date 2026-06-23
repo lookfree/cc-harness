@@ -21,14 +21,12 @@ function ActiveSessionsCard({ sessions }: { sessions: SessionSummary[] }) {
   const navigate = useNavigate()
   const nowMs = Date.now()
 
-  const active = useMemo(
-    () =>
-      sessions
-        .filter((s) => s.status !== 'completed')
-        .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
-        .slice(0, 5),
-    [sessions]
-  )
+  const { active, hasMore } = useMemo(() => {
+    const nonCompleted = sessions
+      .filter((s) => s.status !== 'completed')
+      .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
+    return { active: nonCompleted.slice(0, 5), hasMore: nonCompleted.length > 5 }
+  }, [sessions])
 
   return (
     <Card>
@@ -37,7 +35,7 @@ function ActiveSessionsCard({ sessions }: { sessions: SessionSummary[] }) {
           <Activity className="w-4 h-4 text-green-500" />
           {t('activeSessions.title')}
         </CardTitle>
-        {sessions.length > 5 && (
+        {hasMore && (
           <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => navigate('/sessions')}>
             {t('activeSessions.viewAll')}
             <ArrowRight className="w-3 h-3" />
@@ -60,7 +58,7 @@ function ActiveSessionsCard({ sessions }: { sessions: SessionSummary[] }) {
                   <span className={`w-2 h-2 rounded-full shrink-0 ${meta.dot}`} />
                   <span className="flex-1 truncate text-sm">{s.title || shortCwd(s.cwd)}</span>
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {compactNum(s.totalTokens.totalTokens)} tok
+                    {t('tokens', { n: compactNum(s.totalTokens.totalTokens) })}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0 w-16 text-right">
                     {relativeTime(s.lastActivityAt, nowMs)}
@@ -79,9 +77,14 @@ function ActiveSessionsCard({ sessions }: { sessions: SessionSummary[] }) {
 
 function TokenTrendCard({ sessions }: { sessions: SessionSummary[] }) {
   const { t } = useTranslation('dashboard')
-  const todayStr = toLocalDate(new Date().toISOString())
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   const { chartData, todayTokens } = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('en-CA')
     const byDay: Record<string, { input: number; output: number; cache: number }> = {}
     for (const s of sessions) {
       const day = toLocalDate(s.lastActivityAt)
@@ -104,7 +107,7 @@ function TokenTrendCard({ sessions }: { sessions: SessionSummary[] }) {
     const today = byDay[todayStr]
     const todayTotal = today ? today.input + today.output + today.cache : 0
     return { chartData: data, todayTokens: todayTotal }
-  }, [sessions, todayStr])
+  }, [sessions, tick])
 
   return (
     <Card>
@@ -171,19 +174,17 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState<SessionSummary[]>([])
 
   useEffect(() => {
-    const load = async () => {
+    ;(async () => {
       try {
-        const [skills, agents, hooks, mcpServers, commands, claudeMd, sessionList] = await Promise.all([
+        const [skills, agents, hooks, mcpServers, commands, claudeMd] = await Promise.all([
           api.skills.getAll(),
           api.agents.getAll(),
           api.hooks.getAll(),
           api.mcp.getAll(),
           api.commands.getAll(),
           api.claudeMD.getAll(),
-          api.session.list(),
         ])
         setClaudeMdFiles(claudeMd)
-        setSessions(sessionList)
         const existingFiles = claudeMd.filter(f => f.exists)
         setStats({
           skills: skills.length,
@@ -195,10 +196,15 @@ export default function Dashboard() {
           claudeMdProjects: claudeMd.filter(f => f.location === 'project' && f.exists).length,
         })
       } catch (error) {
-        console.error('Failed to load stats:', error)
+        console.error('Failed to load config stats:', error)
       }
-    }
-    load()
+    })()
+  }, [])
+
+  useEffect(() => {
+    api.session.list()
+      .then(setSessions)
+      .catch((e) => console.error('[API] session.list failed:', e))
   }, [])
 
   const cards = [
@@ -264,7 +270,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate" title={file.filePath}>{file.filePath}</p>
-                    {file.exists && <p className="text-xs text-muted-foreground mt-1">{file.content.split('\n').length} lines</p>}
+                    {file.exists && <p className="text-xs text-muted-foreground mt-1">{t('claudeMdSection.lines', { n: file.content.split('\n').length })}</p>}
                   </div>
                 </div>
               </div>
