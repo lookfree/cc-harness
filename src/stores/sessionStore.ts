@@ -133,7 +133,7 @@ function ingest(payload: SessionEventsPush, set: Set): void {
     // 重算 live 状态（filePath/cwd/hasSubagents 沿用列表里的概要）
     const prevSummary = state.summaries.find((s) => s.sessionId === sessionId)
     let summaries = state.summaries
-    if (prevSummary) {
+    if (prevSummary && prevSummary.status !== 'completed') {
       const ms = lastActivityMs(merged)
       const live = summarizeEvents(merged, {
         sessionId,

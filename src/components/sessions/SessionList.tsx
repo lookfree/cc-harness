@@ -16,7 +16,7 @@ interface Props {
   onDelete?: (id: string, filePath: string) => Promise<void>
 }
 
-const STATUS_FILTERS: Array<'all' | SessionLiveStatus> = ['all', 'active', 'waiting', 'idle']
+const STATUS_FILTERS: Array<'all' | SessionLiveStatus> = ['all', 'active', 'waiting', 'idle', 'completed']
 
 export function SessionList({ summaries, selectedIds, compareMode, onSelect, onToggleCompare, onDelete }: Props) {
   const { t } = useTranslation('sessions')
