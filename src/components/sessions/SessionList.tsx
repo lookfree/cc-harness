@@ -40,7 +40,7 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
     try {
       await onDelete?.(s.sessionId, s.filePath)
     } catch (err) {
-      console.error('[SessionList] delete failed:', err)
+      console.error('[API] delete failed:', err)
       setConfirmId(s.sessionId)
     }
   }

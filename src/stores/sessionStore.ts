@@ -23,6 +23,7 @@ interface SessionState {
   /** 单选某 session：替换选中并确保已加载/订阅 */
   selectSession: (id: string) => Promise<void>
   clearSelection: () => void
+  deselectSession: (id: string) => void
   /** 比对模式下增删选中（≤MAX_COMPARE） */
   toggleCompare: (id: string) => Promise<void>
   setCompareMode: (on: boolean) => void
@@ -66,6 +67,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   clearSelection: () => set({ selectedIds: [] }),
+  deselectSession: (id) => set((s) => ({ selectedIds: s.selectedIds.filter((x) => x !== id) })),
 
   toggleCompare: async (id) => {
     const { selectedIds } = get()
@@ -130,10 +132,11 @@ function ingest(payload: SessionEventsPush, set: Set): void {
 
     const eventsBySession = { ...state.eventsBySession, [sessionId]: merged }
 
-    // 重算 live 状态（filePath/cwd/hasSubagents 沿用列表里的概要）
+    // 重算 live 状态（filePath/cwd/hasSubagents 沿用列表里的概要）。
+    // completed 由目录启发式在 list() 里设置；ingest 重算摘要（token/消息数等），但保留 completed 标记不覆盖。
     const prevSummary = state.summaries.find((s) => s.sessionId === sessionId)
     let summaries = state.summaries
-    if (prevSummary && prevSummary.status !== 'completed') {
+    if (prevSummary) {
       const ms = lastActivityMs(merged)
       const live = summarizeEvents(merged, {
         sessionId,
@@ -143,7 +146,8 @@ function ingest(payload: SessionEventsPush, set: Set): void {
         mtimeMs: ms,
         nowMs: Date.now(),
       })
-      summaries = state.summaries.map((s) => (s.sessionId === sessionId ? live : s))
+      const updated = prevSummary.status === 'completed' ? { ...live, status: 'completed' as const } : live
+      summaries = state.summaries.map((s) => (s.sessionId === sessionId ? updated : s))
     }
     return { eventsBySession, summaries }
   })

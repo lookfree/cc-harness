@@ -22,7 +22,7 @@ export default function Sessions() {
     loading,
     loadSessions,
     selectSession,
-    clearSelection,
+    deselectSession,
     toggleCompare,
     setCompareMode,
     startListening,
@@ -55,9 +55,13 @@ export default function Sessions() {
   }
 
   async function handleDelete(id: string, filePath: string) {
-    await api.session.delete(id, filePath)
-    if (selectedIds.includes(id)) clearSelection()
-    await loadSessions()
+    try {
+      await api.session.delete(id, filePath)
+      if (selectedIds.includes(id)) deselectSession(id)
+      await loadSessions()
+    } catch (err) {
+      console.error('[API] session delete failed:', err)
+    }
   }
 
   const empty = (

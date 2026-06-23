@@ -6,9 +6,11 @@ import type { SessionFileMeta } from '../../../shared/types'
 
 const SUFFIX = '.jsonl'
 
+export const SESSIONS_ROOT = path.join(os.homedir(), '.claude', 'projects')
+
 /** 列出所有 project 目录及其 session 文件（不解析内容，只 stat）。目录不存在 → []（ENOENT 静默）。 */
 export async function listSessions(projectsRoot?: string): Promise<SessionFileMeta[]> {
-  const root = projectsRoot ?? path.join(os.homedir(), '.claude', 'projects')
+  const root = projectsRoot ?? SESSIONS_ROOT
   let projectDirs: string[]
   try {
     projectDirs = await fs.readdir(root)

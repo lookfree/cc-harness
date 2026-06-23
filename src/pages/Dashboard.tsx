@@ -77,14 +77,16 @@ function ActiveSessionsCard({ sessions }: { sessions: SessionSummary[] }) {
 
 function TokenTrendCard({ sessions }: { sessions: SessionSummary[] }) {
   const { t } = useTranslation('dashboard')
-  const [tick, setTick] = useState(0)
+  const [dateStr, setDateStr] = useState(() => new Date().toLocaleDateString('en-CA'))
   useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), 60_000)
+    const id = setInterval(() => {
+      const d = new Date().toLocaleDateString('en-CA')
+      setDateStr((prev) => (prev === d ? prev : d))
+    }, 60_000)
     return () => clearInterval(id)
   }, [])
 
   const { chartData, todayTokens } = useMemo(() => {
-    const todayStr = new Date().toLocaleDateString('en-CA')
     const byDay: Record<string, { input: number; output: number; cache: number }> = {}
     for (const s of sessions) {
       const day = toLocalDate(s.lastActivityAt)
@@ -101,13 +103,13 @@ function TokenTrendCard({ sessions }: { sessions: SessionSummary[] }) {
       d.setDate(d.getDate() - (6 - i))
       const day = d.toLocaleDateString('en-CA')
       const { input = 0, output = 0, cache = 0 } = byDay[day] ?? {}
-      return { date: `${d.getMonth() + 1}/${d.getDate()}`, input, output, cache, isToday: day === todayStr }
+      return { date: `${d.getMonth() + 1}/${d.getDate()}`, input, output, cache, isToday: day === dateStr }
     })
 
-    const today = byDay[todayStr]
+    const today = byDay[dateStr]
     const todayTotal = today ? today.input + today.output + today.cache : 0
     return { chartData: data, todayTokens: todayTotal }
-  }, [sessions, tick])
+  }, [sessions, dateStr])
 
   return (
     <Card>
@@ -174,6 +176,7 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState<SessionSummary[]>([])
 
   useEffect(() => {
+    let cancelled = false
     ;(async () => {
       try {
         const [skills, agents, hooks, mcpServers, commands, claudeMd] = await Promise.all([
@@ -184,6 +187,7 @@ export default function Dashboard() {
           api.commands.getAll(),
           api.claudeMD.getAll(),
         ])
+        if (cancelled) return
         setClaudeMdFiles(claudeMd)
         const existingFiles = claudeMd.filter(f => f.exists)
         setStats({
@@ -199,12 +203,15 @@ export default function Dashboard() {
         console.error('Failed to load config stats:', error)
       }
     })()
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
+    let cancelled = false
     api.session.list()
-      .then(setSessions)
+      .then((s) => { if (!cancelled) setSessions(s) })
       .catch((e) => console.error('[API] session.list failed:', e))
+    return () => { cancelled = true }
   }, [])
 
   const cards = [

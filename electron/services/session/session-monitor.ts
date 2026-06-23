@@ -1,9 +1,8 @@
 import { promises as fs } from 'fs'
 import path from 'path'
-import os from 'os'
 import { watch, type FSWatcher } from 'chokidar'
 import type { BrowserWindow } from 'electron'
-import { listSessions } from './session-index'
+import { listSessions, SESSIONS_ROOT } from './session-index'
 import { parseChunk } from './session-parser'
 import { SessionTailer } from './session-tailer'
 import { buildAgentTopology } from './agent-topology'
@@ -21,7 +20,7 @@ import type { SessionEvent, SessionSummary, SessionEventsPush, AgentTopology, Us
  * 建立"主进程主动持续推流"范式（项目原先只有 invoke 请求/响应）。
  */
 export class SessionMonitor {
-  private readonly sessionsRoot = path.join(os.homedir(), '.claude', 'projects')
+  private readonly sessionsRoot = SESSIONS_ROOT
   /** sessionId → 该会话的 tailer（subscribe 时建，unsubscribe 时 close 防句柄泄漏） */
   private tailers = new Map<string, SessionTailer>()
   /** sessionId → workflow/subagents 目录 watcher + 去抖定时器（spec016 拓扑实时长出） */
@@ -108,18 +107,22 @@ export class SessionMonitor {
     )
     const valid = summaries.filter((s): s is SessionSummary => s !== null)
 
-    // 同一 cwd 下只有最新的 session 可能还活着，其余标 completed
+    // 同一 cwd 下只有最新的 session 可能还活着，其余标 completed。
+    // validIds 过滤掉解析失败的文件，其 mtime 不参与"最新"判定。
+    const validIds = new Set(valid.map((s) => s.sessionId))
+    const mtimeById = new Map<string, number>()
     const latestMtimeByCwd = new Map<string, number>()
     for (const m of metas) {
+      if (!validIds.has(m.sessionId)) continue
+      mtimeById.set(m.sessionId, m.mtimeMs)
       const cur = latestMtimeByCwd.get(m.cwd) ?? 0
       if (m.mtimeMs > cur) latestMtimeByCwd.set(m.cwd, m.mtimeMs)
     }
-    const nonLatest = new Set(
-      metas.filter((m) => m.mtimeMs < (latestMtimeByCwd.get(m.cwd) ?? 0)).map((m) => m.sessionId)
-    )
-    return valid.map((s) =>
-      nonLatest.has(s.sessionId) ? { ...s, status: 'completed' as const } : s
-    )
+    return valid.map((s) => {
+      const latest = latestMtimeByCwd.get(s.cwd) ?? 0
+      const mtime = mtimeById.get(s.sessionId) ?? 0
+      return mtime < latest ? { ...s, status: 'completed' as const } : s
+    })
   }
 
   /** 取一个 session 的全量已解析事件（首屏快照，Web 模式唯一路径）。 */
