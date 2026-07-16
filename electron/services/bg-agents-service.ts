@@ -3,6 +3,7 @@ import { promises as fs } from 'fs'
 import os from 'os'
 import path from 'path'
 import { promisify } from 'util'
+import { isMissing } from './glob-scan'
 import type { BackgroundAgentsSnapshot, BgAgentItem, BgJobDetail, CliAgentRow } from '../../shared/types'
 
 const execFileP = promisify(execFile)
@@ -10,34 +11,57 @@ const execFileP = promisify(execFile)
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined)
 
+/** 读 JSON 对象；ENOENT（文件不存在）静默，坏 JSON / 权限等真错误记日志（否则损坏的 roster/state 无从排查）。 */
 async function readJson(p: string): Promise<Record<string, unknown> | null> {
+  let text: string
   try {
-    const parsed = JSON.parse(await fs.readFile(p, 'utf8')) as unknown
+    text = await fs.readFile(p, 'utf8')
+  } catch (e) {
+    if (!isMissing(e)) console.warn('[bg-agents] read failed:', p, e)
+    return null
+  }
+  try {
+    const parsed = JSON.parse(text) as unknown
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null
-  } catch {
+  } catch (e) {
+    console.warn('[bg-agents] parse failed:', p, e)
     return null
   }
 }
 
+interface ClaudeBin {
+  bin: string
+  /** Windows 上 npm 的 claude.cmd shim 必须 shell:true 才能被 execFile 执行 */
+  shell: boolean
+}
+let claudeBinCache: ClaudeBin | undefined
+
 /**
- * 解析 claude 可执行文件：Electron GUI 进程的 PATH 常缺 shell 里的自定义路径
- * （launchd 环境），PATH 找不到时按常见安装位兜底。
+ * 解析 claude 可执行文件：Electron GUI 进程的 PATH 常缺 shell 里的自定义路径（launchd 环境），
+ * PATH 找不到时按常见安装位兜底。命中具体文件才缓存；退回 PATH 不缓存，以便安装后下次重探。
  */
-async function resolveClaudeBin(): Promise<string> {
-  const candidates = [
-    path.join(os.homedir(), '.local', 'bin', 'claude'),
-    '/usr/local/bin/claude',
-    '/opt/homebrew/bin/claude',
-  ]
+async function resolveClaudeBin(): Promise<ClaudeBin> {
+  if (claudeBinCache) return claudeBinCache
+  const home = os.homedir()
+  const isWin = process.platform === 'win32'
+  const candidates = isWin
+    ? [
+        path.join(process.env.APPDATA ?? path.join(home, 'AppData', 'Roaming'), 'npm', 'claude.cmd'),
+        path.join(home, '.local', 'bin', 'claude.exe'),
+      ]
+    : [path.join(home, '.local', 'bin', 'claude'), '/usr/local/bin/claude', '/opt/homebrew/bin/claude']
   for (const c of candidates) {
     try {
       await fs.access(c)
-      return c
+      const hit: ClaudeBin = { bin: c, shell: c.endsWith('.cmd') }
+      claudeBinCache = hit
+      return hit
     } catch {
       /* 试下一个 */
     }
   }
-  return 'claude' // 交给 PATH
+  // 交给 PATH（Windows 上 .cmd shim 需 shell:true）；不缓存，留后续重探机会
+  return { bin: 'claude', shell: isWin }
 }
 
 /**
@@ -68,10 +92,11 @@ export async function getBackgroundAgents(): Promise<BackgroundAgentsSnapshot> {
   let rows: CliAgentRow[] = []
   let error: string | undefined
   try {
-    const bin = await resolveClaudeBin()
+    const { bin, shell } = await resolveClaudeBin()
     const { stdout } = await execFileP(bin, ['agents', '--json', '--all'], {
       timeout: 30_000,
       maxBuffer: 8 * 1024 * 1024,
+      shell,
     })
     const parsed = JSON.parse(stdout) as unknown
     if (Array.isArray(parsed)) rows = parsed as CliAgentRow[]

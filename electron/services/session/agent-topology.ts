@@ -153,6 +153,7 @@ async function applyJournal(subdir: string, wf: WorkflowRun, agents: AgentNode[]
     return
   }
   let started = 0
+  let resultLines = 0
   const previews = new Map<string, string>()
   for (const line of text.split('\n')) {
     const trimmed = line.trim()
@@ -160,16 +161,22 @@ async function applyJournal(subdir: string, wf: WorkflowRun, agents: AgentNode[]
     try {
       const o = JSON.parse(trimmed) as Record<string, unknown>
       if (o.type === 'started') started++
-      else if (o.type === 'result' && typeof o.agentId === 'string') {
-        const preview = JSON.stringify(o.result)
-        previews.set(o.agentId, preview.length > 240 ? `${preview.slice(0, 240)}…` : preview)
+      else if (o.type === 'result') {
+        resultLines++
+        // result 字段可能缺省（agent 无返回值）——JSON.stringify(undefined) 得 undefined，别对它取 .length
+        if (typeof o.agentId === 'string' && o.result !== undefined) {
+          const preview = JSON.stringify(o.result)
+          if (typeof preview === 'string') {
+            previews.set(o.agentId, preview.length > 240 ? `${preview.slice(0, 240)}…` : preview)
+          }
+        }
       }
     } catch {
       /* 坏行跳过 */
     }
   }
   wf.journalStarted = started
-  wf.journalResults = previews.size
+  wf.journalResults = resultLines // 用 result 行数（无返回值的行也算完成），不是有预览的数量
   for (const a of agents) {
     if (a.workflowRunId !== wf.runId) continue
     const p = previews.get(a.agentId)
@@ -216,11 +223,73 @@ function taskTreeFromEvents(events: SessionEvent[]): AgentNode[] {
   return out
 }
 
+/** 一个落盘 subagent 文件的解析结果。join 键是 meta.json 的 toolUseId（≠ 文件名 hex）。 */
+interface LoadedAgentFile {
+  fileHex: string
+  /** meta.json.toolUseId——与主 jsonl / 父级 Task tool_use 同一 id 空间（'toolu_...'）；缺失退回 fileHex */
+  toolUseId?: string
+  agentType?: string
+  fp: string
+  tokens: AgentNode['tokens']
+  toolCalls: number
+  durationMs?: number
+  startedAt?: string
+  hasEvents: boolean
+  /** 该 agent 内部再 spawn 的 Task（各自以 toolUseId 为 agentId） */
+  innerTasks: AgentNode[]
+}
+
+/** 并行读 subagents/agent-*.jsonl + 同名 .meta.json（含关键的 toolUseId 关联键）。 */
+async function loadAgentFiles(dir: string, files: string[]): Promise<LoadedAgentFile[]> {
+  const jsonls = files.filter((f) => AGENT_RE.test(f))
+  const loaded = await Promise.all(
+    jsonls.map(async (f): Promise<LoadedAgentFile | null> => {
+      const fileHex = f.match(AGENT_RE)![1]
+      const fp = path.join(dir, f)
+      let text: string
+      try {
+        text = await fs.readFile(fp, 'utf8')
+      } catch {
+        return null
+      }
+      const { events } = parseChunk(text, 0)
+      const sum = summarizeEvents(events, { sessionId: fileHex, filePath: fp, cwd: '', hasSubagents: false, mtimeMs: 0, nowMs: 0 })
+      const start = sum.startedAt ? Date.parse(sum.startedAt) : NaN
+      const end = sum.lastActivityAt ? Date.parse(sum.lastActivityAt) : NaN
+      const durationMs = Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : undefined
+      let toolUseId: string | undefined
+      let agentType: string | undefined
+      try {
+        const meta = JSON.parse(await fs.readFile(path.join(dir, `agent-${fileHex}.meta.json`), 'utf8')) as Record<string, unknown>
+        toolUseId = str(meta.toolUseId)
+        agentType = str(meta.agentType)
+      } catch {
+        /* meta 缺失 → 关联键退回 fileHex，节点作孤立展示 */
+      }
+      return {
+        fileHex,
+        toolUseId,
+        agentType,
+        fp,
+        tokens: sum.totalTokens,
+        toolCalls: sum.toolUseCount,
+        durationMs,
+        startedAt: sum.startedAt,
+        hasEvents: events.length > 0,
+        innerTasks: taskTreeFromEvents(events),
+      }
+    })
+  )
+  return loaded.filter((x): x is LoadedAgentFile => x !== null)
+}
+
 /**
- * 扫 <subdir>/subagents/agent-*.jsonl（顶层，不含 workflows/ 子目录）：
- * - agentId 能对上 taskTree 节点的，就地充实 token/工具数/时长/文件路径（供抽屉回放）；
- * - 对不上的补一个 depth 0 节点（落盘了但主 jsonl 没扫到 spawn 的场景）；
- * - 每个文件里再 spawn 的 Task → 嵌套子节点（parentAgentId=该 agent，depth+1，五层封顶，ORCH-06/11）。
+ * 扫 <subdir>/subagents/agent-*.jsonl（顶层，不含 workflows/ 子目录）建嵌套子树。
+ * 关键：文件与主 jsonl Task 节点的关联键是 meta.json 的 **toolUseId**（'toolu_...'），
+ * 不是文件名 hex——两者不同 id 空间，用 hex 匹配会永远落空并把每个 subagent 渲染两次。
+ * - 命中 taskTree 节点：就地充实 token/工具数/时长/文件路径（供抽屉回放），不新建节点；
+ * - 从命中节点的内部 Task 递归下探建真正的嵌套（depth+1，五层封顶，visited 去重防环/防双节点）；
+ * - 任何链路都没触达的落盘文件 → 补一个孤立 depth-0 节点。
  * 目录缺失/文件损坏一律退化为不动，不抛错。
  */
 async function plainSubagentNodes(subdir: string, taskTree: AgentNode[]): Promise<AgentNode[]> {
@@ -231,59 +300,56 @@ async function plainSubagentNodes(subdir: string, taskTree: AgentNode[]): Promis
   } catch {
     return []
   }
-  const byId = new Map(taskTree.map((n) => [n.agentId, n]))
+  const loaded = await loadAgentFiles(dir, files)
+  const byKey = new Map<string, LoadedAgentFile>()
+  for (const lf of loaded) byKey.set(lf.toolUseId ?? lf.fileHex, lf)
+
   const extra: AgentNode[] = []
-  for (const f of files) {
-    const m = f.match(AGENT_RE)
-    if (!m) continue
-    const agentId = m[1]
-    const fp = path.join(dir, f)
-    let text: string
-    try {
-      text = await fs.readFile(fp, 'utf8')
-    } catch {
-      continue
-    }
-    const { events } = parseChunk(text, 0)
-    const sum = summarizeEvents(events, { sessionId: agentId, filePath: fp, cwd: '', hasSubagents: false, mtimeMs: 0, nowMs: 0 })
-    const start = sum.startedAt ? Date.parse(sum.startedAt) : NaN
-    const end = sum.lastActivityAt ? Date.parse(sum.lastActivityAt) : NaN
-    const durationMs = Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : undefined
+  const visited = new Set<string>(taskTree.map((n) => n.agentId)) // 防重复渲染与环
 
-    let node = byId.get(agentId)
-    if (node) {
-      node.tokens = sum.totalTokens
-      node.toolCalls = sum.toolUseCount
-      node.filePath = fp
-      if (durationMs !== undefined) node.durationMs = durationMs
-    } else {
-      let agentType: string | undefined
-      try {
-        const meta = JSON.parse(await fs.readFile(path.join(dir, `agent-${agentId}.meta.json`), 'utf8')) as Record<string, unknown>
-        agentType = str(meta.agentType)
-      } catch {
-        /* meta 缺失 → agentType 留空 */
-      }
-      node = {
-        agentId,
-        agentType,
-        label: agentType ?? 'agent',
-        parentAgentId: null,
-        depth: 0,
-        status: events.length ? 'done' : 'unknown',
-        startedAt: sum.startedAt,
-        durationMs,
-        tokens: sum.totalTokens,
-        toolCalls: sum.toolUseCount,
-        filePath: fp,
-      }
-      extra.push(node)
+  // 命中的 taskTree 节点就地充实，并从其内部 Task 递归下探建嵌套子树
+  const expand = (node: AgentNode): void => {
+    const lf = byKey.get(node.agentId)
+    if (!lf) return
+    node.tokens = lf.tokens
+    node.toolCalls = lf.toolCalls
+    node.filePath = lf.fp
+    if (lf.durationMs !== undefined) node.durationMs = lf.durationMs
+    if (node.agentType === undefined && lf.agentType) {
+      node.agentType = lf.agentType
+      if (node.label === 'Task') node.label = lf.agentType
     }
+    if (node.depth >= 5) return // ORCH-06 五层护栏（现在真正生效）
+    for (const child of lf.innerTasks) {
+      if (visited.has(child.agentId)) continue
+      visited.add(child.agentId)
+      const childNode: AgentNode = { ...child, parentAgentId: node.agentId, depth: node.depth + 1 }
+      extra.push(childNode)
+      expand(childNode)
+    }
+  }
+  for (const n of taskTree) expand(n)
 
-    if (node.depth >= 5) continue // ORCH-06 五层护栏
-    for (const child of taskTreeFromEvents(events)) {
-      extra.push({ ...child, parentAgentId: agentId, depth: Math.min(node.depth + 1, 5) })
+  // 未被触达的落盘文件 → 孤立节点（落盘了但没在任何 Task 树里出现）
+  for (const lf of loaded) {
+    const key = lf.toolUseId ?? lf.fileHex
+    if (visited.has(key)) continue
+    visited.add(key)
+    const orphan: AgentNode = {
+      agentId: key,
+      agentType: lf.agentType,
+      label: lf.agentType ?? 'agent',
+      parentAgentId: null,
+      depth: 0,
+      status: lf.hasEvents ? 'done' : 'unknown',
+      startedAt: lf.startedAt,
+      durationMs: lf.durationMs,
+      tokens: lf.tokens,
+      toolCalls: lf.toolCalls,
+      filePath: lf.fp,
     }
+    extra.push(orphan)
+    expand(orphan)
   }
   return extra
 }

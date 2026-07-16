@@ -1,12 +1,28 @@
 import path from 'path'
+import os from 'os'
 import type { MCPServers, MCPServerConfig } from '../../shared/types'
 import { FileManagerHooks } from './file-manager-hooks'
+
+/** 一个 MCP 配置来源文件：路径 + 归属层 + 本工具是否可写（~/.claude.json 由 CLI 管理，只读）。 */
+interface McpSourceFile {
+  path: string
+  level: 'user' | 'project'
+  writable: boolean
+}
+
+/** getMCPServers / getMCPServerSources / 可写性 三者同源，避免各自 hand-roll 文件集导致口径漂移。 */
+interface McpOverview {
+  servers: MCPServers
+  sources: Record<string, 'user' | 'project'>
+  /** 出现在 ~/.claude.json 的 server——本工具不写该文件，save/delete 对它们要报错而非静默无效 */
+  cliManaged: Set<string>
+}
 
 export class FileManagerMcp extends FileManagerHooks {
   /**
    * MCP 配置文件路径（写入目标）：
-   * - project → <project>/.mcp.json（Claude Code 标准项目级文件；旧的 .claude/mcpServers.json 只读迁移）
-   * - user → ~/.claude/claude_mcp_config.json（本工具的 user 层落盘；~/.claude.json 只读合并，见下）
+   * - project → <project>/.mcp.json（Claude Code 标准项目级文件）
+   * - user → ~/.claude/claude_mcp_config.json（本工具的 user 层落盘）
    */
   private mcpPath(location: 'user' | 'project'): string {
     return location === 'project'
@@ -14,11 +30,22 @@ export class FileManagerMcp extends FileManagerHooks {
       : path.join(this.userConfigPath, 'claude_mcp_config.json')
   }
 
-  /** 本工具历史写过的旧路径，只读迁移用。 */
-  private legacyMcpPaths(): string[] {
+  /** ~/.claude.json：Claude Code 自己的用户级 MCP 存储（`claude mcp add -s user` 写这里），只读合并。 */
+  private claudeJsonPath(): string {
+    return path.join(os.homedir(), '.claude.json')
+  }
+
+  /**
+   * 有序来源列表（低→高优先级，后者覆盖前者）。同一 name 的归属 = 最高优先级来源。
+   * project 层整体压过 user 层（还原"project 覆盖 user"不变量）；标准文件压过 legacy 文件。
+   */
+  private mcpSourceFiles(): McpSourceFile[] {
     return [
-      path.join(this.userConfigPath, 'mcpServers.json'),
-      path.join(this.projectPath, '.claude', 'mcpServers.json'),
+      { path: path.join(this.userConfigPath, 'mcpServers.json'), level: 'user', writable: true }, // legacy user
+      { path: this.claudeJsonPath(), level: 'user', writable: false }, // CLI 用户级，只读
+      { path: this.mcpPath('user'), level: 'user', writable: true }, // claude_mcp_config.json
+      { path: path.join(this.projectPath, '.claude', 'mcpServers.json'), level: 'project', writable: true }, // legacy project
+      { path: this.mcpPath('project'), level: 'project', writable: true }, // .mcp.json
     ]
   }
 
@@ -27,83 +54,92 @@ export class FileManagerMcp extends FileManagerHooks {
     return !c.command && c.url && !c.type ? { ...c, type: 'http' } : c
   }
 
-  /**
-   * ~/.claude.json 是 Claude Code 自己的用户级 MCP 存储（`claude mcp add -s user` 写这里）。
-   * 只读合并进来保证"看得见"；不写它——该文件由运行中的 CLI 频繁重写，外部写入有丢数据风险。
-   */
-  private async readClaudeJsonUserMCP(): Promise<MCPServers> {
-    const claudeJson = await this.readJSONFile<{ mcpServers?: MCPServers }>(
-      path.join(this.userConfigPath, '..', '.claude.json')
-    )
-    return claudeJson?.mcpServers ?? {}
+  /** 读单个 MCP 文件的 mcpServers（复用继承的 settingsWriter 路径原语，ENOENT/坏 JSON 退化为空）。 */
+  private async readMCPFile(filePath: string): Promise<MCPServers> {
+    const snap = await this.settingsWriter.readAtPath(filePath, 'user')
+    return (snap.raw.mcpServers as MCPServers) ?? {}
+  }
+
+  /** 一次读齐所有来源文件（并行），单遍算出 servers / sources / cliManaged。 */
+  private async loadMCPMerged(): Promise<McpOverview> {
+    const descs = this.mcpSourceFiles()
+    const perFile = await Promise.all(descs.map((d) => this.readMCPFile(d.path)))
+    const servers: MCPServers = {}
+    const sources: Record<string, 'user' | 'project'> = {}
+    const cliManaged = new Set<string>()
+    descs.forEach((d, i) => {
+      for (const [name, cfg] of Object.entries(perFile[i])) {
+        servers[name] = this.normalizeMCP(cfg) // 后者覆盖前者
+        sources[name] = d.level
+        if (!d.writable) cliManaged.add(name)
+      }
+    })
+    return { servers, sources, cliManaged }
   }
 
   async getMCPServers(): Promise<MCPServers> {
     this.logger.info('getMCPServers() called')
-    // 合并次序（后者覆盖前者）：本工具 legacy → CLI 用户级(~/.claude.json) → 本工具 user 层 → 项目标准 .mcp.json
-    const [legacyUser, legacyProject] = await Promise.all(
-      this.legacyMcpPaths().map((p) => this.readJSONFile<{ mcpServers?: MCPServers }>(p))
-    )
-    const cliUserMCP = await this.readClaudeJsonUserMCP()
-    const userMCP = await this.readJSONFile<{ mcpServers?: MCPServers }>(this.mcpPath('user'))
-    const projectMCP = await this.readJSONFile<{ mcpServers?: MCPServers }>(this.mcpPath('project'))
-    const merged: MCPServers = {
-      ...(legacyUser?.mcpServers || {}),
-      ...(legacyProject?.mcpServers || {}),
-      ...cliUserMCP,
-      ...(userMCP?.mcpServers || {}),
-      ...(projectMCP?.mcpServers || {}),
-    }
-    const out = Object.fromEntries(Object.entries(merged).map(([name, cfg]) => [name, this.normalizeMCP(cfg)]))
-    this.logger.info('Found', Object.keys(out).length, 'MCP servers')
-    return out
+    const { servers } = await this.loadMCPMerged()
+    this.logger.info('Found', Object.keys(servers).length, 'MCP servers')
+    return servers
   }
 
-  /** 读某层 MCP 文件的 mcpServers（复用继承的 settingsWriter 路径原语，与 hooks 同款，不另起 writer 实例）。 */
-  private async readMCPLayer(location: 'user' | 'project'): Promise<MCPServers> {
-    const snap = await this.settingsWriter.readAtPath(this.mcpPath(location), location)
-    return (snap.raw.mcpServers as MCPServers) ?? {}
-  }
-
-  /** 每个 server 来自哪个文件（project 覆盖 user，与 getMCPServers 合并同口径）；UI 编辑时默认写回原层用。 */
+  /** 每个 server 来自哪个层（与 getMCPServers 严格同源，含 legacy 路径——否则供应链门控会漏）。 */
   async getMCPServerSources(): Promise<Record<string, 'user' | 'project'>> {
-    const out: Record<string, 'user' | 'project'> = {}
-    for (const name of Object.keys(await this.readClaudeJsonUserMCP())) out[name] = 'user'
-    for (const level of ['user', 'project'] as const) {
-      for (const name of Object.keys(await this.readMCPLayer(level))) out[name] = level
-    }
-    return out
+    return (await this.loadMCPMerged()).sources
+  }
+
+  /** 供 IPC（mcp:health）一次取齐，避免 getMCPServers + getMCPServerSources 双读大文件。 */
+  async getMCPOverview(): Promise<McpOverview> {
+    return this.loadMCPMerged()
   }
 
   /**
-   * 单 server upsert：read-modify-write 该文件 mcpServers（保留其他 server 与未知顶层 key，原子写）。
-   * 权威写：从「非目标」文件里删掉同名，避免同名跨文件残留导致重复/被覆盖看不见。
+   * 单 server upsert：写目标层文件（保留其他 server 与未知顶层 key，原子写），
+   * 并从「非目标」标准文件与 legacy 文件删同名，避免跨文件残留覆盖不可见。
+   * ~/.claude.json 由 CLI 管理，本工具不写——命中则报错，绝不静默把配置分叉进 claude_mcp_config.json。
    */
   async saveMCPServer(name: string, config: MCPServerConfig, location: 'user' | 'project' = 'user'): Promise<void> {
-    const servers = { ...(await this.readMCPLayer(location)), [name]: config }
+    const { cliManaged } = await this.loadMCPMerged()
+    if (cliManaged.has(name)) {
+      throw new Error(`MCP server "${name}" 由 Claude Code CLI 管理（~/.claude.json），本工具不写该文件；请用 \`claude mcp\` 命令修改，避免配置分叉`)
+    }
+    const servers = { ...(await this.readMCPFile(this.mcpPath(location))), [name]: config }
     await this.settingsWriter.writeKeyAtPath(this.mcpPath(location), 'mcpServers', servers)
 
-    const other = location === 'user' ? 'project' : 'user'
-    await this.removeFromFile(this.mcpPath(other), name)
-    // 旧路径里的同名条目一并清掉，避免合并读取时残留覆盖不可见（~/.claude.json 不动，见 readClaudeJsonUserMCP）
+    const otherStandard = this.mcpPath(location === 'user' ? 'project' : 'user')
+    await this.removeFromFile(otherStandard, name)
     for (const p of this.legacyMcpPaths()) await this.removeFromFile(p, name)
+  }
+
+  /** 本工具历史写过的旧路径，只读迁移用（保存/删除时清残留）。 */
+  private legacyMcpPaths(): string[] {
+    return [
+      path.join(this.userConfigPath, 'mcpServers.json'),
+      path.join(this.projectPath, '.claude', 'mcpServers.json'),
+    ]
   }
 
   /** 从指定 MCP 文件的 mcpServers 里删掉某个 name（文件不存在/无该名则不动）。 */
   private async removeFromFile(filePath: string, name: string): Promise<void> {
-    const snap = await this.settingsWriter.readAtPath(filePath, 'user')
-    const servers = (snap.raw.mcpServers as MCPServers) ?? {}
+    const servers = await this.readMCPFile(filePath)
     if (!(name in servers)) return
     const next = { ...servers }
     delete next[name]
     await this.settingsWriter.writeKeyAtPath(filePath, 'mcpServers', next)
   }
 
-  /** 单 server 删除：从标准 user/project 文件与旧路径里有该 name 的都删掉（~/.claude.json 只读不动）。 */
+  /**
+   * 单 server 删除：从标准 user/project 文件与 legacy 路径里都删掉。
+   * ~/.claude.json 命中则报错——否则删除会静默无效（该 server 下次合并又回来）。
+   */
   async deleteMCPServer(name: string): Promise<void> {
-    for (const level of ['user', 'project'] as const) {
-      await this.removeFromFile(this.mcpPath(level), name)
+    const { cliManaged } = await this.loadMCPMerged()
+    if (cliManaged.has(name)) {
+      throw new Error(`MCP server "${name}" 由 Claude Code CLI 管理（~/.claude.json），无法从本工具删除；请用 \`claude mcp remove ${name}\``)
     }
+    await this.removeFromFile(this.mcpPath('user'), name)
+    await this.removeFromFile(this.mcpPath('project'), name)
     for (const p of this.legacyMcpPaths()) await this.removeFromFile(p, name)
   }
 }

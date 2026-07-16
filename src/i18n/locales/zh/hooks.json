@@ -190,7 +190,7 @@
     "rawContentHint": "编辑完整的 JSON 配置",
     "matcher": "匹配器",
     "matcherPlaceholder": "工具名称模式（例如：Bash, Edit|Write）",
-    "matcherHint": "留空匹配所有。使用 | 匹配多个模式（例如：Edit|Write）",
+    "matcherHint": "留空匹配所有工具。默认按精确匹配（≥2.1.195）；逗号分隔多个精确名（Edit,Write），或写正则（Edit|Write、mcp__srv__.*）",
     "hookCommands": "命令",
     "addCommand": "添加命令",
     "command": "命令",

@@ -190,7 +190,7 @@
     "rawContentHint": "Edit the complete JSON configuration",
     "matcher": "Matcher",
     "matcherPlaceholder": "Tool name pattern (e.g., Bash, Edit|Write)",
-    "matcherHint": "Leave empty to match all. Use | for multiple patterns (e.g., Edit|Write)",
+    "matcherHint": "Empty matches all tools. Default is exact match (≥2.1.195); comma-separate exact names (Edit,Write), or write a regex (Edit|Write, mcp__srv__.*)",
     "hookCommands": "Commands",
     "addCommand": "Add Command",
     "command": "Command",

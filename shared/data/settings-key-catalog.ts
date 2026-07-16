@@ -32,5 +32,8 @@ export const SETTINGS_KEY_CATALOG: Record<string, SettingsKeyMeta> = {
 }
 
 export function settingsKeyMeta(key: string): SettingsKeyMeta | undefined {
-  return SETTINGS_KEY_CATALOG[key] ?? SETTINGS_KEY_CATALOG[key.split('.')[0]]
+  // hasOwn 防原型链：键名恰为 'constructor'/'toString' 时不能拿到 Object 原型上的函数
+  const own = (k: string): SettingsKeyMeta | undefined =>
+    Object.prototype.hasOwnProperty.call(SETTINGS_KEY_CATALOG, k) ? SETTINGS_KEY_CATALOG[k] : undefined
+  return own(key) ?? own(key.split('.')[0])
 }

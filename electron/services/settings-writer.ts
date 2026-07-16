@@ -8,18 +8,23 @@ const LEVELS: SettingsLevel[] = ['user', 'project', 'local']
 
 /**
  * Claude Code ≥2.1.207 起，部分键不再读取某些层（写了也不生效）：
- * - autoMode：不再读仓库内的 settings.local.json（防仓库配置替用户做信任决定）
+ * - autoMode：2.1.207 改为用 ~/.claude/settings.json（用户级）——仓库内的 project/local 均不读，
+ *   防仓库提交的配置替用户做信任决定
  * - pluginConfigs：只认 user / --settings / managed，项目级与 local 均不读
  * 顶层 key 命中即整棵子树受限（'autoMode' 与 'autoMode.classifyAllShell' 同规则）。
  */
 const KEY_LEVEL_RESTRICTIONS: Record<string, SettingsLevel[]> = {
-  autoMode: ['user', 'project'],
+  autoMode: ['user'],
   pluginConfigs: ['user'],
 }
 
 /** 该层的此键是否会被 Claude Code 实际读取。 */
 export function levelHonoredForKey(keyPath: string, level: SettingsLevel): boolean {
-  const allowed = KEY_LEVEL_RESTRICTIONS[keyPath.split('.')[0]]
+  const top = keyPath.split('.')[0]
+  // hasOwn 防原型链：键名恰为 'constructor'/'toString' 时不能拿到 Object 原型上的函数
+  const allowed = Object.prototype.hasOwnProperty.call(KEY_LEVEL_RESTRICTIONS, top)
+    ? KEY_LEVEL_RESTRICTIONS[top]
+    : undefined
   return !allowed || allowed.includes(level)
 }
 
@@ -170,22 +175,24 @@ export class SettingsWriter {
     const allKeys = new Set<string>()
     pathMaps.forEach((pm) => pm.paths.forEach((_v, k) => allKeys.add(k)))
 
+    const byRankDesc = (a: SettingsLevel, b: SettingsLevel): number => LEVEL_ORDER[b] - LEVEL_ORDER[a]
     const effective: EffectiveSetting[] = []
     for (const key of allKeys) {
       const having = pathMaps.filter((pm) => pm.paths.has(key))
-      // 受限键：Claude Code 不读取的层不参与胜出，单独记为 ignoredLevels（2.1.207 语义）
+      // 受限键：Claude Code 不读取的层不参与胜出（2.1.207 语义）
       const honored = having.filter((pm) => levelHonoredForKey(key, pm.level))
-      const ignored = having
-        .filter((pm) => !levelHonoredForKey(key, pm.level))
-        .map((pm) => pm.level)
-        .sort((a, b) => LEVEL_ORDER[b] - LEVEL_ORDER[a])
-      // 全部定义都落在不生效的层 → 仍展示最高层的值，但标 sourceIgnored 让 UI 提示"写了不生效"
+      // 全部定义都落在不生效层 → 仍展示最高层的值，但标 sourceIgnored 让 UI 提示"写了不生效"
       const pool = honored.length ? honored : having
       const winner = pool.reduce((a, b) => (LEVEL_ORDER[b.level] > LEVEL_ORDER[a.level] ? b : a))
-      const overridden = pool
-        .filter((pm) => pm !== winner)
+      // "被覆盖"只在生效层之间谈（全不生效时无覆盖关系可言）
+      const overridden = honored.length
+        ? honored.filter((pm) => pm !== winner).map((pm) => pm.level).sort(byRankDesc)
+        : []
+      // 不生效层徽标：排除 winner 本身（它已作 source 徽标展示，避免同层既是来源又划线）
+      const ignored = having
+        .filter((pm) => !levelHonoredForKey(key, pm.level) && pm.level !== winner.level)
         .map((pm) => pm.level)
-        .sort((a, b) => LEVEL_ORDER[b] - LEVEL_ORDER[a]) // 优先级降序
+        .sort(byRankDesc)
       effective.push({
         key,
         value: winner.paths.get(key),

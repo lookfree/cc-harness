@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import type { BackgroundAgentsSnapshot, BgAgentItem } from '@shared/types'
@@ -28,7 +28,9 @@ function groupOf(item: BgAgentItem): Group {
   if (item.waitingFor || item.status === 'waiting') return 'needsInput'
   if (item.status === 'busy') return 'working'
   if (item.kind === 'background') {
-    const s = item.job?.state ?? item.state
+    // CLI（claude agents --json）是权威 roster；磁盘 jobs/state.json 可能过期（崩溃/滞后），
+    // 只在 CLI 没给 state 时退回磁盘，否则会把已结束的 job 误报成"干活中"
+    const s = item.state ?? item.job?.state
     if (s === 'working' || s === 'running' || s === 'active') return 'working'
     if (s === 'failed' || s === 'completed' || s === 'killed' || s === 'cancelled' || s === 'done') return 'done'
     return 'idle'
@@ -39,18 +41,21 @@ function groupOf(item: BgAgentItem): Group {
 function AgentRow({ item }: { item: BgAgentItem }) {
   const { t } = useTranslation('bgagents')
   const [copied, setCopied] = useState(false)
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => () => clearTimeout(copyTimer.current), []) // 卸载时清定时器，避免对已卸载组件 setState
   const KindIcon = item.kind === 'background' ? Bot : Terminal
-  const stateText = item.waitingFor ?? item.status ?? item.job?.state ?? item.state
-  const failed = (item.job?.state ?? item.state) === 'failed'
+  const stateText = item.waitingFor ?? item.status ?? item.state ?? item.job?.state
+  const failed = (item.state ?? item.job?.state) === 'failed' // CLI 权威优先（同 groupOf）
   // ORCH-04 增量：后台 job 给出 attach 命令一键复制（在终端 attach，Ctrl+Z 回 shell）
   const attachCmd = item.kind === 'background' && item.id ? `claude attach ${item.id}` : null
 
   async function copyAttach() {
     if (!attachCmd) return
     try {
-      await navigator.clipboard.writeText(attachCmd)
+      await navigator.clipboard?.writeText(attachCmd)
       setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopied(false), 1500)
     } catch {
       /* 剪贴板不可用则不响应 */
     }
@@ -174,8 +179,9 @@ export default function BgAgents() {
                 <h2 className="text-sm font-semibold">{t(`groups.${g}`)}</h2>
                 <Badge variant="secondary" className="text-xs">{items.length}</Badge>
               </div>
-              {items.map((item) => (
-                <AgentRow key={`${item.sessionId}:${item.pid ?? item.id ?? ''}`} item={item} />
+              {items.map((item, i) => (
+                // pid/id 都缺失时用组内下标兜底，避免同 sessionId 多行 key 碰撞导致 copied 状态串行
+                <AgentRow key={`${item.kind}:${item.sessionId}:${item.pid ?? item.id ?? i}`} item={item} />
               ))}
             </div>
           )

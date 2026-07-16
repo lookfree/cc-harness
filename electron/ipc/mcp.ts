@@ -27,10 +27,8 @@ export function registerMCPHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   })
 
   ipcMain.handle('mcp:health', async () => {
-    const [servers, sources] = await Promise.all([
-      fileManager.getMCPServers(),
-      fileManager.getMCPServerSources(),
-    ])
+    // 一次取齐（servers/sources 同源），避免双读 ~/.claude.json 这类大文件
+    const { servers, sources } = await fileManager.getMCPOverview()
     // 项目级（仓库带来的）stdio server 不自动 spawn，返回 pending-approval；
     // 单点 mcp:probe（用户点"确认探测"）不受限——显式动作即确认（2.1.196 供应链姿态）
     const deferStdio = new Set(

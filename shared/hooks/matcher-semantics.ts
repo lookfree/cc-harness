@@ -24,6 +24,16 @@ const REGEX_META = /[|*+?^$()[\]{}\\.]/
 export function analyzeHookMatcher(matcher: string): MatcherAnalysis {
   const m = matcher.trim()
   if (!m) return { kind: 'empty' }
+  // 正则判定必须先于逗号判定：含逗号的正则（量词 {0,20}、字符类 [a,b]、分组 (a,b)）
+  // 不是逗号列表——否则会把它拆成两半并谎报"逐个精确匹配"，与 CLI 实际行为相反。
+  if (REGEX_META.test(m)) {
+    try {
+      new RegExp(m)
+      return { kind: 'regex' }
+    } catch {
+      return { kind: 'regex', invalidRegex: true }
+    }
+  }
   if (m.includes(',')) {
     return {
       kind: 'list',
@@ -33,17 +43,9 @@ export function analyzeHookMatcher(matcher: string): MatcherAnalysis {
         .filter(Boolean),
     }
   }
-  if (REGEX_META.test(m)) {
-    try {
-      new RegExp(m)
-      return { kind: 'regex' }
-    } catch {
-      return { kind: 'regex', invalidRegex: true }
-    }
-  }
   return {
     kind: 'exact',
     names: [m],
-    mcpPrefixSuspect: m.startsWith('mcp__') && m.split('__').length === 2 ? true : undefined,
+    mcpPrefixSuspect: m.startsWith('mcp__') && m.split('__').length === 2,
   }
 }

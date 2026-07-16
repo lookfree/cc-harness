@@ -14,29 +14,37 @@ export interface ModelPrice {
   cacheReadPerM: number
 }
 
-/** Sonnet 5 促销价 $2/$10 至 2026-08-31（官方公告），2026-09-01 起恢复 $3/$15。 */
-const SONNET5_PROMO_ACTIVE = Date.now() < Date.parse('2026-09-01T00:00:00Z')
+const SONNET5_PROMO_END = Date.parse('2026-09-01T00:00:00Z') // 促销价 $2/$10 截止（官方公告）
+const SONNET5_PROMO: ModelPrice = { inputPerM: 2, outputPerM: 10, cacheWritePerM: 2.5, cacheReadPerM: 0.2 }
+const SONNET5_LIST: ModelPrice = { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 }
 
 /**
- * 按模型串关键字匹配（保留原串做分组，仅匹配时小写）。靠前优先——sonnet-5 必须排在 sonnet 之前。
+ * 按模型串关键字匹配（保留原串做分组，仅匹配时小写）。靠前优先——具体串排在通用串之前。
  * 价格源：claude-api skill 权威模型表（cacheWrite=1.25×input 5m TTL，cacheRead=0.1×input）。
+ * sonnet-5 的促销/原价按查询时刻决定，见 priceFor（不在模块加载时定死）。
  */
 const TABLE: Array<{ match: RegExp; price: ModelPrice }> = [
   // Fable 5 / Mythos 5：2026-07-07 官方公布 $10/$50（此前未公布、曾按 sonnet 档估）
   { match: /fable|mythos/i, price: { inputPerM: 10, outputPerM: 50, cacheWritePerM: 12.5, cacheReadPerM: 1 } },
+  // 旧 Opus（4.1 / 4.0 / Opus 3）仍是 $15/$75——必须排在通用 /opus/ 之前，否则被误算成 $5/$25 的三分之一
   {
-    match: /sonnet-5/i,
-    price: SONNET5_PROMO_ACTIVE
-      ? { inputPerM: 2, outputPerM: 10, cacheWritePerM: 2.5, cacheReadPerM: 0.2 }
-      : { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 },
+    match: /claude-3-opus|opus-4-1(\b|-)|opus-4-0\b|opus-4-20250514/i,
+    price: { inputPerM: 15, outputPerM: 75, cacheWritePerM: 18.75, cacheReadPerM: 1.5 },
   },
-  // Opus 4.6/4.7/4.8 全系 $5/$25（$15/$75 是 Opus 3 时代旧价，勿回退）
+  // Opus 4.5/4.6/4.7/4.8 全系 $5/$25
   { match: /opus/i, price: { inputPerM: 5, outputPerM: 25, cacheWritePerM: 6.25, cacheReadPerM: 0.5 } },
-  { match: /sonnet/i, price: { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 } },
   { match: /haiku/i, price: { inputPerM: 1, outputPerM: 5, cacheWritePerM: 1.25, cacheReadPerM: 0.1 } },
+  // 其余 sonnet 统一 $3/$15（sonnet-5 已在 priceFor 前置处理，不会走到这里）
+  { match: /sonnet/i, price: SONNET5_LIST },
 ]
 
-export function priceFor(model: string): ModelPrice | undefined {
+/**
+ * @param model 模型串
+ * @param atMs 用量发生的时刻（epoch ms），用于 sonnet-5 促销价判定；缺省用当前时刻。
+ *             传 session 时间戳可让历史会话按当时价格计（否则跨越促销截止点后会被重新定价）。
+ */
+export function priceFor(model: string, atMs: number = Date.now()): ModelPrice | undefined {
+  if (/sonnet-5/i.test(model)) return atMs < SONNET5_PROMO_END ? SONNET5_PROMO : SONNET5_LIST
   return TABLE.find((t) => t.match.test(model))?.price
 }
 

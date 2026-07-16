@@ -116,14 +116,24 @@ export default function MCP() {
     set('timeout', form.timeout.trim() && !isNaN(Number(form.timeout)) ? Number(form.timeout) : undefined)
     set('description', form.description.trim() || undefined)
 
-    await api.mcp.save(name, cfg, form.target)
+    try {
+      await api.mcp.save(name, cfg, form.target)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e))
+      return
+    }
     setDialogOpen(false)
     await load()
   }
 
   const remove = async (name: string) => {
     if (!confirm(t('dialog.confirmDelete', { name }))) return
-    await api.mcp.delete(name)
+    try {
+      await api.mcp.delete(name)
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e))
+      return
+    }
     await load()
   }
 
