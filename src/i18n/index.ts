@@ -19,6 +19,7 @@ import mcpEn from './locales/en/mcp.json'
 import sessionsEn from './locales/en/sessions.json'
 import memoryEn from './locales/en/memory.json'
 import loopsEn from './locales/en/loops.json'
+import bgagentsEn from './locales/en/bgagents.json'
 
 import commonZh from './locales/zh/common.json'
 import layoutZh from './locales/zh/layout.json'
@@ -35,6 +36,7 @@ import mcpZh from './locales/zh/mcp.json'
 import sessionsZh from './locales/zh/sessions.json'
 import memoryZh from './locales/zh/memory.json'
 import loopsZh from './locales/zh/loops.json'
+import bgagentsZh from './locales/zh/bgagents.json'
 
 export const resources = {
   en: {
@@ -53,6 +55,7 @@ export const resources = {
     sessions: sessionsEn,
     memory: memoryEn,
     loops: loopsEn,
+    bgagents: bgagentsEn,
   },
   zh: {
     common: commonZh,
@@ -70,6 +73,7 @@ export const resources = {
     sessions: sessionsZh,
     memory: memoryZh,
     loops: loopsZh,
+    bgagents: bgagentsZh,
   },
 } as const
 

@@ -18,6 +18,7 @@ import {
   Activity,
   Brain,
   Timer,
+  Radar,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react'
@@ -31,6 +32,7 @@ interface LayoutProps {
 const navigationKeys = [
   { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
   { key: 'sessions', href: '/sessions', icon: Activity },
+  { key: 'bgAgents', href: '/bg-agents', icon: Radar },
   { key: 'models', href: '/models', icon: Cpu },
   { key: 'claudeMd', href: '/claude-md', icon: FileText },
   { key: 'commands', href: '/commands', icon: Terminal },

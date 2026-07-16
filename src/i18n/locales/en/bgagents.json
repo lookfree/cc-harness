@@ -1,0 +1,24 @@
+{
+  "title": "Background Agents",
+  "description": "Daemon-side view of active sessions and background jobs — from claude agents --json plus ~/.claude on-disk state (jobs/roster)",
+  "refresh": "Refresh",
+  "loading": "Loading…",
+  "empty": "No active sessions or background jobs",
+  "desktopOnly": "This panel requires desktop mode (executes the claude CLI and reads ~/.claude)",
+  "cliError": "claude agents --json failed: {{error}} (requires Claude Code CLI ≥2.1.139)",
+  "fetchedAt": "Fetched at {{time}}",
+  "rosterUpdatedAt": "daemon roster updated {{time}}",
+  "waitingFor": "Waiting: {{what}}",
+  "intent": "Intent",
+  "attempt": "Attempt {{n}}",
+  "kind": {
+    "background": "background",
+    "interactive": "interactive"
+  },
+  "groups": {
+    "needsInput": "Needs input",
+    "working": "Working",
+    "idle": "Idle",
+    "done": "Done"
+  }
+}

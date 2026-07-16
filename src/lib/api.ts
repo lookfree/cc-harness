@@ -29,6 +29,7 @@ import type {
   UsageReport,
 } from '@shared/types'
 import type { MCPHealth } from '@shared/types/mcp-health'
+import type { BackgroundAgentsSnapshot } from '@shared/types/bg-agents'
 import type { MemoryStore, MemorySnapshot, DreamChange } from '@shared/types/memory'
 import type { LoopTask } from '@shared/types/loop'
 
@@ -409,6 +410,14 @@ export const api = {
     probe: async (name: string): Promise<MCPHealth> => {
       if (isElectron) return window.electronAPI.probeMCPServer(name)
       throw new Error('mcp_probe_desktop_only')
+    },
+  },
+
+  // Background agents（ORCH-01/02/12：claude agents --json + daemon 落盘；桌面模式专属——要 exec CLI 和读 ~/.claude）
+  bgAgents: {
+    list: async (): Promise<BackgroundAgentsSnapshot> => {
+      if (isElectron) return window.electronAPI.listBackgroundAgents()
+      return { available: false, error: 'desktop_only', fetchedAt: Date.now(), items: [] }
     },
   },
 

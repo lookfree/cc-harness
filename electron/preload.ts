@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport, BackgroundAgentsSnapshot } from '../shared/types'
 import type { MCPHealth } from '../shared/types/mcp-health'
 import type { MemoryStore, MemorySnapshot, DreamChange } from '../shared/types/memory'
 import type { LoopTask } from '../shared/types/loop'
@@ -82,6 +82,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testMCPConnection: (name: string): Promise<{ success: boolean; message?: string }> => ipcRenderer.invoke('mcp:test', name),
   getMCPHealth: (): Promise<MCPHealth[]> => ipcRenderer.invoke('mcp:health'),
   probeMCPServer: (name: string): Promise<MCPHealth> => ipcRenderer.invoke('mcp:probe', name),
+
+  // Background agents（claude agents --json + daemon 落盘）
+  listBackgroundAgents: (): Promise<BackgroundAgentsSnapshot> => ipcRenderer.invoke('bgagents:list'),
 
   // Memory
   listMemoryStores: (): Promise<MemoryStore[]> => ipcRenderer.invoke('memory:list'),
@@ -258,6 +261,7 @@ declare global {
       testMCPConnection: (name: string) => Promise<{ success: boolean; message?: string }>
       getMCPHealth: () => Promise<MCPHealth[]>
       probeMCPServer: (name: string) => Promise<MCPHealth>
+      listBackgroundAgents: () => Promise<BackgroundAgentsSnapshot>
 
       // Memory
       listMemoryStores: () => Promise<MemoryStore[]>

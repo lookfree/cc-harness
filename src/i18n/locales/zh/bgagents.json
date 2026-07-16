@@ -1,0 +1,24 @@
+{
+  "title": "后台 Agent",
+  "description": "daemon 视角的活跃会话与后台任务——数据来自 claude agents --json 与 ~/.claude 落盘（jobs/roster）",
+  "refresh": "刷新",
+  "loading": "加载中…",
+  "empty": "当前没有活跃会话或后台任务",
+  "desktopOnly": "此面板需要桌面模式（要执行 claude CLI 并读取 ~/.claude）",
+  "cliError": "claude agents --json 执行失败：{{error}}（确认已安装 Claude Code CLI ≥2.1.139）",
+  "fetchedAt": "抓取于 {{time}}",
+  "rosterUpdatedAt": "daemon roster 更新于 {{time}}",
+  "waitingFor": "等待：{{what}}",
+  "intent": "派活意图",
+  "attempt": "第 {{n}} 次拉起",
+  "kind": {
+    "background": "后台",
+    "interactive": "交互"
+  },
+  "groups": {
+    "needsInput": "等你输入",
+    "working": "干活中",
+    "idle": "空闲",
+    "done": "已结束"
+  }
+}

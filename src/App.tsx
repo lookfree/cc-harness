@@ -13,6 +13,7 @@ import Graph from './pages/Graph'
 import Models from './pages/Models'
 import Settings from './pages/Settings'
 import Sessions from './pages/Sessions'
+import BgAgents from './pages/BgAgents'
 import Memory from './pages/Memory'
 import Loops from './pages/Loops'
 
@@ -24,6 +25,7 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/sessions" element={<Sessions />} />
+          <Route path="/bg-agents" element={<BgAgents />} />
           <Route path="/claude-md" element={<ClaudeMd />} />
           <Route path="/commands" element={<Commands />} />
           <Route path="/agents" element={<Agents />} />

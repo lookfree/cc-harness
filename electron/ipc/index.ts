@@ -15,6 +15,7 @@ import { registerPermissionHandlers } from './permissions'
 import { registerSettingsHandlers } from './settings'
 import { registerMemoryHandlers } from './memory'
 import { registerLoopHandlers } from './loop'
+import { registerBgAgentsHandlers } from './bg-agents'
 
 export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) {
   registerSkillHandlers(ipcMain, fileManager)
@@ -32,4 +33,5 @@ export function registerIPCHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   registerSettingsHandlers(ipcMain, fileManager)
   registerMemoryHandlers(ipcMain)
   registerLoopHandlers(ipcMain)
+  registerBgAgentsHandlers(ipcMain)
 }

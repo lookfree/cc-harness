@@ -13,6 +13,7 @@ export * from './session'
 export * from './agent-tree'
 export * from './mcp-health'
 export * from './memory'
+export * from './bg-agents'
 
 export interface ConfigFile {
   path: string

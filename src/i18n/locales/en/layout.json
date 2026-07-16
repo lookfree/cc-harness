@@ -19,6 +19,7 @@
     "memory": "Memory",
     "loops": "Loop Wakeups",
     "graph": "Dependency Graph",
-    "settings": "Settings"
+    "settings": "Settings",
+    "bgAgents": "Bg Agents"
   }
 }
