@@ -201,4 +201,9 @@ export interface SessionSummary {
   hasSubagents: boolean
   /** ORCH-05 pinned——本地无稳定契约，暂留空不展示（见 spec015 风险节） */
   pinned?: boolean
+  /**
+   * 会话最后一次 permission-mode 事件的模式（实测记录 {"type":"permission-mode","permissionMode":"default"}）。
+   * 2.1.200 起 "default" 官方更名 Manual——UI 展示时映射；plan/acceptEdits/bypassPermissions 值原样。
+   */
+  permissionMode?: string
 }

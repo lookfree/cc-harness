@@ -46,6 +46,8 @@ export interface BgJobDetail {
 
 export interface BgAgentItem extends CliAgentRow {
   job?: BgJobDetail
+  /** ORCH-05：出现在 ~/.claude/jobs/pins.json（Ctrl+T 钉住，不被回收、升级原地重启） */
+  pinned?: boolean
 }
 
 export interface BackgroundAgentsSnapshot {

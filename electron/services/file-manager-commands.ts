@@ -103,12 +103,19 @@ export class FileManagerCommands extends FileManagerMcp {
         }
       }
 
+      // SKILL-07：参数面建模——frontmatter argument-hint + 正文 $ARGUMENTS/$1..$9 引用
+      // （2.1.210 起未匹配占位符原样保留不再被剥离；2.1.199 起斜杠 skill 可叠用 ≤5 个）
+      const argumentHint = frontmatter['argument-hint'] || undefined
+      const usesArguments = /\$ARGUMENTS\b|\$[1-9]\b/.test(instructions) || undefined
+
       return {
         name: commandName,
         description,
-        usage: `/${commandName}`,
+        usage: argumentHint ? `/${commandName} ${argumentHint}` : `/${commandName}`,
         type: 'plugin',
         pattern: `^/${commandName}`,
+        argumentHint,
+        usesArguments,
         handler: {
           type: 'inline',
           code: instructions

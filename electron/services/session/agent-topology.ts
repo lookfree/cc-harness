@@ -23,6 +23,8 @@ export async function buildAgentTopology(sessionFilePath: string, mainEvents?: S
   const workflows = await readWorkflows(subdir, sessionId)
   const agentLists = await Promise.all(workflows.map((wf) => scanWorkflowAgents(subdir, wf.runId)))
   const agents = agentLists.flat()
+  // ORCH-13：journal.jsonl（2.1.208 起 workflow resume 的权威源）——每个 agent 的真实返回值
+  await Promise.all(workflows.map((wf) => applyJournal(subdir, wf, agents)))
   // mainEvents 已解析时直接用（spec017 usage() 已 snapshot 过，免二次读+解析主 jsonl）
   const taskTree = mainEvents ? taskTreeFromEvents(mainEvents) : await readMainTaskTree(sessionFilePath)
   // ORCH-11：普通 subagent 落盘文件（subagents/agent-*.jsonl，非 workflow）——
@@ -134,6 +136,44 @@ async function buildAgentNode(dir: string, fileName: string, runId: string): Pro
     toolCalls: sum.toolUseCount,
     workflowRunId: runId,
     filePath: fp,
+  }
+}
+
+/**
+ * 读 subagents/workflows/<runId>/journal.jsonl，把每个 agent 的真实返回值预览挂到对应节点，
+ * 并统计 started/result 行数写进 WorkflowRun（"声明 spawn 数 ≠ 实际完成数"的第三个口径）。
+ * 实测行契约：{"type":"started","key","agentId"} 与 {"type":"result","key","agentId","result":<any>}。
+ * journal 缺失/损坏 → 原样退化。
+ */
+async function applyJournal(subdir: string, wf: WorkflowRun, agents: AgentNode[]): Promise<void> {
+  let text: string
+  try {
+    text = await fs.readFile(path.join(subdir, 'subagents', 'workflows', wf.runId, 'journal.jsonl'), 'utf8')
+  } catch {
+    return
+  }
+  let started = 0
+  const previews = new Map<string, string>()
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    try {
+      const o = JSON.parse(trimmed) as Record<string, unknown>
+      if (o.type === 'started') started++
+      else if (o.type === 'result' && typeof o.agentId === 'string') {
+        const preview = JSON.stringify(o.result)
+        previews.set(o.agentId, preview.length > 240 ? `${preview.slice(0, 240)}…` : preview)
+      }
+    } catch {
+      /* 坏行跳过 */
+    }
+  }
+  wf.journalStarted = started
+  wf.journalResults = previews.size
+  for (const a of agents) {
+    if (a.workflowRunId !== wf.runId) continue
+    const p = previews.get(a.agentId)
+    if (p) a.resultPreview = p
   }
 }
 

@@ -20,7 +20,8 @@
     "source": "Source",
     "overridden": "Also in",
     "empty": "No settings found",
-    "actions": "Actions"
+    "actions": "Actions",
+    "sourceIgnored": "⚠ This key lives in a layer Claude Code does not read — it has no effect; move it to an honored layer"
   },
   "edit": {
     "title": "Edit setting",
@@ -54,5 +55,21 @@
     "safeModeDesc": "A CLI launch flag that disables all customizations for troubleshooting. Not a settings field — run `claude --safe-mode`; the tool cannot toggle it.",
     "cd": "/cd",
     "cdDesc": "A CLI command that switches working directory without breaking the cache. Read-only note."
+  },
+  "catalog": {
+    "autoMode": "Auto mode config (≥2.1.207 no longer read from repo-resident settings.local.json)",
+    "classifyAllShell": "Run ALL shell commands through the auto mode safety classifier",
+    "disableAutoMode": "Disable auto mode (≥2.1.207 on by default on Bedrock/Vertex/Foundry)",
+    "pluginConfigs": "Plugin option values (≥2.1.207 only user / --settings / managed layers honored)",
+    "sandboxCredentials": "Block sandboxed commands from reading credential files and secret env vars",
+    "axScreenReader": "Screen reader mode: plain-text rendering (also claude --ax-screen-reader)",
+    "vimInsertModeRemaps": "Two-key insert-mode remaps in vim mode (e.g. jj → Escape)",
+    "respondToBashCommands": "Whether Claude responds to ! command output (false restores old behavior)",
+    "modelOverrides": "Per-scenario model overrides",
+    "fallbackModel": "Fallback models (up to 3, tried in order when a model is unavailable)",
+    "defaultMode": "Default permission mode (\"default\" renamed to manual in 2.1.200, both accepted)",
+    "requiredVersion": "Enterprise version constraint (managed settings layer only)",
+    "enforceAvailableModels": "Enforce the org model allowlist across every entry point",
+    "availableModels": "Org available-models list"
   }
 }

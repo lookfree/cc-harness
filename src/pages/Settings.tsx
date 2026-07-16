@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/lib/api'
 import type { SettingsModel, SettingsLevel, EffectiveSetting, SafetyToggles, WorktreeConfig } from '@shared/types'
+import { settingsKeyMeta } from '@shared/data/settings-key-catalog'
 import { BG_ISOLATION_OPTIONS } from '@shared/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -201,21 +202,43 @@ export default function Settings() {
                   <span>{t('table.source')}</span>
                   <span className="text-right">{t('table.actions')}</span>
                 </div>
-                {rows.map((e) => (
-                  <div key={e.key} className="grid grid-cols-[2fr_3fr_auto_auto] gap-3 px-2 py-1.5 items-center hover:bg-accent rounded text-sm">
-                    <code className="font-mono text-xs truncate">{e.key}</code>
-                    <code className="font-mono text-xs text-muted-foreground truncate">{JSON.stringify(e.value)}</code>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="outline" className={cn('text-xs', LEVEL_BADGE[e.source])}>{t(`levels.${e.source}`)}</Badge>
-                      {e.overriddenLevels?.map((l) => (
-                        <Badge key={l} variant="outline" className="text-[10px] opacity-60">{t(`levels.${l}`)}</Badge>
-                      ))}
+                {rows.map((e) => {
+                  const meta = settingsKeyMeta(e.key)
+                  return (
+                    <div key={e.key} className="grid grid-cols-[2fr_3fr_auto_auto] gap-3 px-2 py-1.5 items-center hover:bg-accent rounded text-sm">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <code className="font-mono text-xs truncate">{e.key}</code>
+                          {meta?.since && (
+                            <Badge variant="outline" className="text-[10px] opacity-70 shrink-0">≥{meta.since}</Badge>
+                          )}
+                        </div>
+                        {meta && (
+                          <p className="text-[11px] text-muted-foreground truncate">{t(`catalog.${meta.descKey}`)}</p>
+                        )}
+                        {/* 2.1.207 分层语义：写在不生效层的键显式警示（settings-writer 计算） */}
+                        {e.sourceIgnored && (
+                          <p className="text-[11px] text-amber-600 dark:text-amber-400">{t('table.sourceIgnored')}</p>
+                        )}
+                      </div>
+                      <code className="font-mono text-xs text-muted-foreground truncate">{JSON.stringify(e.value)}</code>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className={cn('text-xs', LEVEL_BADGE[e.source])}>{t(`levels.${e.source}`)}</Badge>
+                        {e.overriddenLevels?.map((l) => (
+                          <Badge key={l} variant="outline" className="text-[10px] opacity-60">{t(`levels.${l}`)}</Badge>
+                        ))}
+                        {e.ignoredLevels?.map((l) => (
+                          <Badge key={`ig-${l}`} variant="outline" className="text-[10px] text-amber-600 border-amber-400 line-through">
+                            {t(`levels.${l}`)}
+                          </Badge>
+                        ))}
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 justify-self-end" onClick={() => openEdit(e)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 justify-self-end" onClick={() => openEdit(e)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>

@@ -239,7 +239,8 @@
     "matcherSemanticsList": "Comma list (≥2.1.191): exact-matches each of {{names}}.",
     "matcherSemanticsRegex": "Interpreted as a regular expression.",
     "matcherSemanticsRegexInvalid": "Invalid regular expression — this matcher will never fire.",
-    "matcherSemanticsMcp": "MCP tools are named mcp__<server>__<tool>; \"{{name}}\" exact-matches none of them. Use \"{{name}}__.*\" instead."
+    "matcherSemanticsMcp": "MCP tools are named mcp__<server>__<tool>; \"{{name}}\" exact-matches none of them. Use \"{{name}}__.*\" instead.",
+    "preToolUseSemantics": "≥2.1.211: an \"ask\" from this hook is no longer overridden by auto mode (always floors at a prompt). ≥2.1.210: a hook callback timeout is no longer misreported as a user rejection."
   },
   "deleteDialog": {
     "title": "Delete Hook",

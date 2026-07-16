@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Check, Settings, Zap, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Provider, ProviderModelMap, ProviderApiFormat } from '@shared/types'
+import { modelDeprecation } from '@shared/data/model-deprecations'
 
 /** 角色映射的四个角色（CC Switch 粒度）。 */
 const MODEL_ROLES: Array<keyof ProviderModelMap> = ['opus', 'sonnet', 'haiku', 'fable']
@@ -398,6 +399,12 @@ export default function Models() {
                               <span className="flex items-center gap-1">
                                 <Zap className="w-3 h-3" />
                                 {provider.model}
+                                {/* MODEL-03：废弃/退役模型警告（对齐 CLI 2.1.183 起的自动切换警告） */}
+                                {modelDeprecation(provider.model) && (
+                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-400">
+                                    {t('deprecatedModel', { replacement: modelDeprecation(provider.model)!.replacement })}
+                                  </Badge>
+                                )}
                               </span>
                             )}
                           </div>

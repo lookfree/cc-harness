@@ -25,6 +25,8 @@ export interface AgentNode {
   filePath?: string
   /** Task 输入带 run_in_background: true（2.1.198 起后台为默认，此标记为显式请求） */
   background?: boolean
+  /** workflow journal.jsonl 里该 agent 的真实返回值预览（截断；2.1.208 起 journal 为 resume 权威源） */
+  resultPreview?: string
 }
 
 /**
@@ -49,6 +51,9 @@ export interface WorkflowRun {
   error?: string
   filePath: string
   sessionId: string
+  /** journal.jsonl 统计（实测契约：type=started/result 两种行）；缺 journal 时为空 */
+  journalStarted?: number
+  journalResults?: number
 }
 
 /** 一个 session 的完整 agent 拓扑（workflow + 嵌套 Task 树）。 */

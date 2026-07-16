@@ -20,5 +20,6 @@
     "working": "Working",
     "idle": "Idle",
     "done": "Done"
-  }
+  },
+  "pinned": "Pinned (never reaped, restarts in place on update)"
 }

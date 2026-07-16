@@ -46,5 +46,6 @@
     "disable": "Disable",
     "delete": "Delete",
     "configure": "Configure"
-  }
+  },
+  "deprecatedModel": "Deprecated/retired → use {{replacement}}"
 }

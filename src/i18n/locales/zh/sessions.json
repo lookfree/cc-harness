@@ -104,5 +104,6 @@
     "system": "系统",
     "thinking": "思考 · {{chars}} 字",
     "noText": "（无文本）"
-  }
+  },
+  "permissionMode": "权限模式：{{mode}}"
 }

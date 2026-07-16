@@ -26,14 +26,25 @@ export function HookTypePanels({ type, fields, effort, onChange, t }: HookTypePa
   const showSessionStart = type === 'SessionStart'
   const showMaxBlocks = type === 'Stop' || type === 'StopFailure'
   const showReplaceToolOutput = type === 'PostToolUse'
+  const showPreToolUseNote = type === 'PreToolUse'
 
-  if (!showSessionStart && !showMaxBlocks && !showReplaceToolOutput && !effort) {
+  if (!showSessionStart && !showMaxBlocks && !showReplaceToolOutput && !showPreToolUseNote && !effort) {
     return null
   }
 
   return (
     <div className="space-y-3 rounded-md border p-4">
       <p className="text-sm font-medium">{t('dialog.typeSpecific', 'Type-specific options')}</p>
+
+      {/* HOOK-13：≥2.1.211 ask 语义说明 */}
+      {showPreToolUseNote && (
+        <p className="text-xs text-muted-foreground">
+          {t(
+            'dialog.preToolUseSemantics',
+            '≥2.1.211: an "ask" decision from this hook is no longer overridden by auto mode (it always floors at a prompt). ≥2.1.210: a hook callback timeout is no longer misreported as a user rejection.'
+          )}
+        </p>
+      )}
 
       {showSessionStart && (
         <>

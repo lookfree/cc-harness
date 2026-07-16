@@ -239,7 +239,8 @@
     "matcherSemanticsList": "逗号列表（≥2.1.191）：逐个精确命中 {{names}}。",
     "matcherSemanticsRegex": "按正则表达式解释。",
     "matcherSemanticsRegexInvalid": "正则语法非法——该 matcher 永远不会触发。",
-    "matcherSemanticsMcp": "MCP 工具名形如 mcp__<server>__<tool>，「{{name}}」精确匹配命不中任何工具，应写 {{name}}__.*"
+    "matcherSemanticsMcp": "MCP 工具名形如 mcp__<server>__<tool>，「{{name}}」精确匹配命不中任何工具，应写 {{name}}__.*",
+    "preToolUseSemantics": "≥2.1.211：本 hook 返回的 ask 不会再被 auto mode 覆盖（最低弹确认框）；≥2.1.210：hook 回调超时不再被误报为用户拒绝。"
   },
   "deleteDialog": {
     "title": "删除钩子",

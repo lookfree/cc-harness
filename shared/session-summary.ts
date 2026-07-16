@@ -39,6 +39,7 @@ const SIGNIFICANT = new Set<SessionEvent['kind']>(['user_turn', 'assistant_turn'
 export function summarizeEvents(events: SessionEvent[], meta: SummaryMeta): SessionSummary {
   let title: string | undefined
   let lastModelUsed: string | undefined
+  let permissionMode: string | undefined
   let startedAt: string | undefined
   let lastTs: string | undefined
   let inlineCwd: string | undefined
@@ -76,6 +77,10 @@ export function summarizeEvents(events: SessionEvent[], meta: SummaryMeta): Sess
       case 'meta':
         // ai-title 事件的标题在 raw.aiTitle（spec014 把未知 type 收进 meta.raw）
         if (e.metaType === 'ai-title' && e.raw && typeof e.raw.aiTitle === 'string') title = e.raw.aiTitle
+        // permission-mode 事件（PERM-08）：取最后一条为会话当前权限模式
+        if (e.metaType === 'permission-mode' && e.raw && typeof e.raw.permissionMode === 'string') {
+          permissionMode = e.raw.permissionMode
+        }
         break
     }
   }
@@ -98,6 +103,7 @@ export function summarizeEvents(events: SessionEvent[], meta: SummaryMeta): Sess
     startedAt,
     lastActivityAt: lastTs ?? new Date(meta.mtimeMs).toISOString(),
     hasSubagents: meta.hasSubagents,
+    permissionMode,
   }
 }
 

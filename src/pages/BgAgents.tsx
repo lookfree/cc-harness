@@ -5,7 +5,7 @@ import type { BackgroundAgentsSnapshot, BgAgentItem } from '@shared/types'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Bot, Terminal, RefreshCw, Radar, CircleAlert, CircleDot, CircleCheck, CirclePause } from 'lucide-react'
+import { Bot, Terminal, RefreshCw, Radar, CircleAlert, CircleDot, CircleCheck, CirclePause, Pin, Copy, Check } from 'lucide-react'
 
 /**
  * 后台 agent / 活跃会话观测面（ORCH-01/02/12、OBS-06）。
@@ -38,9 +38,23 @@ function groupOf(item: BgAgentItem): Group {
 
 function AgentRow({ item }: { item: BgAgentItem }) {
   const { t } = useTranslation('bgagents')
+  const [copied, setCopied] = useState(false)
   const KindIcon = item.kind === 'background' ? Bot : Terminal
   const stateText = item.waitingFor ?? item.status ?? item.job?.state ?? item.state
   const failed = (item.job?.state ?? item.state) === 'failed'
+  // ORCH-04 增量：后台 job 给出 attach 命令一键复制（在终端 attach，Ctrl+Z 回 shell）
+  const attachCmd = item.kind === 'background' && item.id ? `claude attach ${item.id}` : null
+
+  async function copyAttach() {
+    if (!attachCmd) return
+    try {
+      await navigator.clipboard.writeText(attachCmd)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* 剪贴板不可用则不响应 */
+    }
+  }
 
   return (
     <div className="border rounded-lg px-4 py-3 bg-card">
@@ -49,6 +63,7 @@ function AgentRow({ item }: { item: BgAgentItem }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-sm truncate">{item.name}</span>
+            {item.pinned && <Pin className="h-3 w-3 text-blue-500" aria-label={t('pinned')} />}
             <Badge variant="outline" className="text-xs font-normal">{t(`kind.${item.kind}`)}</Badge>
             {stateText && (
               <Badge
@@ -83,6 +98,12 @@ function AgentRow({ item }: { item: BgAgentItem }) {
             </p>
           )}
         </div>
+        {attachCmd && (
+          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs shrink-0 font-mono" onClick={copyAttach}>
+            {copied ? <Check className="h-3.5 w-3.5 mr-1 text-green-600" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+            {attachCmd}
+          </Button>
+        )}
       </div>
     </div>
   )

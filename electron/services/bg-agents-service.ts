@@ -51,6 +51,15 @@ export async function getBackgroundAgents(): Promise<BackgroundAgentsSnapshot> {
   const claudeDir = path.join(os.homedir(), '.claude')
 
   const roster = await readJson(path.join(claudeDir, 'daemon', 'roster.json'))
+
+  // ORCH-05：pins.json（实测为数组，当前样本为空——按字符串条目防御性匹配 id/sessionId）
+  let pins: string[] = []
+  try {
+    const parsed = JSON.parse(await fs.readFile(path.join(claudeDir, 'jobs', 'pins.json'), 'utf8')) as unknown
+    if (Array.isArray(parsed)) pins = parsed.filter((p): p is string => typeof p === 'string')
+  } catch {
+    /* 缺失/损坏 → 无钉住 */
+  }
   const workers =
     roster?.workers && typeof roster.workers === 'object' && !Array.isArray(roster.workers)
       ? (roster.workers as Record<string, Record<string, unknown>>)
@@ -72,11 +81,12 @@ export async function getBackgroundAgents(): Promise<BackgroundAgentsSnapshot> {
   }
 
   const items: BgAgentItem[] = await Promise.all(
-    rows.map(async (r) => {
-      if (!r.id) return r
+    rows.map(async (r): Promise<BgAgentItem> => {
+      const pinned = pins.length > 0 && ((!!r.id && pins.includes(r.id)) || pins.includes(r.sessionId)) ? true : undefined
+      if (!r.id) return { ...r, pinned }
       const jobState = await readJson(path.join(claudeDir, 'jobs', r.id, 'state.json'))
       const worker = workers[r.id]
-      if (!jobState && !worker) return r
+      if (!jobState && !worker) return { ...r, pinned }
       const job: BgJobDetail = {
         state: str(jobState?.state),
         detail: str(jobState?.detail),
@@ -91,7 +101,7 @@ export async function getBackgroundAgents(): Promise<BackgroundAgentsSnapshot> {
         cliVersion: str(worker?.cliVersion),
         attempt: num(worker?.attempt),
       }
-      return { ...r, job }
+      return { ...r, job, pinned }
     })
   )
 

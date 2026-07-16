@@ -20,7 +20,8 @@
     "source": "来源层",
     "overridden": "也存在于",
     "empty": "没有找到设置",
-    "actions": "操作"
+    "actions": "操作",
+    "sourceIgnored": "⚠ 该键写在 Claude Code 不读取的层——写了不生效，请改写到允许的层"
   },
   "edit": {
     "title": "编辑设置",
@@ -54,5 +55,21 @@
     "safeModeDesc": "启动 flag，禁所有定制以排障。不是 settings 字段——需 `claude --safe-mode`，工具不可代启动。",
     "cd": "/cd",
     "cdDesc": "不破坏缓存切换工作目录的 CLI 命令。只读说明。"
+  },
+  "catalog": {
+    "autoMode": "auto mode 配置（2.1.207 起不再读仓库内 settings.local.json）",
+    "classifyAllShell": "所有 shell 命令都过 auto mode 安全分类器（不只筛任意代码执行类）",
+    "disableAutoMode": "关闭 auto mode（2.1.207 起 Bedrock/Vertex/Foundry 默认可用，\"没关等于开\"）",
+    "pluginConfigs": "插件选项值（2.1.207 起仅 user / --settings / managed 层生效）",
+    "sandboxCredentials": "阻止沙箱内命令读取凭据文件与含密钥环境变量",
+    "axScreenReader": "屏幕阅读器模式：纯文本渲染（也可用 claude --ax-screen-reader）",
+    "vimInsertModeRemaps": "vim 插入模式两键映射（如 jj → Escape）",
+    "respondToBashCommands": "! 命令输出后 Claude 是否主动接话（false 回到旧行为）",
+    "modelOverrides": "分场景覆盖模型",
+    "fallbackModel": "回退模型（最多 3 个，模型不可用时按序切换）",
+    "defaultMode": "默认权限模式（2.1.200 起 \"default\" 更名 manual，两值兼容）",
+    "requiredVersion": "企业版本约束（仅 managed settings 层生效）",
+    "enforceAvailableModels": "强制组织模型白名单（全入口拦截）",
+    "availableModels": "组织可用模型列表"
   }
 }

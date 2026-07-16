@@ -28,6 +28,10 @@ export interface SlashCommand {
   handler: CommandHandler
   instructions?: string // Instructions for Claude
   rawContent?: string // Raw markdown file content
+  /** frontmatter argument-hint（如 "[pr-number] [focus?]"） */
+  argumentHint?: string
+  /** 正文引用了 $ARGUMENTS / $1..$9（2.1.210 起未匹配的占位符原样保留，不再静默剥离） */
+  usesArguments?: boolean
   aliases?: string[]
   scope: CommandScope
   enabled: boolean

@@ -46,5 +46,6 @@
     "disable": "禁用",
     "delete": "删除",
     "configure": "配置"
-  }
+  },
+  "deprecatedModel": "已废弃/退役 → 建议 {{replacement}}"
 }

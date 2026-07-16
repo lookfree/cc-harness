@@ -149,6 +149,19 @@ export function SessionList({ summaries, selectedIds, compareMode, onSelect, onT
                     {t('waitingFor', { tool: s.waitingFor })}
                   </Badge>
                 )}
+                {/* PERM-08：非 manual（原 default）的权限模式才显示——bypass/plan/acceptEdits 才是要注意的 */}
+                {s.permissionMode && s.permissionMode !== 'default' && s.permissionMode !== 'manual' && (
+                  <Badge
+                    variant="outline"
+                    className={
+                      s.permissionMode === 'bypassPermissions'
+                        ? 'text-red-500 border-red-500/40'
+                        : 'text-blue-600 border-blue-500/40'
+                    }
+                  >
+                    {t('permissionMode', { mode: s.permissionMode })}
+                  </Badge>
+                )}
                 <span>{t('tokens', { n: compactNum(s.totalTokens.totalTokens) })}</span>
                 {s.hasSubagents && <Network className="w-3 h-3" />}
               </div>

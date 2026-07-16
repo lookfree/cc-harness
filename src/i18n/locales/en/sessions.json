@@ -104,5 +104,6 @@
     "system": "System",
     "thinking": "thinking · {{chars}} chars",
     "noText": "(no text)"
-  }
+  },
+  "permissionMode": "Mode: {{mode}}"
 }
