@@ -234,7 +234,12 @@
     "maxBlocksHint": "Stop-hook block count limit (default 8)",
     "replaceToolOutput": "Replace tool output for Claude",
     "effort": "Effort",
-    "effortReadOnly": "read-only"
+    "effortReadOnly": "read-only",
+    "matcherSemanticsExact": "Exact match only (≥2.1.195): matches \"{{name}}\", no substring matching.",
+    "matcherSemanticsList": "Comma list (≥2.1.191): exact-matches each of {{names}}.",
+    "matcherSemanticsRegex": "Interpreted as a regular expression.",
+    "matcherSemanticsRegexInvalid": "Invalid regular expression — this matcher will never fire.",
+    "matcherSemanticsMcp": "MCP tools are named mcp__<server>__<tool>; \"{{name}}\" exact-matches none of them. Use \"{{name}}__.*\" instead."
   },
   "deleteDialog": {
     "title": "Delete Hook",

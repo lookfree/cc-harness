@@ -234,7 +234,12 @@
     "maxBlocksHint": "stop-hook 阻断次数上限（默认 8）",
     "replaceToolOutput": "替换工具输出供 Claude 查看",
     "effort": "Effort 级别",
-    "effortReadOnly": "只读"
+    "effortReadOnly": "只读",
+    "matcherSemanticsExact": "精确匹配（≥2.1.195）：只命中「{{name}}」，不再子串匹配。",
+    "matcherSemanticsList": "逗号列表（≥2.1.191）：逐个精确命中 {{names}}。",
+    "matcherSemanticsRegex": "按正则表达式解释。",
+    "matcherSemanticsRegexInvalid": "正则语法非法——该 matcher 永远不会触发。",
+    "matcherSemanticsMcp": "MCP 工具名形如 mcp__<server>__<tool>，「{{name}}」精确匹配命不中任何工具，应写 {{name}}__.*"
   },
   "deleteDialog": {
     "title": "删除钩子",

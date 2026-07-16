@@ -135,6 +135,12 @@ export default function Permissions() {
                     <option key={tn} value={tn} />
                   ))}
                 </datalist>
+                {/* PERM-12：2.1.210 起 Claude Code 对这三类规则启动告警，官方建议 Edit/Read */}
+                {['Write', 'NotebookEdit', 'Glob'].includes(tool.trim()) && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    {t('builder.dispreferredToolWarning', { tool: tool.trim() })}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">{t('builder.level')}</Label>

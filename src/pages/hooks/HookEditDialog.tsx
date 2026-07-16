@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { HookType, HookSettingsMatcher } from '@shared/types'
+import { analyzeHookMatcher } from '@shared/hooks/matcher-semantics'
 import { HookActionForm, makeEmptyAction } from './HookActionForm'
 import type { HookActionItem } from './HookActionForm'
 import { HookTypePanels } from './HookTypePanels'
@@ -185,6 +186,50 @@ export function HookEditDialog({
             <p className="text-xs text-muted-foreground">
               {t('dialog.matcherHint', 'Leave empty to match all. Use | for multiple patterns (e.g., Edit|Write)')}
             </p>
+            {/* HOOK-12：≥2.1.195 语义实时提示（精确匹配/逗号列表/正则），直击"hook 为什么没生效" */}
+            {(() => {
+              const a = analyzeHookMatcher(editForm.matcher)
+              if (a.kind === 'empty') return null
+              return (
+                <div className="text-xs space-y-0.5">
+                  {a.kind === 'exact' && (
+                    <p className="text-muted-foreground">
+                      {t('dialog.matcherSemanticsExact', {
+                        name: a.names![0],
+                        defaultValue: 'Exact match only (≥2.1.195): matches "{{name}}", no substring matching.',
+                      })}
+                    </p>
+                  )}
+                  {a.kind === 'list' && (
+                    <p className="text-muted-foreground">
+                      {t('dialog.matcherSemanticsList', {
+                        names: a.names!.join(', '),
+                        defaultValue: 'Comma list (≥2.1.191): exact-matches each of {{names}}.',
+                      })}
+                    </p>
+                  )}
+                  {a.kind === 'regex' && !a.invalidRegex && (
+                    <p className="text-muted-foreground">
+                      {t('dialog.matcherSemanticsRegex', 'Interpreted as a regular expression.')}
+                    </p>
+                  )}
+                  {a.invalidRegex && (
+                    <p className="text-red-500">
+                      {t('dialog.matcherSemanticsRegexInvalid', 'Invalid regular expression — this matcher will never fire.')}
+                    </p>
+                  )}
+                  {a.mcpPrefixSuspect && (
+                    <p className="text-amber-600 dark:text-amber-400">
+                      {t('dialog.matcherSemanticsMcp', {
+                        name: a.names![0],
+                        defaultValue:
+                          'MCP tools are named mcp__<server>__<tool>; "{{name}}" exact-matches none of them. Use "{{name}}__.*" instead.',
+                      })}
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Type-specific panels */}

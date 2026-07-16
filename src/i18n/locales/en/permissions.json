@@ -29,7 +29,8 @@
     "effect": "Effect",
     "preview": "Preview",
     "add": "Add rule",
-    "glob": "glob"
+    "glob": "glob",
+    "dispreferredToolWarning": "Claude Code ≥2.1.210 warns at startup about {{tool}}(…) rules — use Edit(…) / Read(…) instead."
   },
   "disallowed": {
     "title": "disallowed-tools (frontmatter)",

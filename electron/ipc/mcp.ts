@@ -27,8 +27,18 @@ export function registerMCPHandlers(ipcMain: IpcMain, fileManager: FileManager) 
   })
 
   ipcMain.handle('mcp:health', async () => {
-    const servers = await fileManager.getMCPServers()
-    return getMCPHealth(servers)
+    const [servers, sources] = await Promise.all([
+      fileManager.getMCPServers(),
+      fileManager.getMCPServerSources(),
+    ])
+    // 项目级（仓库带来的）stdio server 不自动 spawn，返回 pending-approval；
+    // 单点 mcp:probe（用户点"确认探测"）不受限——显式动作即确认（2.1.196 供应链姿态）
+    const deferStdio = new Set(
+      Object.entries(sources)
+        .filter(([, src]) => src === 'project')
+        .map(([name]) => name)
+    )
+    return getMCPHealth(servers, deferStdio)
   })
 
   ipcMain.handle('mcp:probe', async (_event, name: string) => {

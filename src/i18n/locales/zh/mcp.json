@@ -47,7 +47,8 @@
       "connected": "已连接",
       "failed": "连接失败",
       "needsAuth": "需要身份验证",
-      "unknown": "未知"
+      "unknown": "未知",
+      "pendingApproval": "项目级 stdio，未自动启动——点「确认探测」才会拉起进程（对齐 2.1.196 供应链姿态）"
     },
     "stats": {
       "calls": "调用数",
@@ -62,7 +63,8 @@
       "calls": "调用",
       "failed": "失败",
       "avgMs": "均耗(ms)"
-    }
+    },
+    "confirmProbe": "确认探测"
   },
   "dialog": {
     "addTitle": "添加 MCP 服务器",

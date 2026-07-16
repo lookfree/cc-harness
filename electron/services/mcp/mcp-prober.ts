@@ -166,6 +166,27 @@ export async function probeMCP(name: string, config: MCPServerConfig): Promise<M
   return { name, transport: 'unknown', state: 'unknown', callStats: emptyStats }
 }
 
-export async function probeAllMCP(servers: Record<string, MCPServerConfig>): Promise<MCPHealth[]> {
-  return Promise.all(Object.entries(servers).map(([name, cfg]) => probeMCP(name, cfg)))
+export interface ProbeAllOptions {
+  /**
+   * 这些 server（项目级声明的 stdio）批量检查时不自动 spawn，直接返回 pending-approval——
+   * 对齐 Claude Code 2.1.196 的供应链姿态：仓库带来的可执行配置不能未经确认就拉起进程。
+   * 用户在健康面板点"确认探测"后走单点 probeMCP（显式动作即确认）。
+   */
+  deferStdio?: Set<string>
+}
+
+export async function probeAllMCP(servers: Record<string, MCPServerConfig>, opts?: ProbeAllOptions): Promise<MCPHealth[]> {
+  return Promise.all(
+    Object.entries(servers).map(([name, cfg]) => {
+      if (opts?.deferStdio?.has(name) && inferTransport(cfg) === 'stdio' && !cfg.disabled) {
+        return Promise.resolve<MCPHealth>({
+          name,
+          transport: 'stdio',
+          state: 'pending-approval',
+          callStats: { total: 0, success: 0, failed: 0, byTool: {} },
+        })
+      }
+      return probeMCP(name, cfg)
+    })
+  )
 }

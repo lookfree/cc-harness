@@ -11,6 +11,8 @@ export interface MCPServerConfig {
   /** 远程鉴权等头 */
   headers?: Record<string, string>
   timeout?: number
+  /** 每 server 工具调用超时（毫秒）。Claude Code 2.1.206 起对 --mcp-config / .mcp.json 声明的 server 真正生效 */
+  request_timeout_ms?: number
   disabled?: boolean
   alwaysAllow?: string[]
   /** 强制加载该 server（2.1.121） */

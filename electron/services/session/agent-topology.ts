@@ -25,8 +25,11 @@ export async function buildAgentTopology(sessionFilePath: string, mainEvents?: S
   const agents = agentLists.flat()
   // mainEvents 已解析时直接用（spec017 usage() 已 snapshot 过，免二次读+解析主 jsonl）
   const taskTree = mainEvents ? taskTreeFromEvents(mainEvents) : await readMainTaskTree(sessionFilePath)
+  // ORCH-11：普通 subagent 落盘文件（subagents/agent-*.jsonl，非 workflow）——
+  // 对得上的节点就地充实 token/时长/文件路径，其内部再 spawn 的 Task 作为嵌套子节点挂上
+  const nested = await plainSubagentNodes(subdir, taskTree)
 
-  return { sessionId, workflows, agents, taskTree }
+  return { sessionId, workflows, agents, taskTree: [...taskTree, ...nested] }
 }
 
 /** 读 workflows/*.json → WorkflowRun[]（损坏文件跳过）。 */
@@ -166,8 +169,81 @@ function taskTreeFromEvents(events: SessionEvent[]): AgentNode[] {
         depth: 0,
         status: errored.has(e.toolUseId) ? 'error' : done.has(e.toolUseId) ? 'done' : 'running',
         startedAt: e.timestamp,
+        background: e.input.run_in_background === true || undefined,
       })
     }
   }
   return out
+}
+
+/**
+ * 扫 <subdir>/subagents/agent-*.jsonl（顶层，不含 workflows/ 子目录）：
+ * - agentId 能对上 taskTree 节点的，就地充实 token/工具数/时长/文件路径（供抽屉回放）；
+ * - 对不上的补一个 depth 0 节点（落盘了但主 jsonl 没扫到 spawn 的场景）；
+ * - 每个文件里再 spawn 的 Task → 嵌套子节点（parentAgentId=该 agent，depth+1，五层封顶，ORCH-06/11）。
+ * 目录缺失/文件损坏一律退化为不动，不抛错。
+ */
+async function plainSubagentNodes(subdir: string, taskTree: AgentNode[]): Promise<AgentNode[]> {
+  const dir = path.join(subdir, 'subagents')
+  let files: string[]
+  try {
+    files = await fs.readdir(dir)
+  } catch {
+    return []
+  }
+  const byId = new Map(taskTree.map((n) => [n.agentId, n]))
+  const extra: AgentNode[] = []
+  for (const f of files) {
+    const m = f.match(AGENT_RE)
+    if (!m) continue
+    const agentId = m[1]
+    const fp = path.join(dir, f)
+    let text: string
+    try {
+      text = await fs.readFile(fp, 'utf8')
+    } catch {
+      continue
+    }
+    const { events } = parseChunk(text, 0)
+    const sum = summarizeEvents(events, { sessionId: agentId, filePath: fp, cwd: '', hasSubagents: false, mtimeMs: 0, nowMs: 0 })
+    const start = sum.startedAt ? Date.parse(sum.startedAt) : NaN
+    const end = sum.lastActivityAt ? Date.parse(sum.lastActivityAt) : NaN
+    const durationMs = Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : undefined
+
+    let node = byId.get(agentId)
+    if (node) {
+      node.tokens = sum.totalTokens
+      node.toolCalls = sum.toolUseCount
+      node.filePath = fp
+      if (durationMs !== undefined) node.durationMs = durationMs
+    } else {
+      let agentType: string | undefined
+      try {
+        const meta = JSON.parse(await fs.readFile(path.join(dir, `agent-${agentId}.meta.json`), 'utf8')) as Record<string, unknown>
+        agentType = str(meta.agentType)
+      } catch {
+        /* meta 缺失 → agentType 留空 */
+      }
+      node = {
+        agentId,
+        agentType,
+        label: agentType ?? 'agent',
+        parentAgentId: null,
+        depth: 0,
+        status: events.length ? 'done' : 'unknown',
+        startedAt: sum.startedAt,
+        durationMs,
+        tokens: sum.totalTokens,
+        toolCalls: sum.toolUseCount,
+        filePath: fp,
+      }
+      extra.push(node)
+    }
+
+    if (node.depth >= 5) continue // ORCH-06 五层护栏
+    for (const child of taskTreeFromEvents(events)) {
+      extra.push({ ...child, parentAgentId: agentId, depth: Math.min(node.depth + 1, 5) })
+    }
+  }
+  return extra
 }

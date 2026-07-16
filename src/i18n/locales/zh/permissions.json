@@ -29,7 +29,8 @@
     "effect": "效果",
     "preview": "预览",
     "add": "添加规则",
-    "glob": "通配"
+    "glob": "通配",
+    "dispreferredToolWarning": "Claude Code 2.1.210 起会对 {{tool}}(…) 规则在启动时告警，官方建议改用 Edit(…) / Read(…)。"
   },
   "disallowed": {
     "title": "disallowed-tools（frontmatter）",

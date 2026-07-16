@@ -47,7 +47,8 @@
       "connected": "Connected",
       "failed": "Failed",
       "needsAuth": "Needs authentication",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "pendingApproval": "Project-level stdio, not auto-started — click Confirm probe to launch it (2.1.196 supply-chain posture)"
     },
     "stats": {
       "calls": "Calls",
@@ -62,7 +63,8 @@
       "calls": "Calls",
       "failed": "Failed",
       "avgMs": "Avg ms"
-    }
+    },
+    "confirmProbe": "Confirm probe"
   },
   "dialog": {
     "addTitle": "Add MCP server",

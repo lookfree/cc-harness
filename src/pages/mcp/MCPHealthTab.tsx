@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
-  CheckCircle2, XCircle, AlertCircle, HelpCircle, RefreshCw, ChevronDown, ChevronRight
+  CheckCircle2, XCircle, AlertCircle, HelpCircle, RefreshCw, ChevronDown, ChevronRight, ShieldAlert
 } from 'lucide-react'
 
 const STATE_CONFIG = {
@@ -14,6 +14,8 @@ const STATE_CONFIG = {
   failed:     { icon: XCircle,      class: 'text-red-500',    label: 'health.state.failed'      },
   'needs-auth': { icon: AlertCircle, class: 'text-yellow-500', label: 'health.state.needsAuth'  },
   unknown:    { icon: HelpCircle,   class: 'text-muted-foreground', label: 'health.state.unknown' },
+  // 项目级 stdio 不自动 spawn（2.1.196 供应链姿态），等用户点"确认探测"
+  'pending-approval': { icon: ShieldAlert, class: 'text-amber-500', label: 'health.state.pendingApproval' },
 }
 
 function StatPill({ label, value, className }: { label: string; value: string | number; className?: string }) {
@@ -62,7 +64,12 @@ function ServerCard({ health, onProbe }: { health: MCPHealth; onProbe: (name: st
           {health.toolCount != null && (
             <Badge variant="secondary" className="text-xs">{health.toolCount} {t('health.tools')}</Badge>
           )}
-          {api.isElectron() && (
+          {api.isElectron() && health.state === 'pending-approval' ? (
+            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleProbe} disabled={probing}>
+              <RefreshCw className={cn('h-3.5 w-3.5 mr-1', probing && 'animate-spin')} />
+              {t('health.confirmProbe')}
+            </Button>
+          ) : api.isElectron() && (
             <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleProbe} disabled={probing}>
               <RefreshCw className={cn('h-3.5 w-3.5', probing && 'animate-spin')} />
             </Button>

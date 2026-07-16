@@ -17,9 +17,9 @@ async function loadAllSessionEvents(): Promise<SessionEvent[]> {
   return chunks.flat()
 }
 
-export async function getMCPHealth(servers: MCPServers): Promise<MCPHealth[]> {
+export async function getMCPHealth(servers: MCPServers, deferStdio?: Set<string>): Promise<MCPHealth[]> {
   const [probeResults, allEvents] = await Promise.all([
-    probeAllMCP(servers),
+    probeAllMCP(servers, { deferStdio }),
     loadAllSessionEvents(),
   ])
 

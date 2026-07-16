@@ -23,6 +23,8 @@ export interface AgentNode {
   workflowPhase?: string
   /** agent-<id>.jsonl 路径（点击抽屉回放用）；普通内联 Task 无独立文件则空 */
   filePath?: string
+  /** Task 输入带 run_in_background: true（2.1.198 起后台为默认，此标记为显式请求） */
+  background?: boolean
 }
 
 /**
