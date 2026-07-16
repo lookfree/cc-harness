@@ -19,6 +19,13 @@ export interface EffectiveSetting {
   source: SettingsLevel
   /** 同一 key 在更低优先级层也定义了（被本层覆盖），按优先级降序记录 */
   overriddenLevels?: SettingsLevel[]
+  /**
+   * 该 key 在这些层虽有定义，但 Claude Code（≥2.1.207）不再读取该层的此键——写了也不生效。
+   * 例：autoMode 不读 settings.local.json；pluginConfigs 只认 user 层。
+   */
+  ignoredLevels?: SettingsLevel[]
+  /** source 本身就是被忽略的层（所有定义都落在不生效的层里）时为 true，UI 应显著提示 */
+  sourceIgnored?: boolean
 }
 
 /** 合并三层后的视图 */

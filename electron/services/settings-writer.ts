@@ -6,6 +6,23 @@ import type { SettingsLevel, SettingsLayer, SettingsModel, EffectiveSetting } fr
 const LEVEL_ORDER: Record<SettingsLevel, number> = { user: 1, project: 2, local: 3 }
 const LEVELS: SettingsLevel[] = ['user', 'project', 'local']
 
+/**
+ * Claude Code ≥2.1.207 起，部分键不再读取某些层（写了也不生效）：
+ * - autoMode：不再读仓库内的 settings.local.json（防仓库配置替用户做信任决定）
+ * - pluginConfigs：只认 user / --settings / managed，项目级与 local 均不读
+ * 顶层 key 命中即整棵子树受限（'autoMode' 与 'autoMode.classifyAllShell' 同规则）。
+ */
+const KEY_LEVEL_RESTRICTIONS: Record<string, SettingsLevel[]> = {
+  autoMode: ['user', 'project'],
+  pluginConfigs: ['user'],
+}
+
+/** 该层的此键是否会被 Claude Code 实际读取。 */
+export function levelHonoredForKey(keyPath: string, level: SettingsLevel): boolean {
+  const allowed = KEY_LEVEL_RESTRICTIONS[keyPath.split('.')[0]]
+  return !allowed || allowed.includes(level)
+}
+
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -119,10 +136,14 @@ export class SettingsWriter {
     await fs.rename(tmp, filePath)
   }
 
-  /** 单个点号路径的有效值与来源层（local>project>user，第一个定义的高层胜）。无定义 → undefined。 */
+  /**
+   * 单个点号路径的有效值与来源层（local>project>user，第一个定义的高层胜）。无定义 → undefined。
+   * 受限键（见 KEY_LEVEL_RESTRICTIONS）跳过 Claude Code 不读取的层，与 CLI ≥2.1.207 行为一致。
+   */
   async getEffective(keyPath: string): Promise<{ value: unknown; source: SettingsLevel } | undefined> {
     const layers = await Promise.all(LEVELS.map((l) => this.readLayer(l)))
     for (const level of [...LEVELS].reverse()) {
+      if (!levelHonoredForKey(keyPath, level)) continue
       const layer = layers.find((l) => l.level === level)!
       const value = getByPath(layer.raw, keyPath)
       if (value !== undefined) return { value, source: level }
@@ -152,8 +173,16 @@ export class SettingsWriter {
     const effective: EffectiveSetting[] = []
     for (const key of allKeys) {
       const having = pathMaps.filter((pm) => pm.paths.has(key))
-      const winner = having.reduce((a, b) => (LEVEL_ORDER[b.level] > LEVEL_ORDER[a.level] ? b : a))
-      const overridden = having
+      // 受限键：Claude Code 不读取的层不参与胜出，单独记为 ignoredLevels（2.1.207 语义）
+      const honored = having.filter((pm) => levelHonoredForKey(key, pm.level))
+      const ignored = having
+        .filter((pm) => !levelHonoredForKey(key, pm.level))
+        .map((pm) => pm.level)
+        .sort((a, b) => LEVEL_ORDER[b] - LEVEL_ORDER[a])
+      // 全部定义都落在不生效的层 → 仍展示最高层的值，但标 sourceIgnored 让 UI 提示"写了不生效"
+      const pool = honored.length ? honored : having
+      const winner = pool.reduce((a, b) => (LEVEL_ORDER[b.level] > LEVEL_ORDER[a.level] ? b : a))
+      const overridden = pool
         .filter((pm) => pm !== winner)
         .map((pm) => pm.level)
         .sort((a, b) => LEVEL_ORDER[b] - LEVEL_ORDER[a]) // 优先级降序
@@ -162,6 +191,8 @@ export class SettingsWriter {
         value: winner.paths.get(key),
         source: winner.level,
         overriddenLevels: overridden.length ? overridden : undefined,
+        ignoredLevels: ignored.length ? ignored : undefined,
+        sourceIgnored: honored.length === 0 ? true : undefined,
       })
     }
     return { layers, effective }

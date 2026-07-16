@@ -26,7 +26,8 @@ export function adviseUsage(b: UsageBreakdown): UsageAdvice[] {
     let alt = 0
     for (const [m, u] of opus) {
       cur += estimateCostUsd(u, m) ?? 0
-      alt += estimateCostUsd(u, 'claude-sonnet-4-6') ?? 0
+      // 2.1.197 起 Claude Code 默认模型为 claude-sonnet-5（促销期更便宜），省钱建议以它为基准
+      alt += estimateCostUsd(u, 'claude-sonnet-5') ?? 0
     }
     const saving = cur - alt
     const reads = (b.toolCounts.Read ?? 0) + (b.toolCounts.Grep ?? 0) + (b.toolCounts.Glob ?? 0)

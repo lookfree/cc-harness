@@ -14,10 +14,11 @@ import type { Provider, ProviderModelMap, ProviderApiFormat } from '@shared/type
 /** 角色映射的四个角色（CC Switch 粒度）。 */
 const MODEL_ROLES: Array<keyof ProviderModelMap> = ['opus', 'sonnet', 'haiku', 'fable']
 
-// 各家最新模型（2026-06，CC Switch 角色映射粒度；模型 id / 端点可在表单里改）
+// 各家最新模型（2026-07，CC Switch 角色映射粒度；模型 id / 端点可在表单里改）
+// sonnet 角色对齐 claude-sonnet-5（2.1.197 起 Claude Code 默认模型）
 const CLAUDE_MODELS: ProviderModelMap = {
   opus: 'claude-opus-4-8',
-  sonnet: 'claude-sonnet-4-6',
+  sonnet: 'claude-sonnet-5',
   haiku: 'claude-haiku-4-5-20251001',
   fable: 'claude-fable-5',
 }
@@ -27,7 +28,7 @@ const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>
     name: 'claude-subscription',
     displayName: 'Claude Pro/Max',
     mode: 'subscription',
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     models: CLAUDE_MODELS,
     supports1m: true,
     apiFormat: 'anthropic',
@@ -39,7 +40,7 @@ const defaultProviders: Omit<Provider, 'id' | 'apiKey' | 'enabled' | 'isActive'>
     displayName: 'Claude API',
     mode: 'api',
     baseUrl: 'https://api.anthropic.com',
-    model: 'claude-sonnet-4-6',
+    model: 'claude-sonnet-5',
     models: CLAUDE_MODELS,
     supports1m: true,
     apiFormat: 'anthropic',

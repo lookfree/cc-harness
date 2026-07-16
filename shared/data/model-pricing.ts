@@ -5,7 +5,7 @@ import type { TokenUsage } from '../types/session'
  * 集中此一处维护；理想接 claude-api skill 的权威单价。更新于下方 PRICING_UPDATED。
  * cache_read 通常约 0.1× input、cache_write 约 1.25× input（分开计费，别用一个单价）。
  */
-export const PRICING_UPDATED = '2026-06-21'
+export const PRICING_UPDATED = '2026-07-16'
 
 export interface ModelPrice {
   inputPerM: number
@@ -14,13 +14,26 @@ export interface ModelPrice {
   cacheReadPerM: number
 }
 
-/** 按模型串关键字匹配（保留原串做分组，仅匹配时小写）。靠前优先。 */
+/** Sonnet 5 促销价 $2/$10 至 2026-08-31（官方公告），2026-09-01 起恢复 $3/$15。 */
+const SONNET5_PROMO_ACTIVE = Date.now() < Date.parse('2026-09-01T00:00:00Z')
+
+/**
+ * 按模型串关键字匹配（保留原串做分组，仅匹配时小写）。靠前优先——sonnet-5 必须排在 sonnet 之前。
+ * 价格源：claude-api skill 权威模型表（cacheWrite=1.25×input 5m TTL，cacheRead=0.1×input）。
+ */
 const TABLE: Array<{ match: RegExp; price: ModelPrice }> = [
-  { match: /opus/i, price: { inputPerM: 15, outputPerM: 75, cacheWritePerM: 18.75, cacheReadPerM: 1.5 } },
+  // Fable 5 / Mythos 5：2026-07-07 官方公布 $10/$50（此前未公布、曾按 sonnet 档估）
+  { match: /fable|mythos/i, price: { inputPerM: 10, outputPerM: 50, cacheWritePerM: 12.5, cacheReadPerM: 1 } },
+  {
+    match: /sonnet-5/i,
+    price: SONNET5_PROMO_ACTIVE
+      ? { inputPerM: 2, outputPerM: 10, cacheWritePerM: 2.5, cacheReadPerM: 0.2 }
+      : { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 },
+  },
+  // Opus 4.6/4.7/4.8 全系 $5/$25（$15/$75 是 Opus 3 时代旧价，勿回退）
+  { match: /opus/i, price: { inputPerM: 5, outputPerM: 25, cacheWritePerM: 6.25, cacheReadPerM: 0.5 } },
   { match: /sonnet/i, price: { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 } },
-  { match: /haiku/i, price: { inputPerM: 0.8, outputPerM: 4, cacheWritePerM: 1, cacheReadPerM: 0.08 } },
-  // fable 单价未公布，暂按 sonnet 档估（标注估算）
-  { match: /fable/i, price: { inputPerM: 3, outputPerM: 15, cacheWritePerM: 3.75, cacheReadPerM: 0.3 } },
+  { match: /haiku/i, price: { inputPerM: 1, outputPerM: 5, cacheWritePerM: 1.25, cacheReadPerM: 0.1 } },
 ]
 
 export function priceFor(model: string): ModelPrice | undefined {

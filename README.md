@@ -15,7 +15,7 @@ A desktop workbench for Claude Code: configure, debug, observe, orchestrate, and
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-3b8fff" alt="platform" />
   <img src="https://img.shields.io/badge/desktop-Electron-24C8DB" alt="Electron" />
   <img src="https://img.shields.io/badge/license-MIT-2F4F4F" alt="MIT license" />
-  <img src="https://img.shields.io/badge/Claude%20Code-2.1.183-orange" alt="Claude Code version" />
+  <img src="https://img.shields.io/badge/Claude%20Code-2.1.211-orange" alt="Claude Code version" />
 </p>
 
 Claude Code 已经从"单会话配置工具"长成了多会话编排 + 自动循环 + 后台调度 + 可治理的复杂系统。每加一个能力就多一层不透明——CC Harness 想帮你看见它在干什么。
@@ -215,7 +215,7 @@ npm run web:dev
 
 ### 它能支持最新版本的 Claude Code 吗？
 
-当前对齐 Claude Code 2.1.183。Claude Code 迭代很快，CC Harness 跟着主版本能力边界持续扩展——详见 [spec 文档](docs/harness-ide-spec/README.md) 的版本对应关系。
+当前对齐 Claude Code 2.1.211：模型价格表（Opus 4.8 / Sonnet 5 促销价 / Fable 5 按量价）、配置分层语义（2.1.207 起 `autoMode`/`pluginConfigs` 的层级限制）、权限批准的仓库根存储（2.1.211）、MCP 标准路径（`.mcp.json` / `~/.claude.json`）均已按官方 changelog 校准。功能面（后台 agent 观测、hook matcher 语义校验等）持续扩展——差距与计划见 [版本追赶评估](docs/harness-ide-spec/版本追赶评估-2.1.185-2.1.211.md) 和 [spec 文档](docs/harness-ide-spec/README.md)。
 
 ### 和 claudia 有什么不同？
 
