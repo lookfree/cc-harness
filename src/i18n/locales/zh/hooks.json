@@ -92,6 +92,10 @@
     "SessionEnd": {
       "title": "会话结束",
       "description": "当会话即将结束时触发"
+    },
+    "DirectoryAdded": {
+      "title": "工作目录新增",
+      "description": "/add-dir 或 SDK register_repo_root 注册新工作目录之后触发（2.1.219）"
     }
   },
   "groups": {

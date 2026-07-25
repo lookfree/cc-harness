@@ -92,6 +92,10 @@
     "SessionEnd": {
       "title": "Session End",
       "description": "When a session is ending"
+    },
+    "DirectoryAdded": {
+      "title": "Directory added",
+      "description": "Fires after /add-dir or SDK register_repo_root registers a new working directory (2.1.219)"
     }
   },
   "groups": {

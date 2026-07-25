@@ -5,7 +5,7 @@ import type { TokenUsage } from '../types/session'
  * 集中此一处维护；理想接 claude-api skill 的权威单价。更新于下方 PRICING_UPDATED。
  * cache_read 通常约 0.1× input、cache_write 约 1.25× input（分开计费，别用一个单价）。
  */
-export const PRICING_UPDATED = '2026-07-16'
+export const PRICING_UPDATED = '2026-07-25'
 
 export interface ModelPrice {
   inputPerM: number
@@ -31,7 +31,12 @@ const TABLE: Array<{ match: RegExp; price: ModelPrice }> = [
     match: /claude-3-opus|opus-4-1(\b|-)|opus-4-0\b|opus-4-20250514/i,
     price: { inputPerM: 15, outputPerM: 75, cacheWritePerM: 18.75, cacheReadPerM: 1.5 },
   },
-  // Opus 4.5/4.6/4.7/4.8 全系 $5/$25
+  // fast mode 溢价档 $10/$50（Opus 5 官方价）。2.1.219 起 /fast 只作用于 Opus 5 与 Opus 4.8，
+  // 且 fast 已从模型串（claude-opus-4-6-fast 这种）改成请求参数 speed:"fast"——
+  // 只有落盘模型串仍带 -fast 后缀时这条才命中；参数式 fast 在 transcript 里与标准档同名，无法区分，会按 $5/$25 低估。
+  { match: /opus.*-fast\b/i, price: { inputPerM: 10, outputPerM: 50, cacheWritePerM: 12.5, cacheReadPerM: 1 } },
+  // Opus 4.5/4.6/4.7/4.8/5 全系 $5/$25（Opus 5 于 2026-07-24 上线，与 4.8 同价；
+  // claude-opus-5 与带上下文后缀的 claude-opus-5[1m] 都走这条）
   { match: /opus/i, price: { inputPerM: 5, outputPerM: 25, cacheWritePerM: 6.25, cacheReadPerM: 0.5 } },
   { match: /haiku/i, price: { inputPerM: 1, outputPerM: 5, cacheWritePerM: 1.25, cacheReadPerM: 0.1 } },
   // 其余 sonnet 统一 $3/$15（sonnet-5 已在 priceFor 前置处理，不会走到这里）

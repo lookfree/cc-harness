@@ -70,6 +70,10 @@
     "defaultMode": "Default permission mode (\"default\" renamed to manual in 2.1.200, both accepted)",
     "requiredVersion": "Enterprise version constraint (managed settings layer only)",
     "enforceAvailableModels": "Enforce the org model allowlist across every entry point",
-    "availableModels": "Org available-models list"
+    "availableModels": "Org available-models list",
+    "sandboxFilesystemDisabled": "Skip sandbox filesystem isolation while keeping network egress control (2.1.216)",
+    "sandboxStrictAllowlist": "Deny non-allowlisted hosts for sandboxed commands without prompting (2.1.219)",
+    "workflowSizeGuideline": "Dynamic workflow size guideline (medium = aim for <15 agents); setting it hides the /config row",
+    "emojiCompletionEnabled": "Toggle :shortcode: emoji autocomplete in the prompt input (2.1.217, on by default)"
   }
 }

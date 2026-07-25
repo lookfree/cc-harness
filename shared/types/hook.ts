@@ -12,6 +12,7 @@ export type HookType =
   | 'PostCompact'     // 2.1.76 压缩之后
   | 'SessionStart'    // When Claude Code starts a new session
   | 'SessionEnd'      // When a session is ending
+  | 'DirectoryAdded'  // 2.1.219 会话中途 /add-dir（或 SDK register_repo_root）注册新工作目录之后
   | 'ConfigChange'    // 2.1.49 配置变更审计
   | 'Elicitation'     // 2.1.76 交互征询
   | 'ElicitationResult' // 2.1.76 征询结果

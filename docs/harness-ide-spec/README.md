@@ -78,6 +78,7 @@
 | spec022 | 依赖与 Electron 版本核验 | P0 | MISC-11 | ✅ 完成 |
 | spec023 | 侧边栏收缩重构（lime 风格） | P0 | MISC（布局 UX） | 就绪 |
 | spec024 | 2.1.211 对齐批次多视角评审止血 | P0 | 项目自身 bug | ✅ 完成 |
+| spec025 | 2.1.212–2.1.220 对齐批次（Opus 5 / subagent 限流 / 新设置键） | P1 | MODEL-01/09、ORCH-14、HOOK-14、MISC-17 | ✅ 完成 |
 
 ### Phase 1 · 补配置层（spec004–013）
 

@@ -6,6 +6,14 @@ import type { AgentTopology, AgentNode, WorkflowRun, SessionEvent } from '../../
 
 const AGENT_RE = /^agent-(.+)\.jsonl$/
 
+/**
+ * 嵌套 subagent 子树的解析深度上限（防环/防病态文件，不是对 CLI 的复刻）。
+ * CLI 侧的默认值这半年翻过两次：2.1.172 起五层 → 2.1.217 默认禁止嵌套（深度 1）
+ * → 2.1.219 默认恢复到 3（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 关掉）。
+ * 这里仍按 5 解析：历史会话与调高了该环境变量的会话都要能完整画出来，超深只是不再下探。
+ */
+const PARSE_MAX_DEPTH = 5
+
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 const num = (v: unknown): number => (typeof v === 'number' ? v : 0)
 const numOpt = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined)
@@ -288,7 +296,7 @@ async function loadAgentFiles(dir: string, files: string[]): Promise<LoadedAgent
  * 关键：文件与主 jsonl Task 节点的关联键是 meta.json 的 **toolUseId**（'toolu_...'），
  * 不是文件名 hex——两者不同 id 空间，用 hex 匹配会永远落空并把每个 subagent 渲染两次。
  * - 命中 taskTree 节点：就地充实 token/工具数/时长/文件路径（供抽屉回放），不新建节点；
- * - 从命中节点的内部 Task 递归下探建真正的嵌套（depth+1，五层封顶，visited 去重防环/防双节点）；
+ * - 从命中节点的内部 Task 递归下探建真正的嵌套（depth+1，PARSE_MAX_DEPTH 封顶，visited 去重防环/防双节点）；
  * - 任何链路都没触达的落盘文件 → 补一个孤立 depth-0 节点。
  * 目录缺失/文件损坏一律退化为不动，不抛错。
  */
@@ -319,7 +327,7 @@ async function plainSubagentNodes(subdir: string, taskTree: AgentNode[]): Promis
       node.agentType = lf.agentType
       if (node.label === 'Task') node.label = lf.agentType
     }
-    if (node.depth >= 5) return // ORCH-06 五层护栏（现在真正生效）
+    if (node.depth >= PARSE_MAX_DEPTH) return // ORCH-06 护栏（现在真正生效）
     for (const child of lf.innerTasks) {
       if (visited.has(child.agentId)) continue
       visited.add(child.agentId)

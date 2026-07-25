@@ -5,7 +5,7 @@ export const HOOK_TYPE_GROUPS: Array<{ group: string; types: HookType[] }> = [
   { group: 'tool', types: ['PreToolUse', 'PostToolUse', 'MessageDisplay'] },
   {
     group: 'session',
-    types: ['SessionStart', 'SessionEnd', 'PostSession', 'UserPromptSubmit', 'Notification'],
+    types: ['SessionStart', 'SessionEnd', 'PostSession', 'DirectoryAdded', 'UserPromptSubmit', 'Notification'],
   },
   { group: 'lifecycle', types: ['Stop', 'StopFailure', 'SubagentStart', 'SubagentStop'] },
   { group: 'compaction', types: ['PreCompact', 'PostCompact'] },

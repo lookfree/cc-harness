@@ -70,6 +70,10 @@
     "defaultMode": "默认权限模式（2.1.200 起 \"default\" 更名 manual，两值兼容）",
     "requiredVersion": "企业版本约束（仅 managed settings 层生效）",
     "enforceAvailableModels": "强制组织模型白名单（全入口拦截）",
-    "availableModels": "组织可用模型列表"
+    "availableModels": "组织可用模型列表",
+    "sandboxFilesystemDisabled": "跳过沙箱文件系统隔离、只保留网络出口管控（2.1.216）",
+    "sandboxStrictAllowlist": "沙箱命令访问白名单外主机直接拒绝、不再弹确认（2.1.219）",
+    "workflowSizeGuideline": "动态 workflow 规模档位建议（medium 默认建议 <15 个 agent），写了此键 /config 里对应行会隐藏",
+    "emojiCompletionEnabled": "prompt 输入框的 :shortcode: emoji 补全开关（2.1.217 引入，默认开）"
   }
 }
