@@ -55,11 +55,11 @@ tool_result 卡片的 `<pre>` 内容改为：`hasAnsi(e.contentText)` 时渲染 
 
 ## 验收标准
 
-- [ ] 找一个含 Bash 彩色输出的 session（如跑过测试/构建的），Replay 展开 tool_result：颜色/粗体按终端语义显示，无 `[31m` 乱码残留。
-- [ ] 不含 ANSI 的 tool_result 渲染结果与改动前完全一致（纯字符串路径）。
-- [ ] 构造截断样例（`\x1b[3` 结尾）不抛错、残缺转义不显示。
-- [ ] `ESC]0;标题BEL` 等 OSC 序列被剥离不显示。
-- [ ] `npx tsc --noEmit` 0 错误。
+- [x] 找一个含 Bash 彩色输出的 session（如跑过测试/构建的），Replay 展开 tool_result：颜色/粗体按终端语义显示，无 `[31m` 乱码残留。
+- [x] 不含 ANSI 的 tool_result 渲染结果与改动前完全一致（纯字符串路径）。
+- [x] 构造截断样例（`\x1b[3` 结尾）不抛错、残缺转义不显示。
+- [x] `ESC]0;标题BEL` 等 OSC 序列被剥离不显示。
+- [x] `npx tsc --noEmit` 0 错误。
 
 ## 风险与备注
 
