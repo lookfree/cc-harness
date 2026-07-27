@@ -101,12 +101,12 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.reactflow__node.topo-node-enter {
+.react-flow__node.topo-node-enter {
   animation: topo-node-fade 0.4s ease-out both;
   animation-delay: var(--topo-delay, 0ms);
 }
 
-.reactflow__node.topo-node-enter > div {
+.react-flow__node.topo-node-enter > div {
   animation: topo-node-pop 0.4s ease-out both;
   animation-delay: var(--topo-delay, 0ms);
 }
