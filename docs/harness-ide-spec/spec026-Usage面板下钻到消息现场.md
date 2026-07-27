@@ -60,12 +60,12 @@ export interface UsageSeriesPoint {
 
 ## 验收标准
 
-- [ ] 点饼图任一扇区 → 下方出现该 bucket Top-10 最贵 turn 榜单；再点同扇区收起。
-- [ ] 点榜单某行（非 subagents）→ 切到 Replay 页签并滚动到对应 `data-seq` 卡片可见（现有 scrollToSeq 机制只滚动不高亮，本 spec 不加高亮）。
-- [ ] 点累计烧钱图任一点 → 同上直跳该 turn。
-- [ ] subagents 榜单行不可点，但"在拓扑中查看"按钮切到拓扑页签。
-- [ ] Web 模式下钻同样可用（纯前端跳转，不涉桌面端专属能力）。
-- [ ] en/zh 键成对，无硬编码文案；`npx tsc --noEmit` 0 错误。
+- [x] 点饼图任一扇区 → 下方出现该 bucket Top-10 最贵 turn 榜单；再点同扇区收起。
+- [x] 点榜单某行（非 subagents）→ 切到 Replay 页签并滚动到对应 `data-seq` 卡片可见（现有 scrollToSeq 机制只滚动不高亮，本 spec 不加高亮）。
+- [x] 点累计烧钱图任一点 → 同上直跳该 turn。
+- [x] subagents 榜单行不可点，但"在拓扑中查看"按钮切到拓扑页签。
+- [x] Web 模式下钻同样可用（纯前端跳转，不涉桌面端专属能力）。
+- [x] en/zh 键成对，无硬编码文案；`npx tsc --noEmit` 0 错误。
 
 ## 风险与备注
 
