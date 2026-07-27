@@ -53,6 +53,17 @@
       "subagents": "subagents",
       "mcp": "MCP",
       "plugins": "plugins"
+    },
+    "drill": {
+      "title": "Top spend turns · {{bucket}}",
+      "col": {
+        "turn": "turn",
+        "time": "time",
+        "output": "out"
+      },
+      "viewInTopology": "View in topology",
+      "clickHint": "Click a row to jump to that turn in Replay",
+      "empty": "No data points in this bucket"
     }
   },
   "advice": {

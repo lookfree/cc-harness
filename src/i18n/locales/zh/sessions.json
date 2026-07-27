@@ -53,6 +53,17 @@
       "subagents": "子代理",
       "mcp": "MCP",
       "plugins": "插件"
+    },
+    "drill": {
+      "title": "最贵 turns · {{bucket}}",
+      "col": {
+        "turn": "turn",
+        "time": "时间",
+        "output": "输出"
+      },
+      "viewInTopology": "在拓扑中查看",
+      "clickHint": "点击行跳到 Replay 对应 turn",
+      "empty": "该分桶暂无数据点"
     }
   },
   "advice": {

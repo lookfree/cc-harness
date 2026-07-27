@@ -15,11 +15,16 @@ import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { compactNum } from './sessionStatus'
 import { estimateCostUsd } from '@shared/data/model-pricing'
+import { Button } from '@/components/ui/button'
 import type { UsageReport, UsageBucket } from '@shared/types'
 
 interface Props {
   sessionId: string
   sessionFilePath: string
+  /** 下钻跳 Replay（spec026）；不传则纯展示 */
+  onSeek?: (seq: number) => void
+  /** subagents bucket 无主会话 seq，改跳拓扑页签 */
+  onOpenTopology?: () => void
 }
 
 const BUCKETS: UsageBucket[] = ['base', 'skills', 'subagents', 'mcp', 'plugins']
@@ -38,10 +43,11 @@ const ADVICE_SEV: Record<string, string> = {
   info: 'border-border bg-muted/30',
 }
 
-export function SessionUsage({ sessionId, sessionFilePath }: Props) {
+export function SessionUsage({ sessionId, sessionFilePath, onSeek, onOpenTopology }: Props) {
   const { t } = useTranslation('sessions')
   const [report, setReport] = useState<UsageReport | null>(null)
   const [loading, setLoading] = useState(true)
+  const [drillBucket, setDrillBucket] = useState<UsageBucket | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -66,18 +72,27 @@ export function SessionUsage({ sessionId, sessionFilePath }: Props) {
     [report]
   )
 
-  // 累计烧钱时间序列（必要时降采样到 ~400 点）
+  // 累计烧钱时间序列（必要时降采样到 ~400 点）；seq 透传供点击下钻（spec026）
   const cumSeries = useMemo(() => {
     if (!report) return []
     let cum = 0
     const pts = report.breakdown.series.map((p, i) => {
       cum += p.costUsd
-      return { i, cum: Math.round(cum * 100) / 100 }
+      return { i, cum: Math.round(cum * 100) / 100, seq: p.seq }
     })
     if (pts.length <= 400) return pts
     const step = Math.ceil(pts.length / 400)
     return pts.filter((_, i) => i % step === 0 || i === pts.length - 1)
   }, [report])
+
+  // 下钻榜单：当前 bucket 最贵 Top-10 turn（spec026）
+  const topTurns = useMemo(() => {
+    if (!report || !drillBucket) return []
+    return report.breakdown.series
+      .filter((p) => p.bucket === drillBucket)
+      .sort((a, b) => b.costUsd - a.costUsd)
+      .slice(0, 10)
+  }, [report, drillBucket])
 
   if (loading) return <div className="p-4 text-sm text-muted-foreground">{t('usage.loading')}</div>
   if (!report || report.breakdown.turnCount === 0) {
@@ -104,7 +119,20 @@ export function SessionUsage({ sessionId, sessionFilePath }: Props) {
           <div className="text-xs font-medium mb-1">{t('usage.pieTitle')}</div>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={pieData} dataKey="value" nameKey="bucket" cx="50%" cy="50%" outerRadius={70} label={(e) => `${t(`usage.bucket.${e.bucket}`)} ${usd(e.value)}`}>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="bucket"
+                cx="50%"
+                cy="50%"
+                outerRadius={70}
+                cursor="pointer"
+                label={(e) => `${t(`usage.bucket.${e.bucket}`)} ${usd(e.value)}`}
+                onClick={(_, idx) => {
+                  const b = pieData[idx]?.bucket
+                  if (b) setDrillBucket((prev) => (prev === b ? null : b))
+                }}
+              >
                 {pieData.map((d) => (
                   <Cell key={d.bucket} fill={BUCKET_COLOR[d.bucket]} />
                 ))}
@@ -118,7 +146,13 @@ export function SessionUsage({ sessionId, sessionFilePath }: Props) {
         <div className="border border-border rounded p-3">
           <div className="text-xs font-medium mb-1">{t('usage.spendTitle')}</div>
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={cumSeries}>
+            <AreaChart
+              data={cumSeries}
+              onClick={(st) => {
+                const seq = (st?.activePayload?.[0]?.payload as { seq?: number } | undefined)?.seq
+                if (seq != null && onSeek) onSeek(seq)
+              }}
+            >
               <XAxis dataKey="i" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `$${v}`} />
               <Tooltip formatter={(v: number) => usd(v)} labelFormatter={(l) => t('usage.turnN', { n: l })} />
@@ -127,6 +161,59 @@ export function SessionUsage({ sessionId, sessionFilePath }: Props) {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* 下钻榜单：bucket 最贵 turns → 点行跳 Replay（spec026） */}
+      {drillBucket && (
+        <div className="border border-border rounded p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full inline-block" style={{ background: BUCKET_COLOR[drillBucket] }} />
+              {t('usage.drill.title', { bucket: t(`usage.bucket.${drillBucket}`) })}
+            </div>
+            {drillBucket === 'subagents' && onOpenTopology && (
+              <Button variant="outline" size="sm" onClick={onOpenTopology}>
+                {t('usage.drill.viewInTopology')}
+              </Button>
+            )}
+          </div>
+          {topTurns.length === 0 ? (
+            <div className="text-xs text-muted-foreground">{t('usage.drill.empty')}</div>
+          ) : (
+            <table className="w-full text-xs">
+              <thead className="text-muted-foreground">
+                <tr className="text-left">
+                  <th className="py-1">{t('usage.drill.col.turn')}</th>
+                  <th>{t('usage.drill.col.time')}</th>
+                  <th>{t('usage.model')}</th>
+                  <th>{t('usage.drill.col.output')}</th>
+                  <th>{t('usage.cost')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topTurns.map((p, i) => {
+                  const clickable = p.seq != null && !!onSeek
+                  return (
+                    <tr
+                      key={`${p.seq ?? p.ts}-${i}`}
+                      className={cn('border-t border-border/40', clickable && 'cursor-pointer hover:bg-muted/40')}
+                      onClick={clickable ? () => onSeek?.(p.seq as number) : undefined}
+                    >
+                      <td className="py-1 font-mono">{p.seq != null ? `#${p.seq}` : '–'}</td>
+                      <td>{p.ts ? new Date(p.ts).toLocaleTimeString() : '–'}</td>
+                      <td className="font-mono">{p.model || '–'}</td>
+                      <td>{compactNum(p.output)}</td>
+                      <td>{usd(p.costUsd)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+          {drillBucket !== 'subagents' && onSeek && (
+            <p className="text-[10px] text-muted-foreground mt-1">{t('usage.drill.clickHint')}</p>
+          )}
+        </div>
+      )}
 
       {/* 按 model 表 */}
       <div className="border border-border rounded p-3">

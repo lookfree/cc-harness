@@ -44,7 +44,7 @@ function addUsage(roll: TokenUsageRollup, u: TokenUsage, model: string): void {
   }
 }
 
-function seriesPoint(ts: string, bucket: UsageBucket, model: string, u: TokenUsage): UsageBreakdown['series'][number] {
+function seriesPoint(ts: string, bucket: UsageBucket, model: string, u: TokenUsage, seq?: number): UsageBreakdown['series'][number] {
   return {
     ts,
     bucket,
@@ -52,6 +52,7 @@ function seriesPoint(ts: string, bucket: UsageBucket, model: string, u: TokenUsa
     output: u.outputTokens,
     inputBillable: u.inputTokens + u.cacheCreationInputTokens + u.cacheReadInputTokens,
     costUsd: estimateCostUsd(u, model) ?? 0,
+    seq,
   }
 }
 
@@ -103,7 +104,7 @@ export function computeUsageBreakdown(
     const model = e.model ?? ''
     addUsage(byBucket[bucket], e.usage, model)
     addUsage(total, e.usage, model)
-    series.push(seriesPoint(e.timestamp ?? '', bucket, model, e.usage))
+    series.push(seriesPoint(e.timestamp ?? '', bucket, model, e.usage, e.seq))
   }
 
   // subagents：从拓扑取每个 agent 的 token（归到 workflow 的 defaultModel）

@@ -134,6 +134,8 @@ export interface UsageSeriesPoint {
   inputBillable: number
   /** 该点估算成本（USD），后端按完整用量拆分算（cacheRead 0.1× 等已正确加权） */
   costUsd: number
+  /** 主会话 assistant turn 的 seq（Usage 下钻跳 Replay 用）；subagent 汇总点无 → undefined（spec026） */
+  seq?: number
 }
 
 /** 一个（或多 session 合并）的 token 用量分项（spec017）。 */

@@ -156,7 +156,12 @@ export default function Sessions() {
             </TabsContent>
             <TabsContent value="usage" className="flex-1 min-h-0 mt-2">
               {primarySummary && tab === 'usage' && (
-                <SessionUsage sessionId={primaryId} sessionFilePath={primarySummary.filePath} />
+                <SessionUsage
+                  sessionId={primaryId}
+                  sessionFilePath={primarySummary.filePath}
+                  onSeek={onSeek}
+                  onOpenTopology={() => setTab('topology')}
+                />
               )}
             </TabsContent>
           </Tabs>
