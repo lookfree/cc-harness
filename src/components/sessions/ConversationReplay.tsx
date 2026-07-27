@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { SessionEvent } from '@shared/types'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { hasAnsi, parseAnsi } from '@/lib/ansi'
 import { Brain, Lock, Unlock } from 'lucide-react'
 
 interface Props {
@@ -107,6 +108,37 @@ export function ConversationReplay({ events, scrollToSeq, live }: Props) {
   )
 }
 
+/** 终端 ANSI 输出还原为彩色 span（spec027）；仅 hasAnsi 命中时走这条路径 */
+function AnsiText({ text }: { text: string }) {
+  const segs = useMemo(() => parseAnsi(text), [text])
+  return (
+    <>
+      {segs.map((s, i) => (
+        <span
+          key={i}
+          style={{
+            color: s.fg,
+            backgroundColor: s.bg,
+            fontWeight: s.bold ? 600 : undefined,
+            opacity: s.dim ? 0.6 : undefined,
+            fontStyle: s.italic ? 'italic' : undefined,
+            textDecoration:
+              s.underline && s.strikethrough
+                ? 'underline line-through'
+                : s.underline
+                  ? 'underline'
+                  : s.strikethrough
+                    ? 'line-through'
+                    : undefined,
+          }}
+        >
+          {s.text}
+        </span>
+      ))}
+    </>
+  )
+}
+
 function EventCard({ event: e, t }: { event: SessionEvent; t: (k: string, o?: Record<string, unknown>) => string }) {
   const base = 'rounded border px-3 py-2 text-sm'
   switch (e.kind) {
@@ -150,7 +182,9 @@ function EventCard({ event: e, t }: { event: SessionEvent; t: (k: string, o?: Re
             <summary className={cn('text-xs font-medium cursor-pointer', e.isError ? 'text-red-600' : 'text-emerald-600')}>
               {t(e.isError ? 'card.toolError' : 'card.toolResult')}
             </summary>
-            <pre className="mt-1 text-xs whitespace-pre-wrap break-words max-h-60 overflow-y-auto">{e.contentText}</pre>
+            <pre className="mt-1 text-xs whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
+              {hasAnsi(e.contentText) ? <AnsiText text={e.contentText} /> : e.contentText}
+            </pre>
           </details>
         </div>
       )
