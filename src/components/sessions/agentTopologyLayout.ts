@@ -1,4 +1,5 @@
 import type { Node, Edge } from 'reactflow'
+import type { CSSProperties } from 'react'
 import type { AgentTopology, AgentNode, WorkflowRun } from '@shared/types'
 
 export type TopoMode = 'workflow' | 'tree'
@@ -23,6 +24,18 @@ const COLS = 6 // 每行最多几个 agent
 const WF_H = 84
 
 /**
+ * 节点入场动画标记：className 触发 CSS keyframes，--topo-delay 控制级联次序。
+ * 外层 wrapper 只动 opacity（它的 transform 是 reactflow 定位用的，不能碰），
+ * 内层（自定义节点根 div）做位移+缩放。仅新挂载的节点 DOM 播放一次。
+ */
+function enter(delayMs: number): Pick<Node, 'className' | 'style'> {
+  return {
+    className: 'topo-node-enter',
+    style: { '--topo-delay': `${Math.min(delayMs, 2400)}ms` } as CSSProperties,
+  }
+}
+
+/**
  * 拓扑 → reactflow nodes/edges（纯函数，便于布局逻辑独立演进）。
  * - workflow 模式：每个 workflow 一个头节点，其 agents 在下方网格 fan-out。
  * - tree 模式：按 depth 分层（y=depth 行），父→子边；扁平 workflow agents 挂在 workflow 根下。
@@ -32,11 +45,12 @@ export function buildFlow(topology: AgentTopology, mode: TopoMode): { nodes: Nod
   const edges: Edge[] = []
   let cursorY = 0
 
-  for (const wf of topology.workflows) {
+  topology.workflows.forEach((wf, wfIdx) => {
     const wfAgents = topology.agents.filter((a) => a.workflowRunId === wf.runId)
     const wfId = `wf:${wf.runId}`
     const rows = Math.max(1, Math.ceil(wfAgents.length / COLS))
     const gridW = COLS * (NODE_W + GAP_X)
+    const baseDelay = wfIdx * 220
 
     nodes.push({
       id: wfId,
@@ -44,6 +58,7 @@ export function buildFlow(topology: AgentTopology, mode: TopoMode): { nodes: Nod
       position: { x: gridW / 2 - NODE_W, y: cursorY },
       data: { kind: 'workflow', workflow: wf, actualAgents: wfAgents.length },
       draggable: true,
+      ...enter(baseDelay),
     })
 
     const agentsTop = cursorY + WF_H + GAP_Y
@@ -61,12 +76,13 @@ export function buildFlow(topology: AgentTopology, mode: TopoMode): { nodes: Nod
         position: { x: col * (NODE_W + GAP_X), y: agentsTop + row * (NODE_H + GAP_Y) + depthOffset },
         data: { kind: 'agent', agent: a },
         draggable: true,
+        ...enter(baseDelay + 180 + i * 45),
       })
       edges.push({ id: `e:${wfId}:${a.agentId}`, source: wfId, target: nodeId, animated: a.status === 'running' })
     })
 
     cursorY = agentsTop + rows * (NODE_H + GAP_Y) + 60
-  }
+  })
 
   // 非 workflow 的普通 Task 子树（按 parentAgentId / depth 分层）
   if (topology.taskTree.length) {
@@ -93,9 +109,10 @@ function layoutTaskTree(tree: AgentNode[], topY: number, nodes: Node<TopoNodeDat
         position: { x: i * (NODE_W + GAP_X), y: topY + depth * (NODE_H + GAP_Y) },
         data: { kind: 'agent', agent: a },
         draggable: true,
+        ...enter(depth * 150 + i * 60),
       })
       if (a.parentAgentId) {
-        edges.push({ id: `e:task:${a.parentAgentId}:${a.agentId}`, source: `task:${a.parentAgentId}`, target: `task:${a.agentId}` })
+        edges.push({ id: `e:task:${a.parentAgentId}:${a.agentId}`, source: `task:${a.parentAgentId}`, target: `task:${a.agentId}`, animated: a.status === 'running' })
       }
     })
   }

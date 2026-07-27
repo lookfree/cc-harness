@@ -87,6 +87,7 @@ export function AgentTopologyView({ sessionId, sessionFilePath }: Props) {
         onNodeClick={onNodeClick}
         onlyRenderVisibleElements
         fitView
+        fitViewOptions={{ padding: 0.15, duration: 600 }}
         minZoom={0.2}
         proOptions={{ hideAttribution: true }}
       >

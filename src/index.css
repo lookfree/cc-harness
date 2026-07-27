@@ -88,3 +88,25 @@
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* 拓扑节点入场动画：外层只动 opacity（wrapper 的 transform 归 reactflow 定位），
+   内层（自定义节点根 div）做位移+缩放；--topo-delay 由布局层按层级注入，仅新挂载节点播放一次。 */
+@keyframes topo-node-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes topo-node-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.88); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reactflow__node.topo-node-enter {
+  animation: topo-node-fade 0.4s ease-out both;
+  animation-delay: var(--topo-delay, 0ms);
+}
+
+.reactflow__node.topo-node-enter > div {
+  animation: topo-node-pop 0.4s ease-out both;
+  animation-delay: var(--topo-delay, 0ms);
+}
