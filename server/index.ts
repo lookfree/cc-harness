@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import path from 'path'
+import os from 'os'
 import { FileManager } from '../electron/services/file-manager'
 import { validateHook } from '../electron/services/hook-validation'
 import { SessionMonitor, listSessions } from '../electron/services/session'
@@ -39,15 +40,30 @@ app.get('/api/sessions', asyncHandler(async (_req, res) => {
   res.json(await sessionMonitor.list())
 }))
 
+/** 只允许读 ~/.claude/projects 下的 jsonl（filePath 由前端传入，须防目录穿越）。 */
+const CLAUDE_PROJECTS = path.join(os.homedir(), '.claude', 'projects')
+function safeJsonlPath(p: unknown): string | null {
+  if (typeof p !== 'string' || !p) return null
+  const resolved = path.resolve(p)
+  if (!resolved.startsWith(CLAUDE_PROJECTS + path.sep) || !resolved.endsWith('.jsonl')) return null
+  return resolved
+}
+
 app.get('/api/sessions/:id', asyncHandler(async (req, res) => {
   // Web 端只给 id，服务端反查 filePath 再出全量快照
   const metas = await listSessions()
   const meta = metas.find((m) => m.sessionId === req.params.id)
-  if (!meta) {
+  if (meta) {
+    res.json(await sessionMonitor.snapshot(meta.sessionId, meta.filePath))
+    return
+  }
+  // subagent transcript 不在主会话列表里（agentId + 自己的 jsonl），按受限 filePath 读
+  const agentFile = safeJsonlPath(req.query.filePath)
+  if (!agentFile) {
     res.status(404).json({ error: 'Session not found' })
     return
   }
-  res.json(await sessionMonitor.snapshot(meta.sessionId, meta.filePath))
+  res.json(await sessionMonitor.snapshot(req.params.id, agentFile))
 }))
 
 app.get('/api/sessions/:id/topology', asyncHandler(async (req, res) => {

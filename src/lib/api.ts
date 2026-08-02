@@ -709,10 +709,12 @@ export const api = {
       if (isElectron) return window.electronAPI.getSessions()
       return httpGet<SessionSummary[]>('/api/sessions')
     },
-    // Web 用 id 反查 filePath（服务端从 listSessions 解析）；桌面端传完整 filePath
+    // Web 用 id 反查 filePath（服务端从 listSessions 解析）；桌面端传完整 filePath。
+    // subagent 的 transcript 不在主会话列表里，须把 filePath 带上（服务端限制在 ~/.claude/projects 内）。
     snapshot: async (id: string, filePath: string): Promise<SessionEvent[]> => {
       if (isElectron) return window.electronAPI.getSessionSnapshot(id, filePath)
-      return httpGet<SessionEvent[]>(`/api/sessions/${encodeURIComponent(id)}`)
+      const q = filePath ? `?filePath=${encodeURIComponent(filePath)}` : ''
+      return httpGet<SessionEvent[]>(`/api/sessions/${encodeURIComponent(id)}${q}`)
     },
     subscribe: async (id: string, filePath: string): Promise<void> => {
       if (isElectron) {
