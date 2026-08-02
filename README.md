@@ -20,7 +20,7 @@
 
 Claude Code has grown from a single-session tool into a complex system: multi-session orchestration, background loops, scheduled wakeups, auto-memory. Every new capability adds another layer of opacity. The CLI shows you a counter — `Running agent 47/200`. **CC Harness shows you the topology.**
 
-![Live subagent call tree](./images/subagent-tree.png)
+![Live subagent call tree — the topology grows as the workflow runs, then click any node to read that agent's transcript](./images/agent-topology.gif)
 
 ## What it does
 

@@ -57,7 +57,7 @@ Claude Code 越复杂越像黑盒——subagent 五层、Workflow 几百 agent�
 
 CC Harness 的 Session 监视器实时解析 session jsonl，用 React Flow 画出 subagent 五层调用树，每个节点显示用时、token 消耗和嵌套深度。Workflow 跑着时，这张图是你唯一能看懂"它在干什么"的窗口。
 
-![agent-拓扑](./images/agent-拓扑.png)
+![agent 拓扑——workflow 跑起来时拓扑逐层长出，点任一节点即可读该 agent 的 transcript](./images/agent-topology.gif)
 
 ### 2. Hook 莫名其妙没生效，你不知道是没触发还是执行失败
 
