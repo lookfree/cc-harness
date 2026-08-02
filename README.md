@@ -30,7 +30,7 @@ Claude Code has grown from a single-session tool into a complex system: multi-se
 
 ![Hook sandbox](./images/hook-2.png)
 
-- **Token cost breakdown** — per-session panel splitting skills / subagents / MCP / plugins / base session. Includes a real-time optimizer: repricing the current session's Opus tokens at Sonnet rates, so you see the exact dollar amount you'd save — from real data, not an estimate.
+- **Token cost breakdown** — per-session panel splitting skills / subagents / MCP / plugins / base session. Click a slice to rank that bucket's most expensive turns, then click a row to land on that exact message in the replay. Includes a real-time optimizer: repricing the current session's Opus tokens at Sonnet rates, so you see the exact dollar amount you'd save — from real data, not an estimate.
 
 ![Token usage](./images/token-use.png)
 

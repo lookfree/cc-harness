@@ -117,7 +117,7 @@ export function SessionUsage({ sessionId, sessionFilePath, onSeek, onOpenTopolog
         {/* 成本饼图 */}
         <div className="border border-border rounded p-3">
           <div className="text-xs font-medium mb-1">{t('usage.pieTitle')}</div>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={168}>
             <PieChart>
               <Pie
                 data={pieData}
@@ -127,7 +127,6 @@ export function SessionUsage({ sessionId, sessionFilePath, onSeek, onOpenTopolog
                 cy="50%"
                 outerRadius={70}
                 cursor="pointer"
-                label={(e) => `${t(`usage.bucket.${e.bucket}`)} ${usd(e.value)}`}
                 onClick={(_, idx) => {
                   const b = pieData[idx]?.bucket
                   if (b) setDrillBucket((prev) => (prev === b ? null : b))
@@ -140,6 +139,23 @@ export function SessionUsage({ sessionId, sessionFilePath, onSeek, onOpenTopolog
               <Tooltip formatter={(v: number) => usd(v)} />
             </PieChart>
           </ResponsiveContainer>
+          {/* 图例代替扇区外挂标签：卡片只有半栏宽，外挂标签必被裁 */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+            {pieData.map((d) => (
+              <button
+                key={d.bucket}
+                onClick={() => setDrillBucket((prev) => (prev === d.bucket ? null : d.bucket))}
+                className={cn(
+                  'flex items-center gap-1 text-[11px] rounded px-1 hover:bg-muted/50',
+                  drillBucket === d.bucket && 'bg-muted'
+                )}
+              >
+                <span className="w-2 h-2 rounded-sm" style={{ background: BUCKET_COLOR[d.bucket] }} />
+                {t(`usage.bucket.${d.bucket}`)}
+                <span className="text-muted-foreground">{usd(d.value)}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 累计烧钱 */}
