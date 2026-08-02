@@ -321,7 +321,7 @@
     "cancel": "取消",
     "selectAction": "选择动作",
     "promptPreview": "Prompt 模板（不执行）",
-    "cmdWarningBanner": "⚠ 将在你的机器上实际执行该命令。使用临时目录隔离，但命令本身的副作用（读写文件等）仍会发生。",
+    "cmdWarningBanner": "⚠ 这会真实执行该命令，工作目录为你的项目目录（与 Claude Code 一致）。写文件等副作用不会被拦截。",
     "cmdConfirmTitle": "确认执行 Hook 命令？",
     "cmdConfirmDesc": "命令将在临时目录中以受限环境运行，但仍可能读写文件或调用外部进程。确认继续？",
     "networkDisabledHint": "请勾选「允许出网」后再测试 HTTP Hook。",

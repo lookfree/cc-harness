@@ -1,7 +1,6 @@
 import { spawn } from 'child_process'
 import os from 'os'
 import path from 'path'
-import fs from 'fs'
 import type { Hook, HookAction, HookSimInput, HookDryRunResult } from '../../shared/types'
 import { resolveActionType } from '../../shared/types'
 
@@ -10,6 +9,21 @@ const MAX_TIMEOUT_MS = 30_000
 const MAX_OUTPUT_BYTES = 1024 * 1024 // 1 MB
 const HOME = os.homedir()
 const TMPDIR = os.tmpdir()
+
+/**
+ * hook 的工作目录：真实 Claude Code 在**项目目录**下跑 hook，`.claude/hooks/x.sh` 这类
+ * 相对命令才解析得到。早期版本用空临时目录，导致任何项目 hook 都 exit 127。
+ * project hook 的 filePath 形如 `<project>/.claude/settings.json` → 上溯两级即项目根。
+ */
+function resolveWorkDir(hook: Hook, input: HookSimInput): string {
+  if (input.cwd) return input.cwd
+  if (hook.location === 'project' && hook.filePath) {
+    const dir = path.dirname(hook.filePath) // <project>/.claude
+    if (path.basename(dir) === '.claude') return path.dirname(dir)
+    return dir
+  }
+  return HOME
+}
 
 /** 构造 Claude Code 传给 hook 的 stdin JSON */
 function buildInputJson(hook: Hook, input: HookSimInput): Record<string, unknown> {
@@ -57,21 +71,21 @@ async function runCommand(
   inputJson: Record<string, unknown>,
   timeoutMs: number,
   startMs: number,
-  base: Omit<HookDryRunResult, 'decision' | 'blockReason' | 'transformedOutput' | 'durationMs' | 'timedOut'>
+  base: Omit<HookDryRunResult, 'decision' | 'blockReason' | 'transformedOutput' | 'durationMs' | 'timedOut'>,
+  workDir: string
 ): Promise<HookDryRunResult> {
   if (!action.command) {
     return { ...base, exitCode: null, stdout: '', stderr: '', decision: 'none', error: 'no_command', durationMs: Date.now() - startMs, timedOut: false }
   }
 
-  const tmpDir = path.join(TMPDIR, `cc-hook-dryrun-${process.pid}-${Date.now()}`)
-  try { fs.mkdirSync(tmpDir, { recursive: true }) } catch { /* already exists */ }
-
-  // 白名单 env：只透传 PATH/HOME/TMPDIR，不透传 token/key
+  // 白名单 env：只透传 PATH/HOME/TMPDIR，不透传 token/key。
+  // CLAUDE_PROJECT_DIR 是 Claude Code 传给 hook 的标准变量，脚本常用它拼路径，必须给。
   const safeEnv: NodeJS.ProcessEnv = {
     PATH: process.env.PATH ?? '/usr/local/bin:/usr/bin:/bin',
     HOME,
     TMPDIR,
     TERM: 'dumb',
+    CLAUDE_PROJECT_DIR: workDir,
     HOOK_EVENT_NAME: base.hookType,
     HOOK_NAME: base.hookName,
     HOOK_TYPE: base.hookType,
@@ -85,8 +99,8 @@ async function runCommand(
     let totalBytes = 0
 
     const proc = action.args
-      ? spawn(command, action.args, { shell: false, cwd: tmpDir, env: safeEnv })
-      : spawn(command, { shell: true, cwd: tmpDir, env: safeEnv })
+      ? spawn(command, action.args, { shell: false, cwd: workDir, env: safeEnv })
+      : spawn(command, { shell: true, cwd: workDir, env: safeEnv })
 
     const timer = setTimeout(() => {
       timedOut = true
@@ -98,24 +112,21 @@ async function runCommand(
 
     const onData = (chunk: Buffer, target: 'out' | 'err') => {
       totalBytes += chunk.length
-      if (totalBytes > MAX_OUTPUT_BYTES) { try { proc.kill('SIGKILL') } catch { /* */ }; return }
+      if (totalBytes > MAX_OUTPUT_BYTES) { try { proc.kill('SIGKILL') } catch { /* */ } return }
       if (target === 'out') stdout += chunk.toString()
       else stderr += chunk.toString()
     }
     proc.stdout?.on('data', (c: Buffer) => onData(c, 'out'))
     proc.stderr?.on('data', (c: Buffer) => onData(c, 'err'))
 
-    const cleanup = () => { try { fs.rmSync(tmpDir, { recursive: true }) } catch { /* */ } }
-
+    // ⚠ 不再建/删工作目录：cwd 现在是用户的项目目录，任何 rm 都会误删真实文件
     proc.on('close', (exitCode) => {
       clearTimeout(timer)
-      cleanup()
       const { decision, blockReason, transformedOutput } = parseDecision(stdout, exitCode)
       resolve({ ...base, exitCode, stdout, stderr, decision, blockReason, transformedOutput, durationMs: Date.now() - startMs, timedOut })
     })
     proc.on('error', (err) => {
       clearTimeout(timer)
-      cleanup()
       resolve({ ...base, exitCode: null, stdout, stderr, decision: 'none', error: err.message, durationMs: Date.now() - startMs, timedOut })
     })
   })
@@ -197,5 +208,5 @@ export async function dryRunHook(hook: Hook, action: HookAction, input: HookSimI
     return runHttp(action, inputJson, timeoutMs, startMs, base)
   }
 
-  return runCommand(action, inputJson, timeoutMs, startMs, base)
+  return runCommand(action, inputJson, timeoutMs, startMs, base, resolveWorkDir(hook, input))
 }

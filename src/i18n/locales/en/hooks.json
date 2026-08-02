@@ -321,7 +321,7 @@
     "cancel": "Cancel",
     "selectAction": "Select Action",
     "promptPreview": "Prompt Template (no execution)",
-    "cmdWarningBanner": "⚠ This will execute the command on your machine. A temporary working directory is used, but the command may still have side effects.",
+    "cmdWarningBanner": "⚠ This runs the command for real, in your project directory (same as Claude Code does). Side effects such as file writes are not prevented.",
     "cmdConfirmTitle": "Execute Hook Command?",
     "cmdConfirmDesc": "The command will run in a temporary directory with a restricted environment. It may still read/write files or call external processes. Continue?",
     "networkDisabledHint": "Enable 'Allow Network' to test HTTP hooks.",
