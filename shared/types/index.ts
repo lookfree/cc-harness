@@ -14,6 +14,7 @@ export * from './agent-tree'
 export * from './mcp-health'
 export * from './memory'
 export * from './bg-agents'
+export * from './health'
 
 export interface ConfigFile {
   path: string

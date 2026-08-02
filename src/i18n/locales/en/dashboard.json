@@ -39,5 +39,39 @@
     "projectConfigs": "Project Configurations",
     "more": "more",
     "lines": "{{n}} lines"
+  },
+  "health": {
+    "title": "Config health",
+    "empty": "No config issues found.",
+    "showAll": "Show {{n}} more",
+    "showLess": "Show less",
+    "counts": "{{mcpServers}} MCP · {{skills}} skills · {{commands}} commands · {{agents}} agents",
+    "heuristicNote": "heuristic thresholds, not official limits",
+    "check": {
+      "thinking-budget-unset": {
+        "title": "MAX_THINKING_TOKENS is unset",
+        "detail": "Thinking runs without a budget. Setting it caps the most variable part of your output cost."
+      },
+      "subagent-model-unset": {
+        "title": "CLAUDE_CODE_SUBAGENT_MODEL is unset",
+        "detail": "Subagents inherit your main model. Pointing them at a cheaper model cuts the cost of wide fan-outs."
+      },
+      "autocompact-off": {
+        "title": "Auto-compact is disabled",
+        "detail": "Once context fills up, every turn resends the full history. Leaving it on keeps long sessions affordable."
+      },
+      "mcp-heavy": {
+        "title": "{{count}} MCP servers configured",
+        "detail": "Every server's tool descriptions sit in context on each request. Past ~{{limit}}, disable the ones you rarely use."
+      },
+      "surface-heavy": {
+        "title": "{{count}} skills, commands, agents and MCP servers",
+        "detail": "A large tool surface makes the model's choices fuzzier. Past ~{{limit}}, prune what you no longer use."
+      },
+      "opus-pinned": {
+        "title": "Default model pinned to {{model}}",
+        "detail": "Most edit-and-search work does not need Opus. Switching the default to Sonnet cuts token cost several-fold."
+      }
+    }
   }
 }

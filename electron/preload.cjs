@@ -138,6 +138,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettingsModel: () => ipcRenderer.invoke('settings:getModel'),
   setSettingKey: (level, keyPath, value) => ipcRenderer.invoke('settings:setKey', level, keyPath, value),
   getSafetyToggles: () => ipcRenderer.invoke('settings:getToggles'),
+  getConfigHealth: () => ipcRenderer.invoke('settings:health'),
   getWorktreeConfig: () => ipcRenderer.invoke('settings:getWorktree'),
   setWorktreeKey: (level, key, value) => ipcRenderer.invoke('settings:setWorktreeKey', level, key, value)
 })

@@ -8,6 +8,7 @@ export function registerSettingsHandlers(ipcMain: IpcMain, fileManager: FileMana
     fileManager.setSettingKey(level, keyPath, value)
   )
   ipcMain.handle('settings:getToggles', () => fileManager.getSafetyToggles())
+  ipcMain.handle('settings:health', () => fileManager.getConfigHealth())
   ipcMain.handle('settings:getWorktree', () => fileManager.getWorktreeConfig())
   ipcMain.handle('settings:setWorktreeKey', (_e, level: SettingsLevel, key: 'baseRef' | 'bgIsolation', value: string | undefined) =>
     fileManager.setWorktreeKey(level, key, value)

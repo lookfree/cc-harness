@@ -81,6 +81,7 @@
 | spec025 | 2.1.212–2.1.220 对齐批次（Opus 5 / subagent 限流 / 新设置键） | P1 | MODEL-01/09、ORCH-14、HOOK-14、MISC-17 | ✅ 完成 |
 | spec026 | Usage 面板下钻到消息现场 | P2 | OBS-02 增补 | ✅ 完成 |
 | spec027 | tool_result 的 ANSI 颜色渲染 | P2 | OBS 增强（Replay 体验） | ✅ 完成（UI 实拍验收：web 模式同组件绿/黄着色正常、无乱码） |
+| spec028 | 配置健康分 MVP | P2 | MISC（配置体检）+ OBS-02 联动 | ✅ 完成（本机实测 80 分、规则分支冒烟全覆盖） |
 
 ### Phase 1 · 补配置层（spec004–013）
 

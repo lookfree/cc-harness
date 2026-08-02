@@ -39,5 +39,39 @@
     "projectConfigs": "项目配置",
     "more": "更多",
     "lines": "{{n}} 行"
+  },
+  "health": {
+    "title": "配置健康分",
+    "empty": "配置没有待办。",
+    "showAll": "展开其余 {{n}} 条",
+    "showLess": "收起",
+    "counts": "MCP {{mcpServers}} · 技能 {{skills}} · 命令 {{commands}} · 子代理 {{agents}}",
+    "heuristicNote": "经验阈值，非官方规范",
+    "check": {
+      "thinking-budget-unset": {
+        "title": "未设 MAX_THINKING_TOKENS",
+        "detail": "thinking 没有预算上限。设一个能把输出成本里波动最大的一块钉住。"
+      },
+      "subagent-model-unset": {
+        "title": "未设 CLAUDE_CODE_SUBAGENT_MODEL",
+        "detail": "子代理跟着主力模型跑。指向更便宜的模型，可显著压低大规模 fan-out 的成本。"
+      },
+      "autocompact-off": {
+        "title": "自动压缩已关闭",
+        "detail": "上下文吃满后每轮都在重发完整历史。开着它，长会话才划算。"
+      },
+      "mcp-heavy": {
+        "title": "已配置 {{count}} 个 MCP server",
+        "detail": "每个 server 的工具描述都随请求常驻上下文。超过约 {{limit}} 个，建议停用不常用的。"
+      },
+      "surface-heavy": {
+        "title": "技能 / 命令 / 子代理 / MCP 合计 {{count}} 项",
+        "detail": "工具面越大，模型的选择越模糊。超过约 {{limit}} 项，建议清理不再使用的。"
+      },
+      "opus-pinned": {
+        "title": "默认模型钉在 {{model}}",
+        "detail": "多数改代码和检索的活不需要 Opus。默认换成 Sonnet 可省下数倍 token 成本。"
+      }
+    }
   }
 }

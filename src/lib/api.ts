@@ -27,6 +27,7 @@ import type {
   AgentTopology,
   AgentTopologyPush,
   UsageReport,
+  ConfigHealth,
 } from '@shared/types'
 import type { MCPHealth } from '@shared/types/mcp-health'
 import type { BackgroundAgentsSnapshot } from '@shared/types/bg-agents'
@@ -692,6 +693,11 @@ export const api = {
     getToggles: async (): Promise<SafetyToggles> => {
       if (isElectron) return window.electronAPI.getSafetyToggles()
       return httpGet<SafetyToggles>('/api/settings/toggles')
+    },
+    /** 配置健康分（spec028）：只读体检，Web 模式同样可用。 */
+    health: async (): Promise<ConfigHealth> => {
+      if (isElectron) return window.electronAPI.getConfigHealth()
+      return httpGet<ConfigHealth>('/api/settings/health')
     },
     getWorktree: async (): Promise<WorktreeConfig> => {
       if (isElectron) return window.electronAPI.getWorktreeConfig()

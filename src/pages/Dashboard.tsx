@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
-import type { SessionSummary } from '@shared/types'
+import { cn } from '@/lib/utils'
+import type { SessionSummary, ConfigHealth, HealthSeverity } from '@shared/types'
 import { STATUS_META, shortCwd, relativeTime, compactNum } from '@/components/sessions/sessionStatus'
-import { Zap, Bot, Webhook, Server, Terminal, FileText, Globe, FolderOpen, Activity, ArrowRight } from 'lucide-react'
+import { Zap, Bot, Webhook, Server, Terminal, FileText, Globe, FolderOpen, Activity, ArrowRight, ShieldCheck } from 'lucide-react'
 
 function toLocalDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-CA')
@@ -153,6 +154,76 @@ function TokenTrendCard({ sessions }: { sessions: SessionSummary[] }) {
   )
 }
 
+// ── Config health card (spec028) ──────────────────────────────────────────────
+
+const HEALTH_SEV: Record<HealthSeverity, string> = {
+  warn: 'bg-red-500',
+  suggest: 'bg-amber-500',
+  info: 'bg-sky-500',
+}
+
+function ConfigHealthCard() {
+  const { t } = useTranslation('dashboard')
+  const [health, setHealth] = useState<ConfigHealth | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    api.settings
+      .health()
+      .then((h) => { if (!cancelled) setHealth(h) })
+      .catch((e) => console.error('[API] config health failed:', e))
+    return () => { cancelled = true }
+  }, [])
+
+  if (!health) return null
+  const shown = showAll ? health.checks : health.checks.slice(0, 3)
+  const scoreColor = health.score >= 80 ? 'text-green-500' : health.score >= 50 ? 'text-amber-500' : 'text-red-500'
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          {t('health.title')}
+        </CardTitle>
+        <div className="flex items-baseline gap-1">
+          <span className={cn('text-2xl font-bold', scoreColor)}>{health.score}</span>
+          <span className="text-xs text-muted-foreground">/ 100</span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {health.checks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('health.empty')}</p>
+        ) : (
+          <>
+            {shown.map((c) => (
+              <div key={c.id} className="flex gap-2">
+                <span className={cn('mt-1.5 w-1.5 h-1.5 rounded-full shrink-0', HEALTH_SEV[c.severity])} />
+                <div className="min-w-0">
+                  <div className="text-sm">
+                    {t(`health.check.${c.id}.title`, c.params)}
+                    <span className="ml-1 text-xs text-muted-foreground">+{c.penalty}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">{t(`health.check.${c.id}.detail`, c.params)}</div>
+                </div>
+              </div>
+            ))}
+            {health.checks.length > 3 && (
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowAll((v) => !v)}>
+                {showAll ? t('health.showLess') : t('health.showAll', { n: health.checks.length - 3 })}
+              </Button>
+            )}
+          </>
+        )}
+        <p className="text-[11px] text-muted-foreground pt-1">
+          {t('health.counts', health.counts)} · {t('health.heuristicNote')}
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -235,6 +306,9 @@ export default function Dashboard() {
         <ActiveSessionsCard sessions={sessions} />
         <TokenTrendCard sessions={sessions} />
       </div>
+
+      {/* Config health (spec028) */}
+      <ConfigHealthCard />
 
       {/* Config stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

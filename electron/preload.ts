@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport, BackgroundAgentsSnapshot } from '../shared/types'
+import type { Skill, Agent, Hook, HookSettingsMatcher, MCPServers, MCPServerConfig, SlashCommand, ProjectContext, ConfigFile, Provider, HookExecutionLog, HookSimInput, HookDryRunResult, Marketplace, Plugin, PluginCliResult, PermissionModel, PermissionLevel, PermissionEffect, SettingsModel, SettingsLevel, SafetyToggles, WorktreeConfig, SessionSummary, SessionEvent, SessionEventsPush, AgentTopology, AgentTopologyPush, UsageReport, BackgroundAgentsSnapshot, ConfigHealth } from '../shared/types'
 import type { MCPHealth } from '../shared/types/mcp-health'
 import type { MemoryStore, MemorySnapshot, DreamChange } from '../shared/types/memory'
 import type { LoopTask } from '../shared/types/loop'
@@ -180,6 +180,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setSettingKey: (level: SettingsLevel, keyPath: string, value: unknown): Promise<void> =>
     ipcRenderer.invoke('settings:setKey', level, keyPath, value),
   getSafetyToggles: (): Promise<SafetyToggles> => ipcRenderer.invoke('settings:getToggles'),
+  getConfigHealth: (): Promise<ConfigHealth> => ipcRenderer.invoke('settings:health'),
   getWorktreeConfig: (): Promise<WorktreeConfig> => ipcRenderer.invoke('settings:getWorktree'),
   setWorktreeKey: (level: SettingsLevel, key: 'baseRef' | 'bgIsolation', value: string | undefined): Promise<void> =>
     ipcRenderer.invoke('settings:setWorktreeKey', level, key, value),
@@ -337,6 +338,7 @@ declare global {
       getSettingsModel: () => Promise<SettingsModel>
       setSettingKey: (level: SettingsLevel, keyPath: string, value: unknown) => Promise<void>
       getSafetyToggles: () => Promise<SafetyToggles>
+      getConfigHealth: () => Promise<ConfigHealth>
       getWorktreeConfig: () => Promise<WorktreeConfig>
       setWorktreeKey: (level: SettingsLevel, key: 'baseRef' | 'bgIsolation', value: string | undefined) => Promise<void>
     }

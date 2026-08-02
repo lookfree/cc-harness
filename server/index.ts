@@ -213,6 +213,10 @@ app.get('/api/settings/toggles', asyncHandler(async (_req, res) => {
   res.json(await fileManager.getSafetyToggles())
 }))
 
+app.get('/api/settings/health', asyncHandler(async (_req, res) => {
+  res.json(await fileManager.getConfigHealth())
+}))
+
 app.get('/api/settings/worktree', asyncHandler(async (_req, res) => {
   res.json(await fileManager.getWorktreeConfig())
 }))
