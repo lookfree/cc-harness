@@ -1,7 +1,14 @@
 import 'reactflow/dist/style.css'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import ReactFlow, { Background, Controls, useNodesState, useEdgesState, type Node } from 'reactflow'
+import ReactFlow, {
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type ReactFlowInstance,
+} from 'reactflow'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
@@ -24,6 +31,7 @@ export function AgentTopologyView({ sessionId, sessionFilePath }: Props) {
 
   const [nodes, setNodes, onNodesChange] = useNodesState<TopoNodeData>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const flowRef = useRef<ReactFlowInstance | null>(null)
 
   // 加载 + 订阅拓扑（workflow/agent 文件变化实时重建）
   useEffect(() => {
@@ -46,6 +54,16 @@ export function AgentTopologyView({ sessionId, sessionFilePath }: Props) {
     const flow = buildFlow(topology, mode)
     setNodes(flow.nodes)
     setEdges(flow.edges)
+    // 拓扑是异步到的，<ReactFlow fitView> 只在初次渲染跑（那时 nodes 还空）→ 节点会落在视口外。
+    // 等两帧让新节点完成布局测量，再手动 fit 一次。
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => flowRef.current?.fitView({ padding: 0.15, duration: 600 }))
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
   }, [topology, mode, setNodes, setEdges])
 
   const onNodeClick = useCallback((_e: React.MouseEvent, node: Node<TopoNodeData>) => {
@@ -84,6 +102,7 @@ export function AgentTopologyView({ sessionId, sessionFilePath }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={topoNodeTypes}
+        onInit={(inst) => (flowRef.current = inst)}
         onNodeClick={onNodeClick}
         onlyRenderVisibleElements
         fitView
