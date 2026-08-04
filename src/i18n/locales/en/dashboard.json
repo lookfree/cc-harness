@@ -71,6 +71,10 @@
       "opus-pinned": {
         "title": "Default model pinned to {{model}}",
         "detail": "Most edit-and-search work does not need Opus. Switching the default to Sonnet cuts token cost several-fold."
+      },
+      "stop-hook-no-guard": {
+        "title": "{{count}} Stop hook(s) without a stop_hook_active guard",
+        "detail": "Claude Code passes stop_hook_active to Stop and SubagentStop hooks. A handler that ignores it keeps blocking the turn from ending, which surfaces as \"A hook blocked the turn from ending N consecutive times\". Affected: {{names}}"
       }
     }
   }

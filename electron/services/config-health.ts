@@ -7,6 +7,12 @@ export interface ConfigHealthInput {
   skills: number
   commands: number
   agents: number
+  /**
+   * Stop / SubagentStop hook 里「看不到 stop_hook_active 判断」的 hook 名。
+   * Claude Code 会把 stop_hook_active 传进 hook 输入；不判它就一直阻断收尾，
+   * 表现为 "A hook blocked the turn from ending N consecutive times"。
+   */
+  unguardedStopHooks?: string[]
 }
 
 /**
@@ -14,7 +20,7 @@ export interface ConfigHealthInput {
  * 阈值来自 ECC 经验法则（MCP>10 吃 context、工具面>80 判断力下降），不是官方契约——UI 须标注"经验阈值"。
  */
 export function computeConfigHealth(input: ConfigHealthInput): ConfigHealth {
-  const { effective, mcpServers, skills, commands, agents } = input
+  const { effective, mcpServers, skills, commands, agents, unguardedStopHooks = [] } = input
   const checks: HealthCheck[] = []
   const has = (k: string): boolean => {
     const v = effective.get(k)
@@ -55,6 +61,16 @@ export function computeConfigHealth(input: ConfigHealthInput): ConfigHealth {
   const model = effective.get('model')
   if (typeof model === 'string' && /opus/i.test(model)) {
     checks.push({ id: 'opus-pinned', severity: 'suggest', params: { model }, penalty: 10 })
+  }
+
+  // 7) Stop/SubagentStop hook 不判 stop_hook_active → 会把会话卡在收不了尾的循环里
+  if (unguardedStopHooks.length > 0) {
+    checks.push({
+      id: 'stop-hook-no-guard',
+      severity: 'warn',
+      params: { count: unguardedStopHooks.length, names: unguardedStopHooks.join(', ') },
+      penalty: 20,
+    })
   }
 
   checks.sort((a, b) => b.penalty - a.penalty)

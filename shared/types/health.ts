@@ -8,6 +8,7 @@ export type HealthCheckId =
   | 'mcp-heavy'
   | 'surface-heavy'
   | 'opus-pinned'
+  | 'stop-hook-no-guard'
 
 export interface HealthCheck {
   /** i18n：health.check.<id>.title / .detail */

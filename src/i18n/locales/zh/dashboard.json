@@ -71,6 +71,10 @@
       "opus-pinned": {
         "title": "默认模型钉在 {{model}}",
         "detail": "多数改代码和检索的活不需要 Opus。默认换成 Sonnet 可省下数倍 token 成本。"
+      },
+      "stop-hook-no-guard": {
+        "title": "{{count}} 个 Stop hook 未判 stop_hook_active",
+        "detail": "Claude Code 会把 stop_hook_active 传给 Stop / SubagentStop hook。不判这个字段的脚本会一直阻断收尾，表现为「A hook blocked the turn from ending N consecutive times」。涉及：{{names}}"
       }
     }
   }

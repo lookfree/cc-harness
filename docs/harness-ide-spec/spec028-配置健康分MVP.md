@@ -54,6 +54,7 @@ export interface ConfigHealth {
 | `mcp-heavy` | MCP server > 10 → warn / 6–10 → info | warn/info | 15 / 5 |
 | `surface-heavy` | skills+commands+agents+mcp > 80 → warn / > 50 → info | warn/info | 15 / 5 |
 | `opus-pinned` | `model` 显式含 `opus` | suggest | 10 |
+| `stop-hook-no-guard` | Stop/SubagentStop hook 未判 `stop_hook_active`（2026-08-04 追加） | warn | 20 |
 
 `score = max(0, 100 - Σpenalty)`。阈值来源是策略文档转述的 ECC 经验法则（MCP>10 吃 context、工具面>80 判断力下降），**不是官方契约**——UI 文案须说"经验阈值"。
 
@@ -96,3 +97,4 @@ export interface ConfigHealth {
 - **"工具面"是代理指标**：真实工具数需要连上每个 MCP server 枚举 tools（spec020 健康面板才做），MVP 用 skills+commands+agents+mcp 计数近似，文案里说明口径。
 - `env.CLAUDE_CODE_SUBAGENT_MODEL` / `MAX_THINKING_TOKENS` 键名来自 ECC 实践转述；本工具只做"未设置则建议"，不写入，键名即使有出入也不会误改用户配置。
 - 一键修复留到后续：写入需选层（user/project/local）+ 回滚语义，超出 MVP。
+- **`stop-hook-no-guard` 是静态启发式**（2026-08-04 追加，动机是实际撞上 "A hook blocked the turn from ending 9 consecutive times"）：命令串或其指向的脚本里出现 `stop_hook_active` 即视为已判。脚本可能用别的方式避免死循环（比如根本不 block），所以文案只说"未见该判断"、不断言有 bug。读脚本的路径解析与 spec018 沙箱一致——相对路径按 hook 所属项目目录解析，`$CLAUDE_PROJECT_DIR` 做替换。
