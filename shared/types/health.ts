@@ -9,6 +9,10 @@ export type HealthCheckId =
   | 'surface-heavy'
   | 'opus-pinned'
   | 'stop-hook-no-guard'
+  | 'hook-script-missing'
+  | 'claude-md-bloat'
+  | 'permissions-wide-open'
+  | 'dangerous-skip-enabled'
 
 export interface HealthCheck {
   /** i18n：health.check.<id>.title / .detail */

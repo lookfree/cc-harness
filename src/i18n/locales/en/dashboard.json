@@ -75,6 +75,22 @@
       "stop-hook-no-guard": {
         "title": "{{count}} Stop hook(s) without a stop_hook_active guard",
         "detail": "Claude Code passes stop_hook_active to Stop and SubagentStop hooks. A handler that ignores it keeps blocking the turn from ending, which surfaces as \"A hook blocked the turn from ending N consecutive times\". Affected: {{names}}"
+      },
+      "hook-script-missing": {
+        "title": "{{count}} hook(s) point at a script that does not exist",
+        "detail": "The referenced file is missing, so the hook fails silently and never runs. Affected: {{names}}"
+      },
+      "claude-md-bloat": {
+        "title": "CLAUDE.md totals {{chars}} characters (~{{tokens}} tokens)",
+        "detail": "CLAUDE.md is re-sent on every turn, so its size is paid for continuously. Splitting rarely-needed detail into referenced files keeps the always-on part small."
+      },
+      "permissions-wide-open": {
+        "title": "{{count}} allow rule(s) open a whole tool",
+        "detail": "A rule matching an entire tool removes the confirmation step for every call of that tool, including ones the rule was never meant to cover. Rules: {{rules}}"
+      },
+      "dangerous-skip-enabled": {
+        "title": "Dangerous-mode confirmation is turned off",
+        "detail": "skipDangerousModePermissionPrompt is true, so entering permission-bypass mode no longer asks for confirmation. Intentional for some setups; listed here so it stays a deliberate choice."
       }
     }
   }

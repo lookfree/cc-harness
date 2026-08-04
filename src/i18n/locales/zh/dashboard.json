@@ -75,6 +75,22 @@
       "stop-hook-no-guard": {
         "title": "{{count}} 个 Stop hook 未判 stop_hook_active",
         "detail": "Claude Code 会把 stop_hook_active 传给 Stop / SubagentStop hook。不判这个字段的脚本会一直阻断收尾，表现为「A hook blocked the turn from ending N consecutive times」。涉及：{{names}}"
+      },
+      "hook-script-missing": {
+        "title": "{{count}} 个 hook 指向的脚本不存在",
+        "detail": "引用的文件缺失，hook 会静默失效、根本不执行。涉及：{{names}}"
+      },
+      "claude-md-bloat": {
+        "title": "CLAUDE.md 合计 {{chars}} 字符（约 {{tokens}} token）",
+        "detail": "CLAUDE.md 每轮都会重新送进上下文，体量是持续付费的。把不常用的细节拆成被引用的文件，能压小常驻部分。"
+      },
+      "permissions-wide-open": {
+        "title": "{{count}} 条 allow 规则放行了整个工具",
+        "detail": "匹配整个工具的规则会取消该工具所有调用的确认环节，包括当初并不打算覆盖的那些。规则：{{rules}}"
+      },
+      "dangerous-skip-enabled": {
+        "title": "危险模式的二次确认已关闭",
+        "detail": "skipDangerousModePermissionPrompt 为 true，进入跳过权限模式时不再询问。部分工作流会刻意这样设；列在这里是为了让它保持是个有意识的选择。"
       }
     }
   }

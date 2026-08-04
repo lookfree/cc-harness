@@ -13,6 +13,12 @@ export interface ConfigHealthInput {
    * 表现为 "A hook blocked the turn from ending N consecutive times"。
    */
   unguardedStopHooks?: string[]
+  /** 命令指向的脚本文件不存在的 hook 名——这类 hook 会静默失效 */
+  missingHookScripts?: string[]
+  /** 每轮都进上下文的 CLAUDE.md 字符数（user + 当前项目两份之和） */
+  claudeMdChars?: number
+  /** permissions.allow 里等价于"放行整个工具"的规则原文 */
+  wideOpenRules?: string[]
 }
 
 /**
@@ -20,7 +26,10 @@ export interface ConfigHealthInput {
  * 阈值来自 ECC 经验法则（MCP>10 吃 context、工具面>80 判断力下降），不是官方契约——UI 须标注"经验阈值"。
  */
 export function computeConfigHealth(input: ConfigHealthInput): ConfigHealth {
-  const { effective, mcpServers, skills, commands, agents, unguardedStopHooks = [] } = input
+  const {
+    effective, mcpServers, skills, commands, agents,
+    unguardedStopHooks = [], missingHookScripts = [], claudeMdChars = 0, wideOpenRules = [],
+  } = input
   const checks: HealthCheck[] = []
   const has = (k: string): boolean => {
     const v = effective.get(k)
@@ -71,6 +80,38 @@ export function computeConfigHealth(input: ConfigHealthInput): ConfigHealth {
       params: { count: unguardedStopHooks.length, names: unguardedStopHooks.join(', ') },
       penalty: 20,
     })
+  }
+
+  // 8) hook 指向的脚本不存在 → hook 静默不执行，最难自己发现的一类
+  if (missingHookScripts.length > 0) {
+    checks.push({
+      id: 'hook-script-missing',
+      severity: 'warn',
+      params: { count: missingHookScripts.length, names: missingHookScripts.join(', ') },
+      penalty: 15,
+    })
+  }
+
+  // 9) CLAUDE.md 每轮都进上下文，越大越贵（阈值按 ~4 字符/token 折算）
+  if (claudeMdChars > 16000) {
+    checks.push({ id: 'claude-md-bloat', severity: 'warn', params: { chars: claudeMdChars, tokens: Math.round(claudeMdChars / 4) }, penalty: 10 })
+  } else if (claudeMdChars > 8000) {
+    checks.push({ id: 'claude-md-bloat', severity: 'info', params: { chars: claudeMdChars, tokens: Math.round(claudeMdChars / 4) }, penalty: 5 })
+  }
+
+  // 10) allow 里放行了整个工具（如 Bash(*)）——等于对该工具关掉了确认
+  if (wideOpenRules.length > 0) {
+    checks.push({
+      id: 'permissions-wide-open',
+      severity: 'warn',
+      params: { count: wideOpenRules.length, rules: wideOpenRules.join(', ') },
+      penalty: 15,
+    })
+  }
+
+  // 11) 进入危险模式的二次确认被关掉（是合法的高级用法，只作事实提示）
+  if (effective.get('skipDangerousModePermissionPrompt') === true) {
+    checks.push({ id: 'dangerous-skip-enabled', severity: 'info', params: {}, penalty: 5 })
   }
 
   checks.sort((a, b) => b.penalty - a.penalty)

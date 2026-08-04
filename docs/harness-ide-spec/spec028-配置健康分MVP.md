@@ -55,6 +55,10 @@ export interface ConfigHealth {
 | `surface-heavy` | skills+commands+agents+mcp > 80 → warn / > 50 → info | warn/info | 15 / 5 |
 | `opus-pinned` | `model` 显式含 `opus` | suggest | 10 |
 | `stop-hook-no-guard` | Stop/SubagentStop hook 未判 `stop_hook_active`（2026-08-04 追加） | warn | 20 |
+| `hook-script-missing` | hook 命令指向的脚本文件不存在（2026-08-04 追加） | warn | 15 |
+| `claude-md-bloat` | CLAUDE.md（user+项目）> 16k 字符 → warn / > 8k → info（2026-08-04 追加） | warn/info | 10 / 5 |
+| `permissions-wide-open` | `permissions.allow` 有等价"整个工具放行"的规则（2026-08-04 追加） | warn | 15 |
+| `dangerous-skip-enabled` | `skipDangerousModePermissionPrompt === true`（2026-08-04 追加） | info | 5 |
 
 `score = max(0, 100 - Σpenalty)`。阈值来源是策略文档转述的 ECC 经验法则（MCP>10 吃 context、工具面>80 判断力下降），**不是官方契约**——UI 文案须说"经验阈值"。
 
@@ -69,7 +73,11 @@ export interface ConfigHealth {
 
 `src/pages/Dashboard.tsx` 加一张卡：大号分数 + 严重度圆点，下列前 3 条待办（title + detail），点"查看全部"展开剩余。空清单（100 分）显示一句"配置无待办"。不做跳转/编辑。
 
-### 5. i18n
+### 5. 与 `claude doctor` 的分工（2026-08-04 核实）
+
+实跑 `claude doctor`（CLI 2.1.221）确认它只覆盖**安装健康**：运行方式/版本/commit/平台/安装路径/安装方式/搜索/自动更新通道/上次更新结果/Remote Control，末尾提示"完整 setup checkup 请在会话内跑 `/doctor`"。**不涉及成本、上下文、纪律链**。所以健康分与它不重叠：doctor 答"装没装好"，健康分答"配得省不省钱、纪律链有没有断"。
+
+### 6. i18n
 
 `dashboard` namespace 下新增 `health.*`：`title`、`scoreHint`、`empty`、`showAll`、`counts`、`check.<id>.title/detail`（6 条 × 2 语言）。en/zh 成对。
 
