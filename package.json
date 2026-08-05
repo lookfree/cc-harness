@@ -1,6 +1,7 @@
 {
   "name": "cc-harness",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "A powerful debugger and manager for Claude Code skills, agents, hooks, MCP servers, and slash commands",
   "main": "dist-electron/main.js",
   "type": "module",
