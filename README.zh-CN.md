@@ -155,7 +155,18 @@ CC Harness 在每次 dream 前后做快照，用 diff viewer 呈现 added / dele
 
 ---
 
-## 快速开始
+## 下载安装
+
+**[前往最新 Release →](https://github.com/lookfree/cc-harness/releases/latest)** —— 提供 macOS（Apple 芯片 / Intel）、Windows、Linux 安装包。
+
+安装包未做代码签名，首次打开需要多一步：
+
+- **macOS** —— 拖进「应用程序」后执行 `xattr -cr "/Applications/CC Harness.app"`，或者右键点应用 →「打开」→「打开」。
+- **Windows** —— SmartScreen 提示"已保护你的电脑" → 更多信息 → 仍要运行。
+
+数据不出本机：CC Harness 只读取 `~/.claude` 和项目下的 `.claude` 目录。
+
+## 从源码运行
 
 ```bash
 git clone https://github.com/lookfree/cc-harness.git

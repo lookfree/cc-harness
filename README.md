@@ -51,7 +51,18 @@ Claude Code has grown from a single-session tool into a complex system: multi-se
 
 Not a chat client, not a CLI replacement. [claudia](https://github.com/getAsterisk/claudia) replaces the CLI's interaction surface; CC Harness does not touch the conversation at all. It reads your local `~/.claude/` state and makes it legible — judgment and actions stay with you.
 
-## Quick start
+## Download
+
+**[Latest release →](https://github.com/lookfree/cc-harness/releases/latest)** — macOS (Apple Silicon / Intel), Windows, Linux.
+
+The builds are unsigned, so the first launch needs one extra step:
+
+- **macOS** — `xattr -cr "/Applications/CC Harness.app"` after dragging it in, or right-click the app → Open → Open.
+- **Windows** — SmartScreen shows "Windows protected your PC" → More info → Run anyway.
+
+Nothing leaves your machine: CC Harness only reads `~/.claude` and your project's `.claude` directory.
+
+## Build from source
 
 ```bash
 git clone https://github.com/lookfree/cc-harness.git

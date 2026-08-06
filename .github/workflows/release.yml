@@ -1,0 +1,46 @@
+name: Release
+
+# 打 tag（如 v0.1.0）时三平台并行构建，产物挂到同名 Release。
+# 手动触发也可以，用于验证构建本身没坏。
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest      # Apple Silicon
+            artifact: 'release/*.dmg release/*.zip'
+          - os: macos-13          # Intel Mac（macos-latest 已是 arm64，x64 需单列）
+            artifact: 'release/*.dmg release/*.zip'
+          - os: windows-latest
+            artifact: 'release/*.exe release/*.zip'
+          - os: ubuntu-latest
+            artifact: 'release/*.AppImage release/*.deb'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # electron-builder 默认会尝试签名/公证；未配证书时跳过，避免 CI 失败
+      - name: Build
+        run: npm run electron:build
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
+          fail_on_unmatched_files: false
