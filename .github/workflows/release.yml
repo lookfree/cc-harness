@@ -1,7 +1,7 @@
 name: Release
 
-# 打 tag（如 v0.1.0）时三平台并行构建，产物挂到同名 Release。
-# 手动触发也可以，用于验证构建本身没坏。
+# 打 tag（如 v0.1.0）时三平台并行构建，产物统一由 action 挂到同名 Release。
+# 手动触发也可以，用于验证构建本身没坏（不会上传）。
 on:
   push:
     tags: ['v*']
@@ -16,14 +16,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest      # Apple Silicon
-            artifact: 'release/*.dmg release/*.zip'
-          - os: macos-13          # Intel Mac（macos-latest 已是 arm64，x64 需单列）
-            artifact: 'release/*.dmg release/*.zip'
+          # macOS 一台机器交叉出两种架构，避免排队等稀缺的 Intel runner
+          - os: macos-latest
+            args: --mac --arm64 --x64
           - os: windows-latest
-            artifact: 'release/*.exe release/*.zip'
+            args: --win
           - os: ubuntu-latest
-            artifact: 'release/*.AppImage release/*.deb'
+            args: --linux
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -32,15 +31,22 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # electron-builder 默认会尝试签名/公证；未配证书时跳过，避免 CI 失败
+      # --publish never：只构建不发布。
+      # electron-builder 自带的发布会和下面的上传步骤抢同一个 release，
+      # 且它默认发 draft，撞上已存在的正式 release 就静默跳过上传（Windows 产物丢失即因此）。
       - name: Build
-        run: npm run electron:build
+        run: npm run electron:build -- --publish never ${{ matrix.args }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 每个 glob 必须独占一行：写成一行多个模式会被当作单个模式，匹配不到带空格的文件名
       - name: Upload to release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact }}
+          files: |
+            release/*.dmg
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/*.zip
           fail_on_unmatched_files: false
